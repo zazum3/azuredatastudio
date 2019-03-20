@@ -1,42 +1,21 @@
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the Source EULA. See License.txt in the project root for license information.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
-import * as sinon from 'sinon';
-import * as fs from 'fs';
-import * as path from 'vs/base/common/path';
 import * as os from 'os';
-import { URI } from 'vs/base/common/uri';
+import * as path from 'vs/base/common/path';
+import * as fs from 'fs';
+
 import { Registry } from 'vs/platform/registry/common/platform';
-import { ParsedArgs, IEnvironmentService } from 'vs/platform/environment/common/environment';
-import { EnvironmentService } from 'vs/platform/environment/node/environmentService';
+import { ConfigurationService } from 'vs/platform/configuration/node/configurationService';
+import { ParsedArgs } from 'vs/platform/environment/common/environment';
 import { parseArgs } from 'vs/platform/environment/node/argv';
-import * as pfs from 'vs/base/node/pfs';
+import { EnvironmentService } from 'vs/platform/environment/node/environmentService';
 import * as uuid from 'vs/base/common/uuid';
-import { IConfigurationRegistry, Extensions as ConfigurationExtensions, ConfigurationScope } from 'vs/platform/configuration/common/configurationRegistry';
-import { WorkspaceService } from 'vs/workbench/services/configuration/node/configurationService';
-import { ISingleFolderWorkspaceInitializationPayload } from 'vs/platform/workspaces/common/workspaces';
-import { ConfigurationEditingErrorCode } from 'vs/workbench/services/configuration/common/configurationEditingService';
-import { IFileService, FileChangesEvent, FileChangeType } from 'vs/platform/files/common/files';
-import { IWorkspaceContextService, WorkbenchState, IWorkspaceFoldersChangeEvent } from 'vs/platform/workspace/common/workspace';
-import { ConfigurationTarget, IConfigurationService, IConfigurationChangeEvent } from 'vs/platform/configuration/common/configuration';
-import { workbenchInstantiationService, TestTextResourceConfigurationService, TestTextFileService, TestLifecycleService, TestEnvironmentService, TestStorageService } from 'vs/workbench/test/workbenchTestServices';
-import { TestNotificationService } from 'vs/platform/notification/test/common/testNotificationService';
-import { FileService } from 'vs/workbench/services/files/node/fileService';
-import { TestInstantiationService } from 'vs/platform/instantiation/test/common/instantiationServiceMock';
-import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
-import { ITextModelService } from 'vs/editor/common/services/resolverService';
-import { TextModelResolverService } from 'vs/workbench/services/textmodelResolver/common/textModelResolverService';
-import { IJSONEditingService } from 'vs/workbench/services/configuration/common/jsonEditing';
-import { JSONEditingService } from 'vs/workbench/services/configuration/common/jsonEditingService';
-import { createHash } from 'crypto';
-import { Emitter, Event } from 'vs/base/common/event';
-import { Schemas } from 'vs/base/common/network';
-import { originalFSPath } from 'vs/base/common/resources';
-import { isLinux } from 'vs/base/common/platform';
-import { IWorkspaceIdentifier } from 'vs/workbench/services/configuration/node/configuration';
+import { IConfigurationRegistry, Extensions as ConfigurationExtensions } from 'vs/platform/configuration/common/configurationRegistry';
+import { testFile } from 'vs/base/test/node/utils';
 
 class SettingsTestEnvironmentService extends EnvironmentService {
 
@@ -47,63 +26,237 @@ class SettingsTestEnvironmentService extends EnvironmentService {
 	get appSettingsPath(): string { return this.customAppSettingsHome; }
 }
 
-function setUpFolderWorkspace(folderName: string): Promise<{ parentDir: string, folderDir: string }> {
-	const id = uuid.generateUuid();
-	const parentDir = path.join(os.tmpdir(), 'vsctests', id);
-	return setUpFolder(folderName, parentDir).then(folderDir => ({ parentDir, folderDir }));
-}
+suite('ConfigurationService - Node', () => {
 
-function setUpFolder(folderName: string, parentDir: string): Promise<string> {
-	const folderDir = path.join(parentDir, folderName);
-	// {{SQL CARBON EDIT}}
-	const workspaceSettingsDir = path.join(folderDir, '.azuredatastudio');
-	return Promise.resolve(pfs.mkdirp(workspaceSettingsDir, 493).then(() => folderDir));
-}
+	test('simple', async () => {
+		const res = await testFile('config', 'config.json');
+		fs.writeFileSync(res.testFile, '{ "foo": "bar" }');
 
-function convertToWorkspacePayload(folder: URI): ISingleFolderWorkspaceInitializationPayload {
-	return {
-		id: createHash('md5').update(folder.fsPath).digest('hex'),
-		folder
-	} as ISingleFolderWorkspaceInitializationPayload;
-}
+		const service = new ConfigurationService(new SettingsTestEnvironmentService(parseArgs(process.argv), process.execPath, res.testFile));
+		const config = service.getValue<{
+			foo: string;
+		}>();
 
-function setUpWorkspace(folders: string[]): Promise<{ parentDir: string, configPath: URI }> {
+		assert.ok(config);
+		assert.equal(config.foo, 'bar');
+		service.dispose();
 
-	const id = uuid.generateUuid();
-	const parentDir = path.join(os.tmpdir(), 'vsctests', id);
+		return res.cleanUp();
+	});
 
-	return Promise.resolve(pfs.mkdirp(parentDir, 493)
-		.then(() => {
-			const configPath = path.join(parentDir, 'vsctests.code-workspace');
-			const workspace = { folders: folders.map(path => ({ path })) };
-			fs.writeFileSync(configPath, JSON.stringify(workspace, null, '\t'));
+	test('config gets flattened', async () => {
+		const res = await testFile('config', 'config.json');
 
-			return Promise.all(folders.map(folder => setUpFolder(folder, parentDir)))
-				.then(() => ({ parentDir, configPath: URI.file(configPath) }));
-		}));
+		fs.writeFileSync(res.testFile, '{ "testworkbench.editor.tabs": true }');
 
-}
+		const service = new ConfigurationService(new SettingsTestEnvironmentService(parseArgs(process.argv), process.execPath, res.testFile));
+		const config = service.getValue<{
+			testworkbench: {
+				editor: {
+					tabs: boolean;
+				};
+			};
+		}>();
+		assert.ok(config);
+		assert.ok(config.testworkbench);
+		assert.ok(config.testworkbench.editor);
+		assert.equal(config.testworkbench.editor.tabs, true);
 
+		service.dispose();
+		return res.cleanUp();
+	});
 
-suite('WorkspaceContextService - Folder', () => {
-	test('getWorkspace()', () => {
-		// {{SQL CARBON EDIT}} - Remove test
-		assert.equal(0, 0);
+	test('error case does not explode', async () => {
+		const res = await testFile('config', 'config.json');
+
+		fs.writeFileSync(res.testFile, ',,,,');
+
+		const service = new ConfigurationService(new SettingsTestEnvironmentService(parseArgs(process.argv), process.execPath, res.testFile));
+		const config = service.getValue<{
+			foo: string;
+		}>();
+		assert.ok(config);
+
+		service.dispose();
+		return res.cleanUp();
+	});
+
+	test('missing file does not explode', () => {
+		const id = uuid.generateUuid();
+		const parentDir = path.join(os.tmpdir(), 'vsctests', id);
+		const newDir = path.join(parentDir, 'config', id);
+		const testFile = path.join(newDir, 'config.json');
+
+		const service = new ConfigurationService(new SettingsTestEnvironmentService(parseArgs(process.argv), process.execPath, testFile));
+
+		const config = service.getValue<{ foo: string }>();
+		assert.ok(config);
+
+		service.dispose();
+	});
+
+	test('trigger configuration change event', async () => {
+		const res = await testFile('config', 'config.json');
+
+		const service = new ConfigurationService(new SettingsTestEnvironmentService(parseArgs(process.argv), process.execPath, res.testFile));
+		return new Promise((c, e) => {
+			service.onDidChangeConfiguration(() => {
+				assert.equal(service.getValue('foo'), 'bar');
+				service.dispose();
+				c();
+			});
+			fs.writeFileSync(res.testFile, '{ "foo": "bar" }');
+		});
+
+	});
+
+	test('reloadConfiguration', async () => {
+		const res = await testFile('config', 'config.json');
+
+		fs.writeFileSync(res.testFile, '{ "foo": "bar" }');
+
+		const service = new ConfigurationService(new SettingsTestEnvironmentService(parseArgs(process.argv), process.execPath, res.testFile));
+		let config = service.getValue<{
+			foo: string;
+		}>();
+		assert.ok(config);
+		assert.equal(config.foo, 'bar');
+		fs.writeFileSync(res.testFile, '{ "foo": "changed" }');
+
+		// still outdated
+		config = service.getValue<{
+			foo: string;
+		}>();
+		assert.ok(config);
+		assert.equal(config.foo, 'bar');
+
+		// force a reload to get latest
+		await service.reloadConfiguration();
+		config = service.getValue<{
+			foo: string;
+		}>();
+		assert.ok(config);
+		assert.equal(config.foo, 'changed');
+
+		service.dispose();
+		return res.cleanUp();
+	});
+
+	test('model defaults', () => {
+		interface ITestSetting {
+			configuration: {
+				service: {
+					testSetting: string;
+				}
+			};
+		}
+
+		const configurationRegistry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
+		configurationRegistry.registerConfiguration({
+			'id': '_test',
+			'type': 'object',
+			'properties': {
+				'configuration.service.testSetting': {
+					'type': 'string',
+					'default': 'isSet'
+				}
+			}
+		});
+
+		let serviceWithoutFile = new ConfigurationService(new SettingsTestEnvironmentService(parseArgs(process.argv), process.execPath, '__testFile'));
+		let setting = serviceWithoutFile.getValue<ITestSetting>();
+
+		assert.ok(setting);
+		assert.equal(setting.configuration.service.testSetting, 'isSet');
+
+		return testFile('config', 'config.json').then(async res => {
+			fs.writeFileSync(res.testFile, '{ "testworkbench.editor.tabs": true }');
+
+			const service = new ConfigurationService(new SettingsTestEnvironmentService(parseArgs(process.argv), process.execPath, res.testFile));
+
+			let setting = service.getValue<ITestSetting>();
+
+			assert.ok(setting);
+			assert.equal(setting.configuration.service.testSetting, 'isSet');
+
+			fs.writeFileSync(res.testFile, '{ "configuration.service.testSetting": "isChanged" }');
+
+			await service.reloadConfiguration();
+			let setting_1 = service.getValue<ITestSetting>();
+			assert.ok(setting_1);
+			assert.equal(setting_1.configuration.service.testSetting, 'isChanged');
+			service.dispose();
+			serviceWithoutFile.dispose();
+			return res.cleanUp();
+		});
+	});
+
+	test('lookup', async () => {
+		const configurationRegistry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
+		configurationRegistry.registerConfiguration({
+			'id': '_test',
+			'type': 'object',
+			'properties': {
+				'lookup.service.testSetting': {
+					'type': 'string',
+					'default': 'isSet'
+				}
+			}
+		});
+
+		const r = await testFile('config', 'config.json');
+		const service = new ConfigurationService(new SettingsTestEnvironmentService(parseArgs(process.argv), process.execPath, r.testFile));
+		let res = service.inspect('something.missing');
+		assert.strictEqual(res.value, undefined);
+		assert.strictEqual(res.default, undefined);
+		assert.strictEqual(res.user, undefined);
+
+		res = service.inspect('lookup.service.testSetting');
+		assert.strictEqual(res.default, 'isSet');
+		assert.strictEqual(res.value, 'isSet');
+		assert.strictEqual(res.user, undefined);
+
+		fs.writeFileSync(r.testFile, '{ "lookup.service.testSetting": "bar" }');
+
+		await service.reloadConfiguration();
+		res = service.inspect('lookup.service.testSetting');
+		assert.strictEqual(res.default, 'isSet');
+		assert.strictEqual(res.user, 'bar');
+		assert.strictEqual(res.value, 'bar');
+
+		service.dispose();
+		return r.cleanUp();
+	});
+
+	test('lookup with null', async () => {
+		const configurationRegistry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
+		configurationRegistry.registerConfiguration({
+			'id': '_testNull',
+			'type': 'object',
+			'properties': {
+				'lookup.service.testNullSetting': {
+					'type': 'null',
+				}
+			}
+		});
+
+		const r = await testFile('config', 'config.json');
+		const service = new ConfigurationService(new SettingsTestEnvironmentService(parseArgs(process.argv), process.execPath, r.testFile));
+		let res = service.inspect('lookup.service.testNullSetting');
+		assert.strictEqual(res.default, null);
+		assert.strictEqual(res.value, null);
+		assert.strictEqual(res.user, undefined);
+
+		fs.writeFileSync(r.testFile, '{ "lookup.service.testNullSetting": null }');
+
+		await service.reloadConfiguration();
+
+		res = service.inspect('lookup.service.testNullSetting');
+		assert.strictEqual(res.default, null);
+		assert.strictEqual(res.value, null);
+		assert.strictEqual(res.user, null);
+
+		service.dispose();
+		return r.cleanUp();
 	});
 });
-
-function getWorkspaceId(configPath: URI): string {
-	let workspaceConfigPath = configPath.scheme === Schemas.file ? originalFSPath(configPath) : configPath.toString();
-	if (!isLinux) {
-		workspaceConfigPath = workspaceConfigPath.toLowerCase(); // sanitize for platform file system
-	}
-
-	return createHash('md5').update(workspaceConfigPath).digest('hex');
-}
-
-export function getWorkspaceIdentifier(configPath: URI): IWorkspaceIdentifier {
-	return {
-		configPath,
-		id: getWorkspaceId(configPath)
-	};
-}

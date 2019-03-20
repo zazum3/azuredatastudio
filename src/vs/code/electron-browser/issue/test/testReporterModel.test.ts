@@ -24,16 +24,15 @@ suite('IssueReporter', () => {
 		});
 	});
 
-	// {{SQL CARBON EDIT}}
 	test('serializes model skeleton when no data is provided', () => {
 		const issueReporterModel = new IssueReporterModel({});
 		assert.equal(issueReporterModel.serialize(),
-			`
+		`
 Issue Type: <b>Bug</b>
 
 undefined
 
-Azure Data Studio version: undefined
+VS Code version: undefined
 OS version: undefined
 
 Extensions: none
@@ -51,13 +50,12 @@ Extensions: none
 			}
 		});
 		assert.equal(issueReporterModel.serialize(),
-		// {{SQL CARBON EDIT}}
 			`
 Issue Type: <b>Bug</b>
 
 undefined
 
-Azure Data Studio version: undefined
+VS Code version: undefined
 OS version: undefined
 
 <details>

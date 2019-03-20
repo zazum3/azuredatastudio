@@ -21,7 +21,7 @@ class TwitterFeedbackService implements IFeedbackDelegate {
 
 	private static TWITTER_URL: string = 'https://twitter.com/intent/tweet';
 	private static VIA_NAME: string = 'azuredatastudio'; // {{SQL CARBON EDIT}}
-	private static HASHTAGS: string[] = ['HappyAzureDataStudio']; // {{SQL CARBON EDIT}}
+	private static HASHTAGS: string[] = ['HappyCoding'];
 
 	private combineHashTagsAsString(): string {
 		return TwitterFeedbackService.HASHTAGS.join(',');

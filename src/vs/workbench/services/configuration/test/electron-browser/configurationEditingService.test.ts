@@ -87,8 +87,7 @@ suite('ConfigurationEditingService', () => {
 		parentDir = path.join(os.tmpdir(), 'vsctests', id);
 		workspaceDir = path.join(parentDir, 'workspaceconfig', id);
 		globalSettingsFile = path.join(workspaceDir, 'config.json');
-		// {{SQL CARBON EDIT}}
-		workspaceSettingsDir = path.join(workspaceDir, '.azuredatastudio');
+		workspaceSettingsDir = path.join(workspaceDir, '.vscode');
 
 		return await mkdirp(workspaceSettingsDir, 493);
 	}

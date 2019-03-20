@@ -189,8 +189,7 @@ export class Win32UpdateService extends AbstractUpdateService {
 
 	private async getUpdatePackagePath(version: string): Promise<string> {
 		const cachePath = await this.cachePath;
-		// {{SQL CARBON EDIT}}
-		return path.join(cachePath, `AzureDataStudioSetup-${product.quality}-${version}.exe`);
+		return path.join(cachePath, `CodeSetup-${product.quality}-${version}.exe`);
 	}
 
 	private async cleanup(exceptVersion: string | null = null): Promise<any> {

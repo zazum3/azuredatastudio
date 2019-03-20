@@ -809,12 +809,10 @@ export class TextFileEditorModel extends BaseTextEditorModel implements ITextFil
 		// Check for workspace settings file
 		const folders = this.contextService.getWorkspace().folders;
 		for (const folder of folders) {
-			// {{SQL CARBON EDIT}}
-			if (isEqualOrParent(this.resource, folder.toResource('.azuredatastudio'))) {
+			if (isEqualOrParent(this.resource, folder.toResource('.vscode'))) {
 				const filename = basename(this.resource);
 				if (TextFileEditorModel.WHITELIST_WORKSPACE_JSON.indexOf(filename) > -1) {
-					// {{SQL CARBON EDIT}}
-					return `.azuredatastudio/${filename}`;
+					return `.vscode/${filename}`;
 				}
 			}
 		}

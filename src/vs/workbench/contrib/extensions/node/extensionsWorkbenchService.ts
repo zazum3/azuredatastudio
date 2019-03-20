@@ -258,9 +258,8 @@ class Extension implements IExtension {
 		}
 
 		if (this.type === ExtensionType.System) {
-			// {{SQL CARBON EDIT}}
 			return Promise.resolve(`# ${this.displayName || this.name}
-**Notice** This is a an extension that is bundled with Azure Data Studio.
+**Notice:** This extension is bundled with Visual Studio Code. It can be disabled but not uninstalled.
 ## Features
 ${this.description}
 `);
@@ -290,8 +289,7 @@ ${this.description}
 
 		if (!changelogUrl) {
 			if (this.type === ExtensionType.System) {
-				// {{SQL CARBON EDIT}}
-				return Promise.resolve('Please check the [Azure Data Studio Release Notes](command:update.showCurrentReleaseNotes) for changes to the built-in extensions.');
+				return Promise.resolve('Please check the [VS Code Release Notes](command:update.showCurrentReleaseNotes) for changes to the built-in extensions.');
 			}
 
 			return Promise.reject(new Error('not available'));
@@ -685,7 +683,7 @@ export class ExtensionsWorkbenchService implements IExtensionsWorkbenchService, 
 		// The check is added here because we want to fail fast instead of downloading the VSIX and then fail.
 		if (gallery.properties.engine && (!isEngineValid(gallery.properties.engine, product.vscodeVersion)
 			|| (gallery.properties.azDataEngine && !isEngineValid(gallery.properties.azDataEngine, pkg.version)))) {
-			return Promise.reject(new ExtensionManagementError(nls.localize('incompatible', "Unable to install version '{2}' of extension '{0}' as it is not compatible with Azure Data Studio '{1}'.", extension.gallery!.identifier.id, pkg.version, gallery.version), INSTALL_ERROR_INCOMPATIBLE));
+				return Promise.reject(new Error(nls.localize('incompatible', "Unable to install extension '{0}' with version '{1}' as it is not compatible with VS Code.", extension.gallery!.identifier.id, gallery.version)));
 		}
 
 		return this.installWithProgress(async () => {
@@ -746,8 +744,7 @@ export class ExtensionsWorkbenchService implements IExtensionsWorkbenchService, 
 		return this.galleryService.getCompatibleExtension(extension.gallery.identifier, version)
 			.then(gallery => {
 				if (!gallery) {
-					// {{SQL CARBON EDIT}} - use Azure Data Studio in the text instead of VS Code
-					return Promise.reject(new Error(nls.localize('incompatible', "Unable to install extension '{0}' with version '{1}' as it is not compatible with Azure Data Studio.", extension.gallery!.identifier.id, version)));
+					return Promise.reject(new Error(nls.localize('incompatible', "Unable to install extension '{0}' with version '{1}' as it is not compatible with VS Code.", extension.gallery!.identifier.id, version)));
 				}
 				return this.installWithProgress(async () => {
 					await this.extensionService.installFromGallery(gallery);
