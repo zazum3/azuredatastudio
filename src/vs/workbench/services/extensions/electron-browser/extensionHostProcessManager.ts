@@ -105,12 +105,6 @@ export class ExtensionHostProcessManager extends Disposable {
 		super.dispose();
 	}
 
-	// {{SQL CARBON EDIT}} - Add new getExtensionHostProcessWorker method
-	public getExtenstionHostProcessWorker(): IExtensionHostStarter {
-		return this._extensionHostProcessWorker;
-	}
-	// {{SQL CARBON EDIT}} - End
-
 	private async measure(): Promise<ExtHostLatencyResult> {
 		const latency = await this._measureLatency();
 		const down = await this._measureDown();

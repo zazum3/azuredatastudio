@@ -466,8 +466,7 @@ export class WebviewElement extends Disposable {
 		});
 	}
 
-	// {{SQL CARBON EDIT}}
-	public style(theme: ITheme): void {
+	private style(theme: ITheme): void {
 		const { fontFamily, fontWeight, fontSize } = window.getComputedStyle(this._styleElement); // TODO@theme avoid styleElement
 
 		const exportedColors = colorRegistry.getColorRegistry().getColors().reduce((colors, entry) => {
@@ -480,16 +479,6 @@ export class WebviewElement extends Disposable {
 
 
 		const styles = {
-			// Old vars
-			'font-family': fontFamily,
-			'font-weight': fontWeight,
-			'font-size': fontSize,
-			'background-color': theme.getColor(colorRegistry.editorBackground).toString(),
-			'color': theme.getColor(colorRegistry.editorForeground).toString(),
-			'link-color': theme.getColor(colorRegistry.textLinkForeground).toString(),
-			'link-active-color': theme.getColor(colorRegistry.textLinkActiveForeground).toString(),
-
-			// Offical API
 			'vscode-editor-font-family': fontFamily,
 			'vscode-editor-font-weight': fontWeight,
 			'vscode-editor-font-size': fontSize,
@@ -499,7 +488,9 @@ export class WebviewElement extends Disposable {
 		const activeTheme = ApiThemeClassName.fromTheme(theme);
 		this._send('styles', styles, activeTheme);
 
-		this._webviewFindWidget.updateTheme(theme);
+		if (this._webviewFindWidget) {
+			this._webviewFindWidget.updateTheme(theme);
+		}
 	}
 
 	public layout(): void {

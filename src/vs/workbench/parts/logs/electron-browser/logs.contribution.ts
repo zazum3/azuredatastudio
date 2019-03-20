@@ -16,7 +16,7 @@ import { URI } from 'vs/base/common/uri';
 import * as Constants from 'vs/workbench/parts/logs/common/logConstants';
 import { IWorkbenchActionRegistry, Extensions as WorkbenchActionExtensions } from 'vs/workbench/common/actions';
 import { SyncActionDescriptor } from 'vs/platform/actions/common/actions';
-// {{SQL CARBON EDIT}}
+// {{SQL CARBON EDIT}} @todo this seems like debt we should remove
 import { IExtensionService } from 'vs/workbench/services/extensions/common/extensions';
 import { ExtensionService } from 'vs/workbench/services/extensions/electron-browser/extensionService';
 // {{SQL CARBON EDIT}} - End
@@ -36,7 +36,7 @@ class LogOutputChannels extends Disposable implements IWorkbenchContribution {
 		outputChannelRegistry.registerChannel({ id: Constants.sharedLogChannelId, label: nls.localize('sharedLog', "Shared"), file: URI.file(join(environmentService.logsPath, `sharedprocess.log`)), log: true });
 		outputChannelRegistry.registerChannel({ id: Constants.rendererLogChannelId, label: nls.localize('rendererLog', "Window"), file: URI.file(join(environmentService.logsPath, `renderer${windowService.getCurrentWindowId()}.log`)), log: true });
 
-		// {{SQL CARBON EDIT}}
+		// {{SQL CARBON EDIT}} @todo this seems like debt we should remove
 		let toolsServiceLogFile : string = join(environmentService.logsPath, '..', '..', 'mssql', `sqltools_${Date.now()}.log`);
 		console.log(`SqlTools Log file is: ${toolsServiceLogFile}`);
 		outputChannelRegistry.registerChannel({ id: Constants.sqlToolsLogChannellId, label: nls.localize('sqlToolsLog', "Log (SqlTools)"), file: URI.file(toolsServiceLogFile), log: true });

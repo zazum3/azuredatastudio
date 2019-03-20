@@ -75,7 +75,7 @@ const tasks = compilations.map(function (tsconfigFile) {
 		tsOptions.inlineSources = !!build;
 		tsOptions.base = path.dirname(absolutePath);
 
-		const compilation = tsb.create(tsOptions, null, null, err => reporter(err.toString()));
+		const compilation = tsb.create(tsOptions, undefined, null, null, err => reporter(err.toString()));
 
 		return function () {
 			const input = es.through();

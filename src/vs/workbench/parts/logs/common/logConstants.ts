@@ -8,5 +8,5 @@ export const sharedLogChannelId = 'sharedLog';
 export const rendererLogChannelId = 'rendererLog';
 export const extHostLogChannelId = 'extHostLog';
 export const telemetryLogChannelId = 'telemetryLog';
-// {{SQL CARBON EDIT}}
+// {{SQL CARBON EDIT}} @todo this seems like debt we should remove
 export const sqlToolsLogChannellId = 'sqlToolsLog';

@@ -18,6 +18,7 @@ const reporter_1 = require("./reporter");
 const util = require("./util");
 const util2 = require("gulp-util");
 const watch = require('./watch');
+const transforms = require("./stringReplace");
 const reporter = reporter_1.createReporter();
 function getTypeScriptCompilerOptions(src) {
     const rootDir = path.join(__dirname, `../../${src}`);
@@ -44,7 +45,7 @@ function createCompile(src, build, emitError) {
     const opts = _.clone(getTypeScriptCompilerOptions(src));
     opts.inlineSources = !!build;
     opts.noFilesystemLookup = true;
-    const ts = tsb.create(opts, true, undefined, err => reporter(err.toString()));
+    const ts = tsb.create(opts, { before: [transforms.transformer] }, true, undefined, err => reporter(err.toString()));
     return function (token) {
         const utf8Filter = util.filter(data => /(\/|\\)test(\/|\\).*utf8/.test(data.path));
         const tsFilter = util.filter(data => /\.ts$/.test(data.path));

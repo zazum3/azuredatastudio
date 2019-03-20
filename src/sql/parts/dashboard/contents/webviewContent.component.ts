@@ -118,7 +118,6 @@ export class WebviewContent extends AngularDisposable implements OnInit, IDashbo
 		this._onMessageDisposable = this._webview.onMessage(e => {
 			this._onMessage.fire(e);
 		});
-		this._webview.style(this.themeService.getTheme());
 		if (this._html) {
 			this._webview.contents = this._html;
 		}

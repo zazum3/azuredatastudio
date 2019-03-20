@@ -92,8 +92,6 @@ export default class WebViewComponent extends ComponentBase implements IComponen
 				args: e
 			});
 		}));
-
-		this._webview.style(this.themeService.getTheme());
 		this.setHtml();
 	}
 

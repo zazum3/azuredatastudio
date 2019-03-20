@@ -20,6 +20,8 @@ import * as util from './util';
 import * as util2 from 'gulp-util';
 const watch = require('./watch');
 
+import * as transforms from './stringReplace';
+
 const reporter = createReporter();
 
 function getTypeScriptCompilerOptions(src: string) {
@@ -40,6 +42,7 @@ function getTypeScriptCompilerOptions(src: string) {
 	options.baseUrl = rootDir;
 	options.sourceRoot = util.toFileUri(rootDir);
 	options.newLine = /\r\n/.test(fs.readFileSync(__filename, 'utf8')) ? 'CRLF' : 'LF';
+
 	return options;
 }
 
@@ -48,7 +51,7 @@ function createCompile(src: string, build: boolean, emitError?: boolean): (token
 	opts.inlineSources = !!build;
 	opts.noFilesystemLookup = true;
 
-	const ts = tsb.create(opts, true, undefined, err => reporter(err.toString()));
+	const ts = tsb.create(opts, { before: [transforms.transformer] }, true, undefined, err => reporter(err.toString()));
 
 	return function (token?: util.ICancellationToken) {
 

@@ -97,13 +97,9 @@ export class WebViewDialog extends Modal {
 
 			this._webview.mountTo(this._body);
 
-			this._webview.style(this._themeService.getTheme());
-
 			this._webview.onMessage(message => {
 				this._onMessage.fire(message);
 			}, null, this.contentDisposables);
-
-			this._themeService.onThemeChange(theme => this._webview.style(theme), null, this.contentDisposables);
 
 			this.contentDisposables.push(this._webview);
 			this.contentDisposables.push(toDisposable(() => this._webview = null));

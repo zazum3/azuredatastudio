@@ -234,7 +234,7 @@ export class GlobalNewUntitledFileAction extends Action {
 	}
 
 	public run(): Promise<any> {
-		// {{SQL CARBON EDIT}}
+		// {{SQL CARBON EDIT}} @todo we could probably remove a lot of our modifications by utilizing the "default language" config
 		return TaskUtilities.newQuery(undefined, this.connectionManagementService, this.queryEditorService, this._objectExplorerService, this.editorService);
 	}
 }

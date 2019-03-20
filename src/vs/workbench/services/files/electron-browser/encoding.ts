@@ -113,7 +113,7 @@ export class ResourceEncodings extends Disposable implements IResourceEncodings 
 		// Folder Settings
 		this.contextService.getWorkspace().folders.forEach(folder => {
 			// {{SQL CARBON EDIT}}
-			encodingOverride.push({ parent: joinPath(folder.uri, '.sqlopss'), encoding: encoding.UTF8 });
+			encodingOverride.push({ parent: joinPath(folder.uri, '.azuredatastudio'), encoding: encoding.UTF8 });
 		});
 
 		return encodingOverride;
