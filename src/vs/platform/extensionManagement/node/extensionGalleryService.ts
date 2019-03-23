@@ -451,7 +451,12 @@ export class ExtensionGalleryService implements IExtensionGalleryService {
 			});
 	}
 
-	query(options: IQueryOptions = {}): Promise<IPager<IGalleryExtension>> {
+	query(token: CancellationToken): Promise<IPager<IGalleryExtension>>;
+	query(options: IQueryOptions, token: CancellationToken): Promise<IPager<IGalleryExtension>>;
+	query(arg1: any, arg2?: any): Promise<IPager<IGalleryExtension>> {
+		const options: IQueryOptions = CancellationToken.isCancellationToken(arg1) ? {} : arg1;
+		const token: CancellationToken = CancellationToken.isCancellationToken(arg1) ? arg1 : arg2;
+
 		if (!this.isEnabled()) {
 			return Promise.reject(new Error('No extension gallery service configured.'));
 		}
@@ -511,7 +516,7 @@ export class ExtensionGalleryService implements IExtensionGalleryService {
 			query = query.withSortOrder(options.sortOrder);
 		}
 
-		return this.queryGallery(query, CancellationToken.None).then(({ galleryExtensions, total }) => {
+		return this.queryGallery(query, token).then(({ galleryExtensions, total }) => {
 			const extensions = galleryExtensions.map((e, index) => toExtension(e, e.versions[0], index, query, options.source));
 			// {{SQL CARBON EDIT}}
 			const pageSize = extensions.length;
@@ -553,14 +558,7 @@ export class ExtensionGalleryService implements IExtensionGalleryService {
 			if (searchTexts && searchTexts.length > 0) {
 				searchTexts.forEach(searchText => {
 					if (searchText !== '@allmarketplace') {
-						filteredExtensions = filteredExtensions.filter(
-							e => 	e.extensionName && e.extensionName.includes(searchText) ||
-									e.publisher && e.publisher.publisherName && e.publisher.publisherName.includes(searchText) ||
-									e.publisher && e.publisher.displayName && e.publisher.displayName.includes(searchText) ||
-									e.displayName && e.displayName.includes(searchText) ||
-									e.shortDescription && e.shortDescription.includes(searchText) ||
-									e.extensionId && e.extensionId.includes(searchText)
-						);
+						filteredExtensions = filteredExtensions.filter(e => ExtensionGalleryService.isMatchingExtension(e, searchText));
 					}
 				});
 			}
@@ -569,11 +567,11 @@ export class ExtensionGalleryService implements IExtensionGalleryService {
 		// Sorting
 		switch (query.sortBy) {
 			case SortBy.PublisherName:
-				filteredExtensions.sort( (a, b) => ExtensionGalleryService.compareByField(a.publisher, b.publisher, 'publisherName'));
+				filteredExtensions.sort((a, b) => ExtensionGalleryService.compareByField(a.publisher, b.publisher, 'publisherName'));
 				break;
 			case SortBy.Title:
 			default:
-				filteredExtensions.sort( (a, b) => ExtensionGalleryService.compareByField(a, b, 'displayName'));
+				filteredExtensions.sort((a, b) => ExtensionGalleryService.compareByField(a, b, 'displayName'));
 				break;
 		}
 
@@ -585,6 +583,24 @@ export class ExtensionGalleryService implements IExtensionGalleryService {
 			filteredExtensions = filteredExtensions.filter(ext => ext.publisher && ext.publisher.displayName === 'Microsoft');
 		}
 		return { galleryExtensions: filteredExtensions, total: actualTotal };
+	}
+
+	// {{SQL CARBON EDIT}}
+	/*
+	 * Checks whether the extension matches the search text
+	 */
+	public static isMatchingExtension(extension: IRawGalleryExtension, searchText: string): boolean {
+		if (!searchText) {
+			return true;
+		}
+		let text = searchText.toLocaleLowerCase();
+		return extension
+			&& (extension.extensionName && extension.extensionName.toLocaleLowerCase().includes(text) ||
+				extension.publisher && extension.publisher.publisherName && extension.publisher.publisherName.toLocaleLowerCase().includes(text) ||
+				extension.publisher && extension.publisher.displayName && extension.publisher.displayName.toLocaleLowerCase().includes(text) ||
+				extension.displayName && extension.displayName.toLocaleLowerCase().includes(text) ||
+				extension.shortDescription && extension.shortDescription.toLocaleLowerCase().includes(text) ||
+				extension.extensionId && extension.extensionId.toLocaleLowerCase().includes(text));
 	}
 
 	public static compareByField(a: any, b: any, fieldName: string): number {
@@ -603,7 +619,7 @@ export class ExtensionGalleryService implements IExtensionGalleryService {
 		if (!b || !b[fieldName] && (!a || !a[fieldName])) {
 			return 0;
 		}
-		if (a[fieldName] ===  b[fieldName]) {
+		if (a[fieldName] === b[fieldName]) {
 			return 0;
 		}
 		return a[fieldName] < b[fieldName] ? -1 : 1;

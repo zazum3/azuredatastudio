@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import { localize } from 'vs/nls';
@@ -17,7 +17,7 @@ import { Disposable, IDisposable, dispose } from 'vs/base/common/lifecycle';
 import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
 import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';
 import { EditorContextKeys } from 'vs/editor/common/editorContextKeys';
-
+import { PeekContext } from 'vs/editor/contrib/referenceSearch/peekViewWidget';
 
 const _ctxHasCompletionItemProvider = new RawContextKey<boolean>('editorHasCallHierarchyProvider', false);
 const _ctxCallHierarchyVisible = new RawContextKey<boolean>('callHierarchyVisible', false);
@@ -101,7 +101,6 @@ class CallHierarchyController extends Disposable implements IEditorContribution 
 				widget.showMessage(localize('no.item', "No results"));
 				return;
 			}
-
 			widget.showItem(item);
 		});
 	}
@@ -124,14 +123,17 @@ registerEditorAction(class extends EditorAction {
 			alias: 'Call Hierarchy',
 			menuOpts: {
 				group: 'navigation',
-				order: 111
+				order: 1.48
 			},
 			kbOpts: {
 				kbExpr: EditorContextKeys.editorTextFocus,
 				weight: KeybindingWeight.WorkbenchContrib,
 				primary: KeyMod.Shift + KeyMod.Alt + KeyCode.KEY_H
 			},
-			precondition: _ctxHasCompletionItemProvider
+			precondition: ContextKeyExpr.and(
+				_ctxHasCompletionItemProvider,
+				PeekContext.notInPeekEditor
+			)
 		});
 	}
 
@@ -150,7 +152,10 @@ registerEditorCommand(new class extends EditorCommand {
 				weight: KeybindingWeight.WorkbenchContrib + 10,
 				primary: KeyCode.Escape
 			},
-			precondition: ContextKeyExpr.and(_ctxCallHierarchyVisible, ContextKeyExpr.not('config.editor.stablePeek'))
+			precondition: ContextKeyExpr.and(
+				_ctxCallHierarchyVisible,
+				ContextKeyExpr.not('config.editor.stablePeek')
+			)
 		});
 	}
 

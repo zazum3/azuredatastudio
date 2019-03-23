@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import { IAsyncDataSource, ITreeRenderer, ITreeNode } from 'vs/base/browser/ui/tree/tree';
@@ -11,10 +11,11 @@ import { FuzzyScore, createMatches } from 'vs/base/common/filters';
 import { IconLabel } from 'vs/base/browser/ui/iconLabel/iconLabel';
 import { symbolKindToCssClass, Location } from 'vs/editor/common/modes';
 import { ILabelService } from 'vs/platform/label/common/label';
+import { Range } from 'vs/editor/common/core/range';
+import { hash } from 'vs/base/common/hash';
 
 export class Call {
 	constructor(
-		readonly direction: CallHierarchyDirection,
 		readonly item: CallHierarchyItem,
 		readonly locations: Location[]
 	) { }
@@ -24,33 +25,40 @@ export class SingleDirectionDataSource implements IAsyncDataSource<CallHierarchy
 
 	constructor(
 		public provider: CallHierarchyProvider,
-		public direction: () => CallHierarchyDirection
+		public getDirection: () => CallHierarchyDirection
 	) { }
 
-	hasChildren(_element: CallHierarchyItem): boolean {
+	hasChildren(): boolean {
 		return true;
 	}
 
 	async getChildren(element: CallHierarchyItem | Call): Promise<Call[]> {
 		if (element instanceof Call) {
-			element = element.item;
+			try {
+				const direction = this.getDirection();
+				const calls = await this.provider.resolveCallHierarchyItem(element.item, direction, CancellationToken.None);
+				if (!calls) {
+					return [];
+				}
+				return calls.map(([item, locations]) => new Call(item, locations));
+			} catch {
+				return [];
+			}
+		} else {
+			// 'root'
+			return [new Call(element, [{ uri: element.uri, range: Range.lift(element.range).collapseToStart() }])];
 		}
-		const direction = this.direction();
-		const calls = await this.provider.resolveCallHierarchyItem(element, direction, CancellationToken.None);
-		return calls
-			? calls.map(([item, locations]) => new Call(direction, item, locations))
-			: [];
 	}
 }
 
 export class IdentityProvider implements IIdentityProvider<Call> {
 	getId(element: Call): { toString(): string; } {
-		return element.item._id;
+		return hash(element.item.uri.toString(), hash(JSON.stringify(element.item.range)));
 	}
 }
 
 class CallRenderingTemplate {
-	iconLabel: IconLabel;
+	readonly iconLabel: IconLabel;
 }
 
 export class CallRenderer implements ITreeRenderer<Call, FuzzyScore, CallRenderingTemplate> {
@@ -59,7 +67,9 @@ export class CallRenderer implements ITreeRenderer<Call, FuzzyScore, CallRenderi
 
 	templateId: string = CallRenderer.id;
 
-	constructor(@ILabelService private readonly _labelService: ILabelService) { }
+	constructor(
+		@ILabelService private readonly _labelService: ILabelService,
+	) { }
 
 	renderTemplate(container: HTMLElement): CallRenderingTemplate {
 		const iconLabel = new IconLabel(container, { supportHighlights: true });
