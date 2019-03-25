@@ -59,14 +59,13 @@ export class IssueReporterModel {
 		assign(this._data, newData);
 	}
 
-	// {{SQL CARBON EDIT}}
 	serialize(): string {
 		return `
 Issue Type: <b>${this.getIssueTypeTitle()}</b>
 
 ${this._data.issueDescription}
-
-Azure Data Studio version: ${this._data.versionInfo && this._data.versionInfo.vscodeVersion}
+${this.getExtensionVersion()}
+VS Code version: ${this._data.versionInfo && this._data.versionInfo.vscodeVersion}
 OS version: ${this._data.versionInfo && this._data.versionInfo.os}
 
 ${this.getInfos()}

@@ -97,8 +97,7 @@ export class ConfigurationModel implements IConfigurationModel {
 	}
 
 	freeze(): ConfigurationModel {
-		// {{SQL CARBON EDIT}}
-		// this.isFrozen = true;
+		this.isFrozen = true;
 		return this;
 	}
 
