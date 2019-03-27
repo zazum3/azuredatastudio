@@ -79,6 +79,7 @@ export class NotebookModel extends Disposable implements INotebookModel {
 		if (!_notebookOptions || !_notebookOptions.notebookUri || !_notebookOptions.notebookManagers) {
 			throw new Error('path or notebook service not defined');
 		}
+		console.log('MADE IT TO THE MODEL');
 		this._trustedMode = false;
 		this._providerId = _notebookOptions.providerId;
 		this._onProviderIdChanged.fire(this._providerId);

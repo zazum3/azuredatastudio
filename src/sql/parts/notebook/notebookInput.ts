@@ -38,6 +38,7 @@ export class NotebookEditorModel extends EditorModel {
 		@ITextFileService private textFileService: ITextFileService
 	) {
 		super();
+		console.log('MADE IT TO THE notebook editor model');
 		this._register(this.notebookService.onNotebookEditorAdd(notebook => {
 			if (notebook.id === this.notebookUri.toString()) {
 				// Hook to content change events
@@ -145,6 +146,7 @@ export class NotebookInput extends EditorInput {
 		@IExtensionService private extensionService: IExtensionService
 	) {
 		super();
+		console.log('MADE IT TO THE NOTEBOOK INPUT');
 		this.resource = resource;
 		this._standardKernels = [];
 		this._providersLoaded = this.assignProviders();

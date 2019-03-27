@@ -385,6 +385,7 @@ export class MainThreadNotebookDocumentsAndEditors extends Disposable implements
 		if (!editor) {
 			return undefined;
 		}
+		console.log('MAIN THREAD JUST BEFORE WAITONEDITOR');
 		return this.waitOnEditor(input);
 	}
 
