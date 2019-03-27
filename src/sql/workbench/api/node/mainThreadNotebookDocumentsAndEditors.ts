@@ -372,6 +372,7 @@ export class MainThreadNotebookDocumentsAndEditors extends Disposable implements
 
 		const fileInput = isUntitled ? this._untitledEditorService.createOrGet(uri, notebookModeId) :
 										this._editorService.createInput({ resource: uri, language: notebookModeId });
+		console.log('PATH BASENAME OPENEDITOR: {0}', path.basename(uri.fsPath));
 		let input = this._instantiationService.createInstance(NotebookInput, path.basename(uri.fsPath), uri, fileInput);
 		input.isTrusted = isUntitled;
 		input.defaultKernel = options.defaultKernel;
@@ -393,12 +394,15 @@ export class MainThreadNotebookDocumentsAndEditors extends Disposable implements
 		let id: string = undefined;
 		let attemptsLeft = 10;
 		let timeoutMs = 20;
+		console.log('BEFORE WHILE LOOPYUM');
 		while (!id && attemptsLeft > 0) {
 			id = this.findNotebookEditorIdFor(input);
 			if (!id) {
 				await wait(timeoutMs);
 			}
+			attemptsLeft--;
 		}
+		console.log('WAIT ON EDITOR ID: {0}', id);
 		return id;
 	}
 
