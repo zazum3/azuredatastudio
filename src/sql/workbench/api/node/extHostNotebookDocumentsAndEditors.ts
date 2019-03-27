@@ -172,6 +172,7 @@ export class ExtHostNotebookDocumentsAndEditors implements ExtHostNotebookDocume
 		}
 
 		console.log('BEFORE TRYSHOWNOTEBOOKDOCUMENT');
+		console.log(uri);
 		let id = await this._proxy.$tryShowNotebookDocument(uri, options);
 		console.log('ID: {0}', id);
 		let editor = this.getEditor(id);
