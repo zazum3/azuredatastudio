@@ -470,11 +470,15 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 	}
 
 	public async runCell(cell: ICellModel): Promise<boolean> {
+		console.log('before modelReady');
 		await this.modelReady;
+		console.log('after modelReady');
 		let uriString = cell.cellUri.toString();
 		if (this._model.cells.findIndex(c => c.cellUri.toString() === uriString) > -1) {
+			console.log('found cell uri in runcell');
 			return cell.runCell(this.notificationService, this.connectionManagementService);
 		} else {
+			console.log('rejected promise runcell');
 			return Promise.reject(new Error(localize('cellNotFound', 'cell with URI {0} was not found in this model', uriString)));
 		}
 	}
