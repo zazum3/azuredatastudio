@@ -108,6 +108,9 @@ export class ClientSession implements IClientSession {
 	private async startSessionInstance(kernelName: string): Promise<void> {
 		let session: nb.ISession;
 		try {
+			console.log('CLIENTSESSION 34754');
+			console.log(this.notebookUri.fsPath);
+			console.log(kernelName);
 			// TODO #3164 should use URI instead of path for startNew
 			session = await this.notebookManager.sessionManager.startNew({
 				path: this.notebookUri.fsPath,
