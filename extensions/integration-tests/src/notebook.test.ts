@@ -54,11 +54,15 @@ if (context.RunTest) {
 }
 async function openNotebook(content: azdata.nb.INotebookContents, kernelMetadata: any): Promise<azdata.nb.NotebookEditor> {
 	let notebookConfig = vscode.workspace.getConfiguration('notebook');
-	notebookConfig.update('pythonPath', process.env.PYTHON_TEST_PATH, vscode.ConfigurationTarget.Global);
+	console.log('PYTHON_TEST_PATH_BEFORE');
+	if (notebookConfig.has('pythonPath')) {
+		console.log('NOTEBOOK CONFIG HAS PYTHONPATH');
+	}
+	notebookConfig.update('pythonPath', process.env.PYTHON_TEST_PATH, true);
 	console.log('PYTHON_TEST_PATH');
 	console.log(process.env.PYTHON_TEST_PATH);
 	console.log('ADS PYTHON PATH');
-	console.log(notebookConfig.get('pythonPath'));
+	console.log(<string>notebookConfig.get('pythonPath'));
 	let server = await getBdcServer();
 	await connectToServer(server, 6000);
 	let pythonNotebook = Object.assign({}, content, { metadata: kernelMetadata });

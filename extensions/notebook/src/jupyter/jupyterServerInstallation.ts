@@ -333,12 +333,16 @@ export default class JupyterServerInstallation {
 
 	private static getPythonPathSetting(apiWrapper: ApiWrapper): string {
 		let path = undefined;
+		console.log('getPythonPathSetting');
 		if (apiWrapper) {
 			let notebookConfig = apiWrapper.getConfiguration(constants.notebookConfigKey);
 			if (notebookConfig) {
+				console.log('NOTEBOOK CONFIG EXISTS');
 				let configPythonPath = notebookConfig[constants.pythonPathConfigKey];
 				if (configPythonPath && fs.existsSync(configPythonPath)) {
 					path = configPythonPath;
+					console.log('CONFIGPYTHONPATH');
+					console.log(configPythonPath);
 				}
 			}
 		}

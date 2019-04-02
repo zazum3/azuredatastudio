@@ -65,9 +65,13 @@ export class ClientSession implements IClientSession {
 
 	public async initialize(): Promise<void> {
 		try {
+			console.log('clientsession before startServer');
 			this._serverLoadFinished = this.startServer();
+			console.log('clientsession before serverLoadFinished');
 			await this._serverLoadFinished;
+			console.log('clientsession before initializeSession');
 			await this.initializeSession();
+			console.log('clientsession before updateCachedKernelSpec');
 			await this.updateCachedKernelSpec();
 		} catch (err) {
 			this._errorMessage = notebookUtils.getErrorMessage(err) || localize('clientSession.unknownError', "An error occurred while starting the notebook session");
@@ -95,12 +99,18 @@ export class ClientSession implements IClientSession {
 	}
 
 	private async initializeSession(): Promise<void> {
+		console.log('initializeSESSION');
 		await this._serverLoadFinished;
+		console.log('ISSERVERSTARTED');
 		if (this.isServerStarted) {
+			console.log('SERVER IS STARTEDDDDD');
 			if (!this.notebookManager.sessionManager.isReady) {
+				console.log('session manager NOT READY');
 				await this.notebookManager.sessionManager.ready;
 			}
 			if (this._defaultKernel) {
+				console.log('DEFAULT KERNEL EXISTS');
+				console.log(this._defaultKernel.name);
 				await this.startSessionInstance(this._defaultKernel.name);
 			}
 		}
