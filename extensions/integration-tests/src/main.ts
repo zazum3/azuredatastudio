@@ -28,6 +28,9 @@ export function activate(context: vscode.ExtensionContext) {
 		await setConfiguration('workbench.enablePreviewFeatures', true);
 		await setConfiguration('workbench.showConnectDialogOnStartup', false);
 		await setConfiguration('test.testSetupCompleted', true);
+		if (process.env.PYTHON_TEST_PATH) {
+			await setConfiguration('notebook.pythonPath', process.env.PYTHON_TEST_PATH);
+		}
 		showStatusBarItem(statusBarItem, TEST_SETUP_COMPLETED_TEXT);
 	});
 

@@ -58,7 +58,7 @@ async function openNotebook(content: azdata.nb.INotebookContents, kernelMetadata
 	if (notebookConfig.has('pythonPath')) {
 		console.log('NOTEBOOK CONFIG HAS PYTHONPATH');
 	}
-	notebookConfig.update('pythonPath', process.env.PYTHON_TEST_PATH, true);
+	// notebookConfig.update('pythonPath', process.env.PYTHON_TEST_PATH, true);
 	console.log('PYTHON_TEST_PATH');
 	console.log(process.env.PYTHON_TEST_PATH);
 	console.log('ADS PYTHON PATH');
