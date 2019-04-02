@@ -62,6 +62,8 @@ export default class JupyterServerInstallation {
 		this.outputChannel = outputChannel;
 		this.apiWrapper = apiWrapper;
 		this._pythonInstallationPath = pythonInstallationPath || JupyterServerInstallation.getPythonInstallPath(this.apiWrapper);
+		console.log('PYTHON INSTALL PATH IN SERVER INSTALLATION');
+		console.log(this._pythonInstallationPath);
 		this._forceInstall = !!forceInstall;
 
 		this.configurePackagePaths();
@@ -211,6 +213,8 @@ export default class JupyterServerInstallation {
 	private configurePackagePaths(): void {
 		//Python source path up to bundle version
 		let pythonSourcePath = path.join(this._pythonInstallationPath, constants.pythonBundleVersion);
+		console.log('pythonSourcePath');
+		console.log(pythonSourcePath);
 
 		this._pythonPackageDir = path.join(pythonSourcePath, 'offlinePackages');
 
@@ -234,6 +238,8 @@ export default class JupyterServerInstallation {
 		let env = Object.assign({}, process.env);
 		delete env['Path']; // Delete extra 'Path' variable for Windows, just in case.
 		env['PATH'] = this.pythonEnvVarPath;
+		console.log('PYTHONENVVARPATH');
+		console.log(this.pythonEnvVarPath);
 		this.execOptions = {
 			env: env
 		};
@@ -335,6 +341,7 @@ export default class JupyterServerInstallation {
 		let path = undefined;
 		console.log('getPythonPathSetting');
 		if (apiWrapper) {
+			console.log('apiWrapper JUPYTERSERVERINSTALLATION');
 			let notebookConfig = apiWrapper.getConfiguration(constants.notebookConfigKey);
 			if (notebookConfig) {
 				console.log('NOTEBOOK CONFIG EXISTS');
@@ -345,6 +352,8 @@ export default class JupyterServerInstallation {
 					console.log(configPythonPath);
 				}
 			}
+		} else {
+			console.log('APIWRAPPER DOES NOT EXIST');
 		}
 		return path;
 	}
