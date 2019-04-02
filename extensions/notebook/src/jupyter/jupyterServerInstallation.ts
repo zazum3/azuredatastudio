@@ -346,6 +346,8 @@ export default class JupyterServerInstallation {
 			if (notebookConfig) {
 				console.log('NOTEBOOK CONFIG EXISTS');
 				let configPythonPath = notebookConfig[constants.pythonPathConfigKey];
+				console.log('configPythonPath before checking existsSync');
+				console.log(configPythonPath);
 				if (configPythonPath && fs.existsSync(configPythonPath)) {
 					path = configPythonPath;
 					console.log('CONFIGPYTHONPATH');
