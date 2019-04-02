@@ -427,18 +427,23 @@ export class NotebookModel extends Disposable implements INotebookModel {
 				this._kernelsChangedEmitter.fire(session.kernel);
 			});
 			await clientSession.initialize();
+			if (clientSession.isInErrorState) {
+				console.log('ERROR STATE AFTER INITIALIZE');
+			}
 			// By somehow we have to wait for ready, otherwise may not be called for some cases.
 			await clientSession.ready;
+			if (clientSession.isInErrorState) {
+				console.log('ERROR STATE AFTER READY');
+			}
 			if (clientSession.kernel) {
 				await clientSession.kernel.ready;
+				if (clientSession.isInErrorState) {
+					console.log('ERROR STATE AFTER KERNEL READY');
+				}
 				await this.updateKernelInfoOnKernelChange(clientSession.kernel);
 			}
 			if (clientSession.isInErrorState) {
-				if (setErrorStateOnFail) {
-					this.setErrorState(clientSession.errorMessage);
-				} else {
 					throw new Error(clientSession.errorMessage);
-				}
 			}
 			this._onClientSessionReady.fire(clientSession);
 			this._kernelChangedEmitter.fire({

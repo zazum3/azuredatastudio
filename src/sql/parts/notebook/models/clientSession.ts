@@ -81,6 +81,7 @@ export class ClientSession implements IClientSession {
 	}
 
 	private async startServer(): Promise<void> {
+		console.log('IN STARTSERVER CLIENTSESSION');
 		let serverManager = this.notebookManager.serverManager;
 		if (serverManager && !serverManager.isStarted) {
 			await serverManager.startServer();

@@ -230,13 +230,23 @@ export class PerNotebookServerInstance implements IServerInstance {
 		if (this.isStarted) {
 			return;
 		}
+		console.log('serverInstance NotebookDirectory');
 		let notebookDirectory = this.getNotebookDirectory();
+		console.log(notebookDirectory);
 		// Find a port in a given range. If run into trouble, got up 100 in range and search inside a larger range
 		let port = await ports.strictFindFreePort(new ports.StrictPortFindOptions(defaultPort, defaultPort + 100, defaultPort + 1000));
+		console.log('port');
+		console.log(port);
 		let token = await notebookUtils.getRandomToken();
+		console.log('token');
+		console.log(token);
 		this._uri = vscode.Uri.parse(`http://localhost:${port}/?token=${token}`);
+		console.log('uri');
+		console.log(this._uri);
 		this._port = port.toString();
 		let startCommand = `${this.options.install.pythonExecutable} -m jupyter notebook --no-browser --notebook-dir "${notebookDirectory}" --port=${port} --NotebookApp.token=${token}`;
+		console.log('start command');
+		console.log(startCommand);
 		this.notifyStarting(this.options.install, startCommand);
 
 		// Execute the command

@@ -55,6 +55,7 @@ export class LocalJupyterServerManager implements nb.ServerManager, vscode.Dispo
 
 	public async startServer(): Promise<void> {
 		try {
+			console.log('jupyterservermanager startserver');
 			this.jupyterServer = await this.doStartServer();
 			this.options.extensionContext.subscriptions.push(this);
 			let partialSettings = LocalJupyterServerManager.getLocalConnectionSettings(this.jupyterServer.uri);
@@ -116,7 +117,12 @@ export class LocalJupyterServerManager implements nb.ServerManager, vscode.Dispo
 		// /path2/nb3.ipynb
 		// ... will result in 2 notebook servers being started, one for /path1/ and one for /path2/
 		let notebookDir = this.apiWrapper.getWorkspacePathFromUri(vscode.Uri.file(this.documentPath));
+		console.log('notebook dostartserver dir');
+		console.log(notebookDir);
 		notebookDir = notebookDir || path.dirname(this.documentPath);
+
+		console.log(notebookDir);
+		console.log('after notebookDirSet');
 
 		// TODO handle notification of start/stop status
 		// notebookContext.updateLoadingMessage(localizedConstants.msgJupyterStarting);
@@ -129,11 +135,19 @@ export class LocalJupyterServerManager implements nb.ServerManager, vscode.Dispo
 			install: installation
 		};
 
+		console.log('doc path, notebook dir, pythonbinpath');
+		console.log(this.documentPath);
+		console.log(notebookDir);
+		console.log(installation.pythonBinPath);
+
 		this._instanceOptions = serverInstanceOptions;
 
 		let server = this.factory.createInstance(serverInstanceOptions);
+		console.log('before server configure JUPYTER');
 		await server.configure();
+		console.log('before server start JUPYTER');
 		await server.start();
+		console.log('after server start JUPYTER');
 
 		return server;
 	}
