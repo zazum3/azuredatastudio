@@ -55,6 +55,7 @@ export class JupyterController implements vscode.Disposable {
 
 	// PUBLIC METHODS //////////////////////////////////////////////////////
 	public async activate(): Promise<boolean> {
+		console.log('notebook extension activated');
 		this._jupyterInstallation = new JupyterServerInstallation(
 			this.extensionContext.extensionPath,
 			this.outputChannel,
