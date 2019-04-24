@@ -2,7 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-
+import * as azdata from 'azdata';
 import { Event, Emitter } from 'vs/base/common/event';
 import { IDisposable, dispose, Disposable, toDisposable } from 'vs/base/common/lifecycle';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
@@ -20,7 +20,7 @@ import { IExtensionService } from 'vs/workbench/services/extensions/common/exten
 import { IWorkbenchThemeService } from 'vs/workbench/services/themes/common/workbenchThemeService';
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import * as DOM from 'vs/base/browser/dom';
-import { IDataSource, ITree, IRenderer, ContextMenuEvent } from 'vs/base/parts/tree/browser/tree';
+import { IDataSource, ITree, IRenderer, ContextMenuEvent, IDragOverReaction } from 'vs/base/parts/tree/browser/tree';
 import { ResourceLabel } from 'vs/workbench/browser/labels';
 import { ActionBar, IActionItemProvider, ActionItem } from 'vs/base/browser/ui/actionbar/actionbar';
 import { URI } from 'vs/base/common/uri';
@@ -28,10 +28,10 @@ import { basename } from 'vs/base/common/path';
 import { LIGHT, FileThemeIcon, FolderThemeIcon, registerThemingParticipant } from 'vs/platform/theme/common/themeService';
 import { FileKind } from 'vs/platform/files/common/files';
 import { WorkbenchTreeController } from 'vs/platform/list/browser/listService';
-import { IMouseEvent } from 'vs/base/browser/mouseEvent';
+import { IMouseEvent, DragMouseEvent } from 'vs/base/browser/mouseEvent';
 import { localize } from 'vs/nls';
 import { timeout } from 'vs/base/common/async';
-import { CollapseAllAction } from 'vs/base/parts/tree/browser/treeDefaults';
+import { CollapseAllAction, DefaultDragAndDrop } from 'vs/base/parts/tree/browser/treeDefaults';
 import { editorFindMatchHighlight, editorFindMatchHighlightBorder, textLinkForeground, textCodeBlockBackground, focusBorder } from 'vs/platform/theme/common/colorRegistry';
 import { IMarkdownString } from 'vs/base/common/htmlContent';
 import { isString } from 'vs/base/common/types';
@@ -46,6 +46,7 @@ import { ITreeItem, ITreeView } from 'sql/workbench/common/views';
 import { IOEShimService } from 'sql/workbench/parts/objectExplorer/common/objectExplorerViewTreeShim';
 import { equalsIgnoreCase } from 'vs/base/common/strings';
 import { NodeContextKey } from 'sql/workbench/parts/dataExplorer/common/nodeContext';
+import { IDragAndDropData } from 'vs/base/browser/dnd';
 
 class TitleMenus implements IDisposable {
 
@@ -324,7 +325,8 @@ export class CustomTreeView extends Disposable implements ITreeView {
 		const dataSource = this.instantiationService.createInstance(TreeDataSource, this, this.container, this.id);
 		const renderer = this.instantiationService.createInstance(TreeRenderer, this.id, menus, actionItemProvider);
 		const controller = this.instantiationService.createInstance(TreeController, this.id, this.container.id, menus);
-		this.tree = this.instantiationService.createInstance(FileIconThemableWorkbenchTree, this.treeContainer, { dataSource, renderer, controller }, {});
+		const dnd = this.instantiationService.createInstance(CustomDragAndDrop);
+		this.tree = this.instantiationService.createInstance(FileIconThemableWorkbenchTree, this.treeContainer, { dataSource, renderer, controller, dnd }, {});
 		this.tree.contextKeyService.createKey<boolean>(this.id, true);
 		this._register(this.tree);
 		this._register(this.tree.onDidChangeSelection(e => this.onSelection(e)));
@@ -751,6 +753,10 @@ class TreeController extends WorkbenchTreeController {
 	}
 
 	protected shouldToggleExpansion(element: ITreeItem, event: IMouseEvent, origin: string): boolean {
+		let payload = element.payload;
+		if (payload) {
+			return false;
+		}
 		return element.command ? this.isClickOnTwistie(event) : super.shouldToggleExpansion(element, event, origin);
 	}
 
@@ -895,4 +901,29 @@ class MarkdownRenderer {
 			dispose: () => dispose(disposeables)
 		};
 	}
+}
+
+class CustomDragAndDrop extends DefaultDragAndDrop {
+
+	public getDragURI(tree: ITree, element: any): string | null {
+		if (element.payload) {
+			return element.payload.id;
+		}
+		return null;
+	}
+
+	public onDragStart(tree: ITree, data: IDragAndDropData, originalEvent: DragMouseEvent): void {
+		return;
+	}
+
+	public onDragOver(tree: ITree, data: IDragAndDropData, targetElement: any, originalEvent: DragMouseEvent): IDragOverReaction | null {
+		return null;
+	}
+
+	public drop(tree: ITree, data: IDragAndDropData, targetElement: any, originalEvent: DragMouseEvent): void {
+		return;
+	}
+
+	// {{SQL CARBON EDIT}}
+	public dropAbort(tree: ITree, data: IDragAndDropData): void { }
 }

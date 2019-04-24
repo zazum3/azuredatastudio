@@ -3,6 +3,7 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import * as azdata from 'azdata';
 import { ConnectionProfileGroup } from 'sql/platform/connection/common/connectionProfileGroup';
 import { ConnectionProfile } from 'sql/platform/connection/common/connectionProfile';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
@@ -11,6 +12,8 @@ import * as Constants from 'sql/platform/connection/common/constants';
 import { DragMouseEvent } from 'vs/base/browser/mouseEvent';
 import { TreeUpdateUtils } from 'sql/workbench/parts/objectExplorer/browser/treeUpdateUtils';
 import { IDragAndDropData } from 'vs/base/browser/dnd';
+import { ICapabilitiesService } from 'sql/platform/capabilities/common/capabilitiesService';
+import * as Utils from 'sql/platform/connection/common/utils';
 
 /**
  * Implements drag and drop for the server tree
@@ -19,6 +22,7 @@ export class ServerTreeDragAndDrop implements IDragAndDrop {
 
 	constructor(
 		@IConnectionManagementService private _connectionManagementService: IConnectionManagementService,
+		@ICapabilitiesService private _capabilitiesService: ICapabilitiesService
 	) {
 	}
 
@@ -94,6 +98,7 @@ export class ServerTreeDragAndDrop implements IDragAndDrop {
 	 * Handle a drop in the server tree.
 	 */
 	public drop(tree: ITree, data: IDragAndDropData, targetElement: any, originalEvent: DragMouseEvent): void {
+
 		TreeUpdateUtils.isInDragAndDrop = false;
 
 		let targetConnectionProfileGroup: ConnectionProfileGroup = this.getTargetGroup(targetElement);
@@ -115,6 +120,35 @@ export class ServerTreeDragAndDrop implements IDragAndDrop {
 						TreeUpdateUtils.registeredServerUpdate(tree, self._connectionManagementService);
 					});
 				}
+			}
+		} else if (source && source.payload) {
+			// drag and drop from Azure Resources
+			let profile: azdata.IConnectionProfile = {
+				id: source.payload.id,
+				connectionName: source.payload.connectionName,
+				serverName: source.payload.serverName,
+				databaseName: source.payload.databaseName,
+				userName: source.payload.userName,
+				password: source.payload.password,
+				authenticationType: source.payload.authenticationType,
+				savePassword: source.payload.savePassword,
+				groupFullName: source.payload.groupFullName,
+				groupId: source.payload.groupId,
+				providerName: source.payload.providerName,
+				saveProfile: true,
+				options: {}
+			};
+			let connectionProfile = new ConnectionProfile(this._capabilitiesService, profile);
+			if (this.isDropAllowed(targetConnectionProfileGroup, connectionProfile.getParent(), source)) {
+				this._connectionManagementService.connect(connectionProfile, undefined).then((result) => {
+					// Change group id of profile
+					if (result) {
+						this._connectionManagementService.changeGroupIdForConnection(connectionProfile, targetConnectionProfileGroup.id).then(() => {
+							TreeUpdateUtils.registeredServerUpdate(tree, this._connectionManagementService, targetConnectionProfileGroup);
+							tree.refresh();
+						});
+					}
+				});
 			}
 		}
 	}

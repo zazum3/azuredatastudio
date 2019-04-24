@@ -257,7 +257,7 @@ export class ViewItem implements IViewItem {
 			}
 		}
 
-		if (!skipUserRender && this.element) {
+		if (this.element) {
 			let paddingLeft: number = 0;
 			if (this.context.horizontalScrolling) {
 				const style = window.getComputedStyle(this.element);

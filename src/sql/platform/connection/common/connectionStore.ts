@@ -110,7 +110,7 @@ export class ConnectionStore {
 				let credentialId = this.formatCredentialIdForCred(credentialsItem);
 				self._credentialService.readCredential(credentialId)
 					.then(savedCred => {
-						if (savedCred) {
+						if (savedCred && savedCred.password) {
 							credentialsItem.password = savedCred.password;
 							credentialsItem.options['password'] = savedCred.password;
 						}
