@@ -36,6 +36,7 @@ export function executeBufferedCommand(cmd: string, options: childProcess.ExecOp
 	return new Promise<string>((resolve, reject) => {
 		if (outputChannel) {
 			outputChannel.appendLine(`    > ${cmd}`);
+			console.log('command executed buffered:     >' + cmd);
 		}
 
 		let child = childProcess.exec(cmd, options, (err, stdout) => {
@@ -131,5 +132,6 @@ function outputDataChunk(data: string | Buffer, outputChannel: vscode.OutputChan
 	data.toString().split(/\r?\n/)
 		.forEach(line => {
 			outputChannel.appendLine(header + line);
+			console.log('outputDataChunk' + header + line);
 		});
 }
