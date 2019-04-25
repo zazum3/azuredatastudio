@@ -80,10 +80,12 @@ export class ServerInstanceUtils {
 		if (!childProcess) {
 			return;
 		}
+		console.log('ensureProcessEnded');
 		// Wait 5 seconds and then force kill. Jupyter stop is slow so this seems a reasonable time limit
 		setTimeout(() => {
 			// Test if the process is still alive. Throws an exception if not
 			try {
+				console.log('trying to kill process with pid: ' + childProcess.pid);
 				process.kill(childProcess.pid, 'SIGKILL');
 			} catch (error) {
 				console.log(error);
@@ -235,6 +237,10 @@ export class PerNotebookServerInstance implements IServerInstance {
 		let token = await notebookUtils.getRandomToken();
 		this._uri = vscode.Uri.parse(`http://localhost:${port}/?token=${token}`);
 		this._port = port.toString();
+		let install = this.options.install;
+		console.log('ABOUT TO LIST: ');
+		let listCommand = `"${install.pythonExecutable}" -m jupyter notebook list`;
+		await this.utils.executeBufferedCommand(listCommand, install.execOptions, install.outputChannel);
 		let startCommand = `"${this.options.install.pythonExecutable}" -m jupyter notebook --no-browser --notebook-dir "${notebookDirectory}" --port=${port} --NotebookApp.token=${token}`;
 		this.notifyStarting(this.options.install, startCommand);
 
@@ -258,8 +264,9 @@ export class PerNotebookServerInstance implements IServerInstance {
 			this.childProcess.on('exit', onExitBeforeStart);
 
 			// Add listener for the process to emit its web address
-			let handleStdout = (data: string | Buffer) => { install.outputChannel.appendLine(data.toString()); };
+			let handleStdout = (data: string | Buffer) => { install.outputChannel.appendLine(data.toString()); console.log('handleStartStdout' + data.toString()); };
 			let handleStdErr = (data: string | Buffer) => {
+				console.log('handleStartStdErr' + data.toString());
 				// For some reason, URL info is sent on StdErr
 				let [url, port] = this.matchUrlAndPort(data);
 				if (url) {
@@ -292,7 +299,7 @@ export class PerNotebookServerInstance implements IServerInstance {
 		this.childProcess.addListener('error', this.handleConnectionError);
 		this.childProcess.addListener('exit', this.handleConnectionClosed);
 
-		process.addListener('exit', this.stop);
+		// process.addListener('exit', this.stop);
 
 		// TODO #897 covers serializing stdout and stderr to a location where we can read from so that user can see if they run into trouble
 	}
@@ -349,6 +356,7 @@ export class PerNotebookServerInstance implements IServerInstance {
 	private notifyStarting(install: JupyterServerInstallation, startCommand: string): void {
 		install.outputChannel.appendLine(localize('jupyterOutputMsgStart', '... Starting Notebook server'));
 		install.outputChannel.appendLine(`    > ${startCommand}`);
+		console.log('jupyter startCommand: ' + startCommand);
 	}
 
 	private spawnJupyterProcess(install: JupyterServerInstallation, startCommand: string): ChildProcess {
