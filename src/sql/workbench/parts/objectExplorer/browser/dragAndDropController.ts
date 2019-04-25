@@ -12,8 +12,10 @@ import * as Constants from 'sql/platform/connection/common/constants';
 import { DragMouseEvent } from 'vs/base/browser/mouseEvent';
 import { TreeUpdateUtils } from 'sql/workbench/parts/objectExplorer/browser/treeUpdateUtils';
 import { IDragAndDropData } from 'vs/base/browser/dnd';
+import { IConnectionDialogService } from 'sql/workbench/services/connection/common/connectionDialogService';
 import { ICapabilitiesService } from 'sql/platform/capabilities/common/capabilitiesService';
-import * as Utils from 'sql/platform/connection/common/utils';
+import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
+import { ICommandService } from 'vs/platform/commands/common/commands';
 
 /**
  * Implements drag and drop for the server tree
@@ -22,7 +24,9 @@ export class ServerTreeDragAndDrop implements IDragAndDrop {
 
 	constructor(
 		@IConnectionManagementService private _connectionManagementService: IConnectionManagementService,
-		@ICapabilitiesService private _capabilitiesService: ICapabilitiesService
+		@ICapabilitiesService private _capabilitiesService: ICapabilitiesService,
+		@IConnectionDialogService private _connectionDialogService: IConnectionDialogService,
+		@ICommandService private _commandService: ICommandService
 	) {
 	}
 
@@ -97,7 +101,7 @@ export class ServerTreeDragAndDrop implements IDragAndDrop {
 	/**
 	 * Handle a drop in the server tree.
 	 */
-	public drop(tree: ITree, data: IDragAndDropData, targetElement: any, originalEvent: DragMouseEvent): void {
+	public async drop(tree: ITree, data: IDragAndDropData, targetElement: any, originalEvent: DragMouseEvent) {
 
 		TreeUpdateUtils.isInDragAndDrop = false;
 
@@ -123,7 +127,7 @@ export class ServerTreeDragAndDrop implements IDragAndDrop {
 			}
 		} else if (source && source.payload) {
 			// drag and drop from Azure Resources
-			let profile: azdata.IConnectionProfile = {
+			let profile: IConnectionProfile = {
 				id: source.payload.id,
 				connectionName: source.payload.connectionName,
 				serverName: source.payload.serverName,
@@ -136,19 +140,31 @@ export class ServerTreeDragAndDrop implements IDragAndDrop {
 				groupId: source.payload.groupId,
 				providerName: source.payload.providerName,
 				saveProfile: true,
-				options: {}
+				options: {},
+				getOptionsKey: undefined,
+				matches: undefined
 			};
-			let connectionProfile = new ConnectionProfile(this._capabilitiesService, profile);
+			let connectionProfile = await this._connectionDialogService.openDialogAndWait(this._connectionManagementService,
+				{ connectionType: 1 }, profile, undefined) as ConnectionProfile;
+			connectionProfile.saveProfile = true;
 			if (this.isDropAllowed(targetConnectionProfileGroup, connectionProfile.getParent(), source)) {
-				this._connectionManagementService.connect(connectionProfile, undefined).then((result) => {
-					// Change group id of profile
-					if (result) {
-						this._connectionManagementService.changeGroupIdForConnection(connectionProfile, targetConnectionProfileGroup.id).then(() => {
-							TreeUpdateUtils.registeredServerUpdate(tree, this._connectionManagementService, targetConnectionProfileGroup);
-							tree.refresh();
-						});
-					}
-				});
+				this._connectionManagementService.connectAndSaveProfile(connectionProfile, undefined,
+					{
+						saveTheConnection: true,
+						showDashboard: true,
+						params: undefined,
+						showConnectionDialogOnError: true,
+						showFirewallRuleOnError: true
+					}).then((result) => {
+						// Change group id of profile
+						if (result) {
+							this._connectionManagementService.changeGroupIdForConnection(connectionProfile, targetConnectionProfileGroup.id).then(async () => {
+								TreeUpdateUtils.registeredServerUpdate(tree, this._connectionManagementService, targetConnectionProfileGroup);
+								tree.refresh();
+								await this._commandService.executeCommand('workbench.view.connections');
+							});
+						}
+					});
 			}
 		}
 	}

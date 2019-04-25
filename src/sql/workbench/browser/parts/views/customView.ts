@@ -753,10 +753,6 @@ class TreeController extends WorkbenchTreeController {
 	}
 
 	protected shouldToggleExpansion(element: ITreeItem, event: IMouseEvent, origin: string): boolean {
-		let payload = element.payload;
-		if (payload) {
-			return false;
-		}
 		return element.command ? this.isClickOnTwistie(event) : super.shouldToggleExpansion(element, event, origin);
 	}
 
