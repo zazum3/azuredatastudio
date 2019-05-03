@@ -35,13 +35,11 @@ export class QueryTextEditor extends BaseTextEditor {
 
 	public static ID = 'modelview.editors.textEditor';
 	private _dimension: DOM.Dimension;
-	private _config: editorCommon.IConfiguration;
 	private _minHeight: number = 0;
 	private _maxHeight: number = 4000;
 	private _selected: boolean;
 	private _hideLineNumbers: boolean;
 	private _editorWorkspaceConfig;
-	private _scrollbarHeight: number;
 
 	constructor(
 		@ITelemetryService telemetryService: ITelemetryService,
@@ -132,15 +130,17 @@ export class QueryTextEditor extends BaseTextEditor {
 
 	public setHeightToScrollHeight(configChanged?: boolean): void {
 		let editorWidget = this.getControl() as ICodeEditor;
-		this._config = new Configuration(true, undefined, editorWidget.getDomNode(), this.accessibilityService);
-		if (!this._scrollbarHeight) {
-			this._scrollbarHeight = this._config.editor.viewInfo.scrollbar.horizontalScrollbarSize;
-		}
 		let editorWidgetModel = editorWidget.getModel();
 		if (!editorWidgetModel) {
 			// Not ready yet
 			return;
 		}
+		let editorWidgetLayoutInfo = editorWidget.getLayoutInfo();
+		let editorWidgetConfiguration = editorWidget.getConfiguration();
+
+		let scrollbarHeight = editorWidgetConfiguration.viewInfo.scrollbar.horizontalScrollbarSize;
+		let lineHeight = editorWidgetConfiguration.lineHeight;
+		let viewportColumn = editorWidgetLayoutInfo.viewportColumn;
 		let lineCount = editorWidgetModel.getLineCount();
 		// Need to also keep track of lines that wrap; if we just keep into account line count, then the editor's height would not be
 		// tall enough and we would need to show a scrollbar. Unfortunately, it looks like there isn't any metadata saved in a ICodeEditor
@@ -156,23 +156,23 @@ export class QueryTextEditor extends BaseTextEditor {
 		if (wordWrapEnabled) {
 			for (let line = 1; line <= lineCount; line++) {
 				// 4 columns is equivalent to the viewport column width and the edge of the editor
-				if (editorWidgetModel.getLineMaxColumn(line) >= this._config.editor.layoutInfo.viewportColumn + 4) {
+				if (editorWidgetModel.getLineMaxColumn(line) >= viewportColumn + 4) {
 					// Subtract 1 because the first line should not count as a wrapped line
-					numberWrappedLines += Math.ceil(editorWidgetModel.getLineMaxColumn(line) / this._config.editor.layoutInfo.viewportColumn) - 1;
+					numberWrappedLines += Math.ceil(editorWidgetModel.getLineMaxColumn(line) / viewportColumn) - 1;
 				}
 			}
 		} else {
 			for (let line = 1; line <= lineCount; line++) {
 				// The horizontal scrollbar always appears 1 column past the viewport column when word wrap is disabled
-				if (editorWidgetModel.getLineMaxColumn(line) >= this._config.editor.layoutInfo.viewportColumn + 1) {
+				if (editorWidgetModel.getLineMaxColumn(line) >= viewportColumn + 1) {
 					shouldAddHorizontalScrollbarHeight = true;
 					break;
 				}
 			}
 		}
-		let editorHeightUsingLines = this._config.editor.lineHeight * (lineCount + numberWrappedLines);
+		let editorHeightUsingLines = lineHeight * (lineCount + numberWrappedLines);
 		let editorHeightUsingMinHeight = Math.max(Math.min(editorHeightUsingLines, this._maxHeight), this._minHeight);
-		editorHeightUsingMinHeight = shouldAddHorizontalScrollbarHeight ? editorHeightUsingMinHeight + this._scrollbarHeight : editorHeightUsingMinHeight;
+		editorHeightUsingMinHeight = shouldAddHorizontalScrollbarHeight ? editorHeightUsingMinHeight + scrollbarHeight : editorHeightUsingMinHeight;
 		this.setHeight(editorHeightUsingMinHeight);
 	}
 
