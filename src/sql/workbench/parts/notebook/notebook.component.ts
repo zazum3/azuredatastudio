@@ -67,7 +67,6 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 	protected isLoading: boolean;
 	private notebookManagers: INotebookManager[] = [];
 	private _modelReadyDeferred = new Deferred<NotebookModel>();
-	private _modelRegisteredDeferred = new Deferred<NotebookModel>();
 	private profile: IConnectionProfile;
 	private _trustedAction: TrustedAction;
 	private _runAllCellsAction: RunAllCellsAction;
@@ -143,10 +142,6 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 		return this._model && this._model.activeCell ? this._model.activeCell.id : '';
 	}
 
-	public get modelRegistered(): Promise<NotebookModel> {
-		return this._modelRegisteredDeferred.promise;
-	}
-
 	public get cells(): ICellModel[] {
 		return this._model ? this._model.cells : [];
 	}
@@ -219,6 +214,7 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 
 	private async doLoad(): Promise<void> {
 		try {
+			await this.createModelAndLoadContents();
 			await this.setNotebookManager();
 			await this.loadModel();
 			this._modelReadyDeferred.resolve(this._model);
@@ -265,7 +261,24 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 	}
 
 	private async loadModel(): Promise<void> {
+		let start = performance.now();
+		this.setLoading(false);
+		// Once contents loaded, wait on provider information to be available before loading kernel and other information
 		await this.awaitNonDefaultProvider();
+		await this._model.requestModelLoad();
+		this.detectChanges();
+		let elapsed = performance.now() - start;
+		console.log(`time to fully load notebook ${elapsed}ms`);
+		await this._model.startSession(this._model.notebookManager, undefined, true);
+		elapsed = performance.now() - start;
+		console.log(`time to fully start session ${elapsed}ms`);
+		this.setContextKeyServiceWithProviderId(this._model.providerId);
+		this.fillInActionsForCurrentContext();
+		this.detectChanges();
+	}
+
+	private async createModelAndLoadContents(): Promise<void> {
+		let start = performance.now();
 		let model = new NotebookModel({
 			factory: this.modelFactory,
 			notebookUri: this._notebookParams.notebookUri,
@@ -275,24 +288,22 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 			contentManager: this._notebookParams.input.contentManager,
 			standardKernels: this._notebookParams.input.standardKernels,
 			cellMagicMapper: new CellMagicMapper(this.notebookService.languageMagics),
-			providerId: 'sql', // this is tricky; really should also depend on the connection profile
+			providerId: 'sql',
 			defaultKernel: this._notebookParams.input.defaultKernel,
 			layoutChanged: this._notebookParams.input.layoutChanged,
 			capabilitiesService: this.capabilitiesService
 		}, this.profile, this.logService);
 		model.onError((errInfo: INotification) => this.handleModelError(errInfo));
 		let trusted = await this.notebookService.isNotebookTrustCached(this._notebookParams.notebookUri, this.isDirty());
-		await model.requestModelLoad(trusted);
+		await model.loadContents(trusted);
 		model.contentChanged((change) => this.handleContentChanged(change));
 		model.onProviderIdChange((provider) => this.handleProviderIdChanged(provider));
 		this._model = this._register(model);
-		this.setLoading(false);
 		this.updateToolbarComponents(this._model.trustedMode);
-		this._modelRegisteredDeferred.resolve(this._model);
-		await model.startSession(this.model.notebookManager, undefined, true);
-		this.setContextKeyServiceWithProviderId(model.providerId);
-		this.fillInActionsForCurrentContext();
 		this.detectChanges();
+
+		let elapsed = performance.now() - start;
+		console.log(`time to render notebook ${elapsed}ms`);
 	}
 
 	private async setNotebookManager(): Promise<void> {
