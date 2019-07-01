@@ -24,6 +24,7 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 import { ICapabilitiesService } from 'sql/platform/capabilities/common/capabilitiesService';
 import { ILogService } from 'vs/platform/log/common/log';
 import { isUndefinedOrNull } from 'vs/base/common/types';
+import { ITerminalService } from 'vs/workbench/contrib/terminal/common/terminal';
 
 export const sqlKernelError: string = localize("sqlKernelError", "SQL kernel error");
 export const MAX_ROWS = 5000;
@@ -39,6 +40,17 @@ const languageMagics: ILanguageMagic[] = [{
 }, {
 	language: 'Java',
 	magic: 'lang_java'
+}];
+
+const scriptMagics: ILanguageMagic[] = [{
+	language: 'bash',
+	magic: 'lang_bash'
+}, {
+	language: 'powershell',
+	magic: 'lang_powershell'
+}, {
+	language: 'cmd',
+	magic: 'lang_cmd'
 }];
 
 export interface SQLData {
@@ -161,7 +173,7 @@ class SqlKernel extends Disposable implements nb.IKernel {
 	private _id: string;
 	private _future: SQLFuture;
 	private _executionCount: number = 0;
-	private _magicToExecutorMap = new Map<string, ExternalScriptMagic>();
+	private _magicToExecutorMap = new Map<string, SqlMagic>();
 
 	constructor(private _path: string,
 		@IConnectionManagementService private _connectionManagementService: IConnectionManagementService,
@@ -169,7 +181,8 @@ class SqlKernel extends Disposable implements nb.IKernel {
 		@IInstantiationService private _instantiationService: IInstantiationService,
 		@IErrorMessageService private _errorMessageService: IErrorMessageService,
 		@IConfigurationService private _configurationService: IConfigurationService,
-		@ILogService private readonly logService: ILogService
+		@ILogService private readonly logService: ILogService,
+		@ITerminalService private _terminalService: ITerminalService
 	) {
 		super();
 		this.initMagics();
@@ -178,6 +191,10 @@ class SqlKernel extends Disposable implements nb.IKernel {
 	private initMagics(): void {
 		for (let magic of languageMagics) {
 			let scriptMagic = new ExternalScriptMagic(magic.language);
+			this._magicToExecutorMap.set(magic.magic, scriptMagic);
+		}
+		for (let magic of scriptMagics) {
+			let scriptMagic = new ScriptingMagic(magic.language, this._terminalService);
 			this._magicToExecutorMap.set(magic.magic, scriptMagic);
 		}
 	}
@@ -241,20 +258,20 @@ class SqlKernel extends Disposable implements nb.IKernel {
 
 	requestExecute(content: nb.IExecuteRequest, disposeOnDone?: boolean): nb.IFuture {
 		let canRun: boolean = true;
-		let code = this.getCodeWithoutCellMagic(content);
-		if (this._queryRunner) {
+		let magicInfo = this.getCodeWithoutCellMagic(content);
+		if (this._queryRunner && (!magicInfo.name || magicInfo.isSqlExternalScript)) {
 			// Cancel any existing query
 			if (this._future && !this._queryRunner.hasCompleted) {
 				this._queryRunner.cancelQuery().then(ok => undefined, error => this._errorMessageService.showDialog(Severity.Error, sqlKernelError, error));
 				// TODO when we can just show error as an output, should show an "execution canceled" error in output
 				this._future.handleDone();
 			}
-			this._queryRunner.runQuery(code);
-		} else if (this._currentConnection && this._currentConnectionProfile) {
+			this._queryRunner.runQuery(magicInfo.codeWithoutMagic);
+		} else if (this._currentConnection && this._currentConnectionProfile && (!magicInfo.name || magicInfo.isSqlExternalScript)) {
 			this._queryRunner = this._instantiationService.createInstance(QueryRunner, this._path);
 			this._connectionManagementService.connect(this._currentConnectionProfile, this._path).then((result) => {
 				this.addQueryEventListeners(this._queryRunner);
-				this._queryRunner.runQuery(code);
+				this._queryRunner.runQuery(magicInfo.codeWithoutMagic);
 			});
 		} else {
 			canRun = false;
@@ -264,7 +281,7 @@ class SqlKernel extends Disposable implements nb.IKernel {
 		// TODO verify this is "canonical" behavior
 		let count = canRun ? ++this._executionCount : undefined;
 
-		this._future = new SQLFuture(this._queryRunner, count, this._configurationService, this.logService);
+		this._future = new SQLFuture(this._queryRunner, count, this._configurationService, this.logService, magicInfo, this._magicToExecutorMap);
 		if (!canRun) {
 			// Complete early
 			this._future.handleDone(new Error(localize('connectionRequired', "A connection must be chosen to run notebook cells")));
@@ -274,23 +291,32 @@ class SqlKernel extends Disposable implements nb.IKernel {
 		return this._future;
 	}
 
-	private getCodeWithoutCellMagic(content: nb.IExecuteRequest): string {
+	private getCodeWithoutCellMagic(content: nb.IExecuteRequest): ICellMagicInfo {
 		let code = content.code;
+		let magic;
 		let firstLineEnd = code.indexOf(os.EOL);
 		let firstLine = code.substring(0, (firstLineEnd >= 0) ? firstLineEnd : 0).trimLeft();
 		if (firstLine.startsWith('%%')) {
 			// Strip out the line
 			code = code.substring(firstLineEnd, code.length);
 			// Try and match to an external script magic. If we add more magics later, should handle transforms better
-			let magic = notebookUtils.tryMatchCellMagic(firstLine);
+			magic = notebookUtils.tryMatchCellMagic(firstLine);
 			if (magic) {
 				let executor = this._magicToExecutorMap.get(magic.toLowerCase());
 				if (executor) {
-					code = executor.convertToExternalScript(code);
+					code = executor.executeMagic(code);
 				}
 			}
 		}
-		return code;
+		return {
+			codeWithoutMagic: code,
+			name: magic,
+			isSqlExternalScript: this.isMagicSqlExternalScript(magic)
+		};
+	}
+
+	private isMagicSqlExternalScript(magic: string): boolean {
+		return magic === 'lang_python' || magic === 'lang_r' || magic === 'lang_java';
 	}
 
 	requestComplete(content: nb.ICompleteRequest): Thenable<nb.ICompleteReplyMsg> {
@@ -355,7 +381,9 @@ export class SQLFuture extends Disposable implements FutureInternal {
 		private _queryRunner: QueryRunner,
 		private _executionCount: number | undefined,
 		configurationService: IConfigurationService,
-		private readonly logService: ILogService
+		private readonly logService: ILogService,
+		private _magicInfo: ICellMagicInfo,
+		private _magicExecutorMap: Map<string, SqlMagic>
 	) {
 		super();
 		let config = configurationService.getValue(NotebookConfigSectionName);
@@ -389,6 +417,15 @@ export class SQLFuture extends Disposable implements FutureInternal {
 	}
 
 	private async handleDoneAsync(err?: Error): Promise<void> {
+		let x;
+		if (this._magicInfo && !this._magicInfo.isSqlExternalScript) {
+			let executor = this._magicExecutorMap.get(this._magicInfo.name);
+			if (executor) {
+				executor = <ScriptingMagic>(executor);
+				x = await executor.executeScript(this._magicInfo.codeWithoutMagic);
+				this.handleMessage(x);
+			}
+		}
 		// must wait on all outstanding output updates to complete
 		if (this._outputAddedPromises && this._outputAddedPromises.length > 0) {
 			// Do not care about error handling as this is handled elsewhere
@@ -600,15 +637,83 @@ export interface IDataResourceSchema {
 	type?: string;
 }
 
+export interface ICellMagicInfo {
+	name: string;
+	isSqlExternalScript: boolean;
+	codeWithoutMagic: string;
+}
+
+interface SqlMagic {
+	executeMagic(string: string): string;
+	executeScript?(string: string): Promise<string>;
+}
+
 class ExternalScriptMagic {
 
 	constructor(private language: string) {
 	}
 
-	public convertToExternalScript(script: string): string {
+	public executeMagic(script: string): string {
 		return `execute sp_execute_external_script
 		@language = N'${this.language}',
 		@script = N'${script}'
 		`;
 	}
+}
+
+class ScriptingMagic implements SqlMagic {
+
+	constructor(private language: string, private terminalService: ITerminalService) {
+	}
+
+	public executeMagic(script: string): string {
+
+		return script;
+
+		// return `execute sp_execute_external_script
+		// @language = N'${this.language}',
+		// @script = N'${script}'
+		// `;
+	}
+
+	public async executeScript(script: string): Promise<string> {
+		let terminal = this.terminalService.createTerminal({ executable: 'bash', waitOnExit: false });
+
+		await terminal.processReady;
+		await terminal.waitForTitle();
+		let exitCode = '';
+		let data: string = '';
+		let terminalResolved = new Deferred<void>();
+		terminal.onData(e => {
+			data += e;
+		});
+		terminal.onExit(e => {
+			let x = e;
+			// terminalResolved.resolve(e.toString());
+		});
+		terminal.onDisposed(e => {
+			let x = e;
+		});
+		terminal.onLineData(e => {
+			terminalResolved.resolve();
+		});
+		terminal.onRendererInput(e => {
+			let x = e;
+		});
+		terminal.onRequestExtHostProcess(e => {
+			let x = e;
+		});
+		terminal.onProcessIdReady(e => {
+			let x = e;
+		});
+
+		terminal.sendText(script, true);
+		await terminal.processReady;
+		// await terminal.processReady;
+		await terminalResolved;
+
+		return data;
+	}
+
+
 }
