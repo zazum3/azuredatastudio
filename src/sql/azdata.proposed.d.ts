@@ -36,7 +36,7 @@ declare module 'azdata' {
 
 		export function registerMetadataProvider(provider: MetadataProvider): vscode.Disposable;
 
-		export function registerQueryProvider(provider: QueryProvider): vscode.Disposable;
+		export function registerQueryProvider(provider: QueryProvider, isLiveShare?: boolean): vscode.Disposable;
 
 		export function registerAdminServicesProvider(provider: AdminServicesProvider): vscode.Disposable;
 
@@ -126,6 +126,20 @@ declare module 'azdata' {
 			*/
 			connectionId: string;
 		}
+
+		export type ConnectionEvent =
+			| 'onConnect'
+			| 'onDisconnect'
+			| 'onConnectionChanged';
+
+		export interface ConnectionEventListener {
+			onConnectionEvent(type: ConnectionEvent, ownerUri: string, args: IConnectionProfile): void;
+		}
+
+		/**
+		 * Register a connection event listener
+		 */
+		export function registerConnectionEventListener(listener: connection.ConnectionEventListener): void;
 	}
 
 	/**
