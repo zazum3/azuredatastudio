@@ -34,11 +34,6 @@
         "command": "collaboration.testcmd1",
         "title": "Command 1",
         "category": "Collaboraton"
-      },
-      {
-        "command": "collaboration.testcmd2",
-        "title": "Command 2",
-        "category": "Collaboration"
       }
     ]
   }

@@ -8,14 +8,12 @@ import * as azdata from 'azdata';
 import { LiveShare, SharedServiceProxy } from './liveshare';
 import { ConnectionProvider } from './providers/connectionProvider';
 import { StatusProvider, LiveShareDocumentState } from './providers/statusProvider';
-import { LiveShareServiceName } from './constants';
+import { LiveShareServiceName, VslsSchema } from './constants';
 
 declare var require: any;
 let vsls = require('vsls');
 
 export class GuestSessionManager {
-	private static readonly VslsPrefix: string = 'vsls';
-
 	private _statusProvider: StatusProvider;
 
 	constructor(
@@ -43,10 +41,6 @@ export class GuestSessionManager {
 		});
 	}
 
-	private isLiveShareDocument(doc: vscode.TextDocument): boolean {
-		return (doc && doc.uri.scheme.startsWith(GuestSessionManager.VslsPrefix));
-	}
-
 	private async onDidOpenTextDocument(doc: vscode.TextDocument): Promise<void> {
 		if (this._statusProvider && this.isLiveShareDocument(doc)) {
 			let documentState: LiveShareDocumentState = await this._statusProvider.getDocumentState(doc);
@@ -62,5 +56,9 @@ export class GuestSessionManager {
 				}
 			}
 		}
+	}
+
+	private isLiveShareDocument(doc: vscode.TextDocument): boolean {
+		return doc && doc.uri.scheme === VslsSchema;
 	}
 }

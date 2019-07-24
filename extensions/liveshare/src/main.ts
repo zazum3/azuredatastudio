@@ -32,47 +32,9 @@ function testCommand1() {
 
 }
 
-function testCommand2() {
-
-}
-
 export function registerLiveShareIntegrationCommands() {
 	vscode.commands.registerCommand(
 		'collaboration.testcmd1',
 		testCommand1
 	);
-	vscode.commands.registerCommand(
-		'collaboration.testcmd2',
-		testCommand2
-	);
 }
-
-// scrap snippets for deletion
-// function isLiveShareDocument(doc: vscode.TextDocument): boolean {
-// 	return (doc && doc.uri.toString().startsWith(vslsPrefix));
-// }
-// async function onDidOpenTextDocument(doc: vscode.TextDocument): Promise<void> {
-// 	//let queryDoc = await azdata.queryeditor.getQueryDocument(doc.uri.toString());
-// 	if (isLiveShareDocument(doc)) {
-// 		azdata.conn
-// 	}
-// }
-// await vscode.commands.executeCommand(
-// 	'setContext',
-// 	'ads:liveshare',
-// 	!!vslsApi
-// );
-// vscode.workspace.onDidOpenTextDocument(params => onDidOpenTextDocument(params));
-// export class State {
-// 	private static _extContext: vscode.ExtensionContext;
-// 	public static connection: ConnectionProvider;
-// 	public static guestSessionManager: GuestSession;
-// 	public static get extensionContext(): vscode.ExtensionContext {
-// 		return this._extContext;
-// 	}
-// 	public static set extensionContext(ec: vscode.ExtensionContext) {
-// 		this._extContext = ec;
-// 	}
-// }
-
-
