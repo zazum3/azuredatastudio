@@ -6,6 +6,7 @@
 import * as vscode from 'vscode';
 import { LiveShare, SharedService } from './liveshare';
 import { ConnectionProvider } from './providers/connectionProvider';
+import { QueryProvider } from './providers/queryProvider';
 import { StatusProvider } from './providers/statusProvider';
 import { LiveShareServiceName } from './constants';
 
@@ -30,6 +31,9 @@ export class HostSessionManager {
 			}
 
 			new ConnectionProvider(isHost, sharedService);
+
+			const queryProvider = new QueryProvider(true);
+			queryProvider.initialize(true, sharedService);
 
 			new StatusProvider(isHost, vslsApi, sharedService);
 		});

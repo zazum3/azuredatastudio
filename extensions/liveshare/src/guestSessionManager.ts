@@ -1,7 +1,7 @@
-// /*---------------------------------------------------------------------------------------------
-//  *  Copyright (c) Microsoft Corporation. All rights reserved.
-//  *  Licensed under the Source EULA. See License.txt in the project root for license information.
-//  *--------------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the Source EULA. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
 import * as azdata from 'azdata';
@@ -9,6 +9,7 @@ import { LiveShare, SharedServiceProxy } from './liveshare';
 import { ConnectionProvider } from './providers/connectionProvider';
 import { StatusProvider, LiveShareDocumentState } from './providers/statusProvider';
 import { LiveShareServiceName, VslsSchema } from './constants';
+import { QueryProvider } from './providers/queryProvider';
 
 declare var require: any;
 let vsls = require('vsls');
@@ -37,6 +38,9 @@ export class GuestSessionManager {
 
 			new ConnectionProvider(isHost, sharedServiceProxy);
 
+			const queryProvider = new QueryProvider(false);
+			queryProvider.initialize(false, sharedServiceProxy);
+
 			self._statusProvider = new StatusProvider(isHost, vslsApi, sharedServiceProxy);
 		});
 	}
@@ -50,7 +54,6 @@ export class GuestSessionManager {
 					let connectionOptions: any[] = [];
 					connectionOptions['serverName'] = documentState.serverName;
 					connectionOptions['databaseName'] = documentState.databaseName;
-
 					let profile = azdata.connection.ConnectionProfile.createFrom(connectionOptions);
 					queryDocument.connect(profile);
 				}
