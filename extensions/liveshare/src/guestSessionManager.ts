@@ -22,7 +22,7 @@ export class GuestSessionManager {
 		vslsApi: LiveShare
 	) {
 		let self = this;
-		vscode.workspace.onDidOpenTextDocument(params => this.onDidOpenTextDocument(params));
+		// vscode.workspace.onDidOpenTextDocument(params => this.onDidOpenTextDocument(params));
 
 		vslsApi!.onDidChangeSession(async function onLiveShareSessionCHange(e: any) {
 			const isHost = e.session.role === vsls.Role.Host;
@@ -42,22 +42,31 @@ export class GuestSessionManager {
 			queryProvider.initialize(false, sharedServiceProxy);
 
 			self._statusProvider = new StatusProvider(isHost, vslsApi, sharedServiceProxy);
+			vscode.workspace.onDidOpenTextDocument((params) => {
+				// it's a liveshare doc if opened from here
+				const documentState: LiveShareDocumentState = {
+					isConnected: true,
+					serverName: 'liveshare',
+					databaseName: 'liveshare'
+				};
+				self.onDidOpenTextDocument(params, documentState);
+			});
 		});
 	}
 
-	private async onDidOpenTextDocument(doc: vscode.TextDocument): Promise<void> {
-		if (this._statusProvider && this.isLiveShareDocument(doc)) {
-			let documentState: LiveShareDocumentState = await this._statusProvider.getDocumentState(doc);
-			if (documentState) {
-				let queryDocument = await azdata.queryeditor.getQueryDocument(doc.uri.toString());
-				if (queryDocument) {
-					let connectionOptions: any[] = [];
-					connectionOptions['serverName'] = documentState.serverName;
-					connectionOptions['databaseName'] = documentState.databaseName;
-					let profile = azdata.connection.ConnectionProfile.createFrom(connectionOptions);
-					queryDocument.connect(profile);
-				}
+	private async onDidOpenTextDocument(doc: vscode.TextDocument, documentState?: LiveShareDocumentState): Promise<void> {
+		if (!documentState) {
+			if (this._statusProvider && this.isLiveShareDocument(doc)) {
+				documentState = await this._statusProvider.getDocumentState(doc);
 			}
+		}
+		let queryDocument = await azdata.queryeditor.getQueryDocument(doc.uri.toString());
+		if (queryDocument) {
+			let connectionOptions: any[] = [];
+			connectionOptions['serverName'] = documentState.serverName;
+			connectionOptions['databaseName'] = documentState.databaseName;
+			let profile = azdata.connection.ConnectionProfile.createFrom(connectionOptions);
+			queryDocument.connect(profile);
 		}
 	}
 
