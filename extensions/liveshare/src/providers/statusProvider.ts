@@ -9,8 +9,8 @@ import { LiveShare, SharedService, SharedServiceProxy } from '../liveshare';
 
 export class LiveShareDocumentState {
 	public isConnected: boolean;
-	public serverName: string;
-	public databaseName: string;
+	public serverName?: string;
+	public databaseName?: string;
 }
 
 export class StatusProvider {
@@ -34,20 +34,29 @@ export class StatusProvider {
 		let self = this;
 		this._sharedService.onRequest('getDocumentState', (args: any[]) => {
 			if (args && args.length > 0) {
-				let ownerUri: vscode.Uri = self._vslsApi.convertSharedUriToLocal(args[0]);
-				ownerUri;
 
+				let ownerUri =  vscode.Uri.parse(args[0].ownerUri);
+				let localUri: vscode.Uri = self._vslsApi.convertSharedUriToLocal(ownerUri);
+				localUri;
 
-			//	azdata.connection.getUriForConnection
+				//	azdata.connection.getUriForConnection
+
+				let documentState: LiveShareDocumentState = {
+					isConnected: true,
+					serverName: 'localhost',
+					databaseName: 'master'
+				};
+
+				return documentState;
 			}
-			return true;
+			return undefined;
 		});
 	}
 
 	public getDocumentState(doc: vscode.TextDocument): Promise<LiveShareDocumentState> {
 		if (!this._isHost) {
 			return this._sharedServiceProxy.request('getDocumentState', [{
-				ownerUri: doc.uri
+				ownerUri: doc.uri.toString()
 			}]);
 		} else {
 			return Promise.resolve(undefined);
