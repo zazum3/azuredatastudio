@@ -4,6 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import * as azdata from 'azdata';
 import { LiveShare, SharedService } from './liveshare';
 import { ConnectionProvider } from './providers/connectionProvider';
 import { QueryProvider } from './providers/queryProvider';
@@ -31,8 +32,8 @@ export class HostSessionManager {
 			}
 
 			new ConnectionProvider(isHost, sharedService);
-
-			const queryProvider = new QueryProvider(true);
+			let queryProviderMssql = azdata.dataprotocol.getProvider<azdata.QueryProvider>('MSSQL', azdata.DataProviderType.QueryProvider);
+			const queryProvider = new QueryProvider(false, queryProviderMssql);
 			queryProvider.initialize(true, sharedService);
 
 			new StatusProvider(isHost, vslsApi, sharedService);

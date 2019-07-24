@@ -13,7 +13,10 @@ export class QueryProvider {
 	private _sharedService: SharedService;
 	private _sharedServiceProxy: SharedServiceProxy;
 
-	public constructor(private _isHost: boolean) { }
+	public constructor(
+		private _isHost: boolean,
+		private _queryProvider: azdata.QueryProvider
+	) { }
 
 	public initialize(isHost: boolean, service: any) {
 		if (this._isHost) {
@@ -23,7 +26,7 @@ export class QueryProvider {
 		} else {
 			this._sharedServiceProxy = <SharedServiceProxy>service;
 
-
+			this._queryProvider.runQueryString('test', 'test');
 			this.registerProvider();
 		}
 	}

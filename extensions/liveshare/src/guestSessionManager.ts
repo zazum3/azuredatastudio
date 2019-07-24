@@ -38,9 +38,9 @@ export class GuestSessionManager {
 
 			new ConnectionProvider(isHost, sharedServiceProxy);
 
-			const queryProvider = new QueryProvider(false);
+			let queryProviderMssql = azdata.dataprotocol.getProvider<azdata.QueryProvider>('MSSQL', azdata.DataProviderType.QueryProvider);
+			const queryProvider = new QueryProvider(false, queryProviderMssql);
 			queryProvider.initialize(false, sharedServiceProxy);
-
 			self._statusProvider = new StatusProvider(isHost, vslsApi, sharedServiceProxy);
 			vscode.workspace.onDidOpenTextDocument((params) => {
 				// it's a liveshare doc if opened from here
@@ -66,7 +66,7 @@ export class GuestSessionManager {
 			connectionOptions['serverName'] = documentState.serverName;
 			connectionOptions['databaseName'] = documentState.databaseName;
 			let profile = azdata.connection.ConnectionProfile.createFrom(connectionOptions);
-			queryDocument.connect(profile);
+			await queryDocument.connect(profile);
 		}
 	}
 
