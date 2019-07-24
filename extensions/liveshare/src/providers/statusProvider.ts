@@ -3,8 +3,9 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+// import * as azdata from 'azdata';
 import * as vscode from 'vscode';
-import { SharedService, SharedServiceProxy } from '../liveshare';
+import { LiveShare, SharedService, SharedServiceProxy } from '../liveshare';
 
 export class LiveShareDocumentState {
 	public isConnected: boolean;
@@ -18,6 +19,7 @@ export class StatusProvider {
 
 	public constructor(
 		private _isHost: boolean,
+		private _vslsApi: LiveShare,
 		service: any) {
 
 		if (this._isHost) {
@@ -29,16 +31,23 @@ export class StatusProvider {
 	}
 
 	private registerStatusProvider(): void {
-		this._sharedService.onRequest('getDocumentState', (args: any) => {
+		let self = this;
+		this._sharedService.onRequest('getDocumentState', (args: any[]) => {
+			if (args && args.length > 0) {
+				let ownerUri: vscode.Uri = self._vslsApi.convertSharedUriToLocal(args[0]);
+				ownerUri;
+
+
+			//	azdata.connection.getUriForConnection
+			}
 			return true;
 		});
 	}
 
 	public getDocumentState(doc: vscode.TextDocument): Promise<LiveShareDocumentState> {
 		if (!this._isHost) {
-			let ownerUri: string = doc.uri.toString();
 			return this._sharedServiceProxy.request('getDocumentState', [{
-				ownerUri: ownerUri
+				ownerUri: doc.uri
 			}]);
 		} else {
 			return Promise.resolve(undefined);

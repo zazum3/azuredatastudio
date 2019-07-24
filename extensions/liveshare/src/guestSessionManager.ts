@@ -38,7 +38,7 @@ export class GuestSessionManager {
 
 			new ConnectionProvider(isHost, sharedServiceProxy);
 
-			self._statusProvider = new StatusProvider(isHost, sharedServiceProxy);
+			self._statusProvider = new StatusProvider(isHost, vslsApi, sharedServiceProxy);
 		});
 	}
 

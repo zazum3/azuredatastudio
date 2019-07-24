@@ -10,6 +10,24 @@ import { HostSessionManager } from './hostSessionManager';
 declare var require: any;
 let vsls = require('vsls');
 
+export async function activate(context: vscode.ExtensionContext) {
+	const vslsApi = await vsls.getApi();
+	if (!vslsApi) {
+		return;
+	}
+
+	new HostSessionManager(context, vslsApi);
+	new GuestSessionManager(context, vslsApi);
+
+	// test commands for easy entry points during early dev
+	registerLiveShareIntegrationCommands();
+}
+
+export function deactivate(): void {
+}
+
+
+/// test commands
 function testCommand1() {
 
 }
@@ -28,24 +46,6 @@ export function registerLiveShareIntegrationCommands() {
 		testCommand2
 	);
 }
-
-
-export async function activate(context: vscode.ExtensionContext) {
-	const vslsApi = await vsls.getApi();
-	if (!vslsApi) {
-		return;
-	}
-
-	new HostSessionManager(context, vslsApi);
-	new GuestSessionManager(context, vslsApi);
-
-	// test commands for easy entry points during early dev
-	registerLiveShareIntegrationCommands();
-}
-
-export function deactivate(): void {
-}
-
 
 // scrap snippets for deletion
 // function isLiveShareDocument(doc: vscode.TextDocument): boolean {
@@ -74,3 +74,5 @@ export function deactivate(): void {
 // 		this._extContext = ec;
 // 	}
 // }
+
+

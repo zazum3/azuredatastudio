@@ -100,6 +100,9 @@ export function createApiFactory(
 				getConnections(activeConnectionsOnly?: boolean): Thenable<azdata.connection.ConnectionProfile[]> {
 					return extHostConnectionManagement.$getConnections(activeConnectionsOnly);
 				},
+				getConnection(uri: string): Thenable<azdata.connection.ConnectionProfile> {
+					return extHostConnectionManagement.$getConnection(uri);
+				},
 				registerConnectionEventListener(listener: azdata.connection.ConnectionEventListener): void {
 					return extHostConnectionManagement.$registerConnectionEventListener(mssqlProviderName, listener);
 				},

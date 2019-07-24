@@ -29,9 +29,9 @@ export class HostSessionManager {
 				return;
 			}
 
-			new ConnectionProvider(true, sharedService);
+			new ConnectionProvider(isHost, sharedService);
 
-			new StatusProvider(true, sharedService);
+			new StatusProvider(isHost, vslsApi, sharedService);
 		});
 
 		// context.subscriptions.push(sharedService.onDidChangeIsServiceAvailable(available => {

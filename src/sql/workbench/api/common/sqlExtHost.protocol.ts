@@ -608,6 +608,7 @@ export interface MainThreadDataProtocolShape extends IDisposable {
 export interface MainThreadConnectionManagementShape extends IDisposable {
 	$registerConnectionEventListener(handle: number, providerId: string): void;
 	$getConnections(activeConnectionsOnly?: boolean): Thenable<azdata.connection.ConnectionProfile[]>;
+	$getConnection(uri: string): Thenable<azdata.connection.ConnectionProfile>;
 	$getActiveConnections(): Thenable<azdata.connection.Connection[]>;
 	$getCurrentConnection(): Thenable<azdata.connection.Connection>;
 	$getCurrentConnectionProfile(): Thenable<azdata.connection.ConnectionProfile>;

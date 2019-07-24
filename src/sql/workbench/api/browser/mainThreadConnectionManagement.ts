@@ -87,6 +87,10 @@ export class MainThreadConnectionManagement implements MainThreadConnectionManag
 		return Promise.resolve(this._connectionManagementService.getConnections(activeConnectionsOnly).map(profile => this.convertToConnectionProfile(profile)));
 	}
 
+	public $getConnection(uri: string): Thenable<azdata.connection.ConnectionProfile> {
+		return Promise.resolve(undefined);
+	}
+
 	public $getActiveConnections(): Thenable<azdata.connection.Connection[]> {
 		return Promise.resolve(this._connectionManagementService.getActiveConnections().map(profile => this.convertConnection(profile)));
 	}

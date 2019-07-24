@@ -1477,6 +1477,17 @@ export class ConnectionManagementService extends Disposable implements IConnecti
 		return connections;
 	}
 
+	public getConnection(uri: string): ConnectionProfile {
+		// 1. Active Connections
+		const connections = this.getActiveConnections();
+
+		const connectionExists: (conn: ConnectionProfile) => boolean = (conn) => {
+			return connections.find(existingConnection => existingConnection.id === conn.id) !== undefined;
+		};
+
+		return undefined;
+	}
+
 	private getConnectionsInGroup(group: ConnectionProfileGroup): ConnectionProfile[] {
 		const connections = [];
 		if (group) {

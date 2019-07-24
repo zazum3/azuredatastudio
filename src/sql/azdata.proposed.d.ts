@@ -4235,6 +4235,8 @@ declare module 'azdata' {
 		 */
 		export function getUriForConnection(connectionId: string): Thenable<string>;
 
+		export function getConnection(uri: string): Thenable<ConnectionProfile>;
+
 		/**
 		 * Opens the connection dialog, calls the callback with the result. If connection was successful
 		 * returns the connection otherwise returns undefined
