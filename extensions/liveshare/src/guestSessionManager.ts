@@ -4,6 +4,7 @@
 //  *--------------------------------------------------------------------------------------------*/
 
 import * as vscode from 'vscode';
+import * as azdata from 'azdata';
 import { LiveShare, SharedServiceProxy } from './liveshare';
 import { ConnectionProvider } from './providers/connectionProvider';
 import { StatusProvider, LiveShareDocumentState } from './providers/statusProvider';
@@ -50,8 +51,15 @@ export class GuestSessionManager {
 		if (this._statusProvider && this.isLiveShareDocument(doc)) {
 			let documentState: LiveShareDocumentState = await this._statusProvider.getDocumentState(doc);
 			if (documentState) {
-				let outlog: string = `Document state: isConnected=${documentState.isConnected}, serverName=${documentState.serverName}, databaseName=${documentState.databaseName}`;
-				console.log(outlog);
+				let queryDocument = await azdata.queryeditor.getQueryDocument(doc.uri.toString());
+				if (queryDocument) {
+					let connectionOptions: any[] = [];
+					connectionOptions['serverName'] = documentState.serverName;
+					connectionOptions['databaseName'] = documentState.databaseName;
+
+					let profile = azdata.connection.ConnectionProfile.createFrom(connectionOptions);
+					queryDocument.connect(profile);
+				}
 			}
 		}
 	}

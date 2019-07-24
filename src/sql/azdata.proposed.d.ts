@@ -3999,6 +3999,9 @@ declare module 'azdata' {
 			// tab content is build using the modelview UI builder APIs
 			// probably should rename DialogTab class since it is useful outside dialogs
 			createQueryTab(tab: window.DialogTab): void;
+
+			// connect the query document using the given connection profile
+			connect(connectionProfile: connection.ConnectionProfile): Thenable<void>;
 		}
 
 		/**

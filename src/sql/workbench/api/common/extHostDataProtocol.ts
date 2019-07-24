@@ -292,6 +292,10 @@ export class ExtHostDataProtocol extends ExtHostDataProtocolShape {
 		}
 	}
 
+	$connectWithProfile(handle: number, ownerUri: string, profile: azdata.connection.ConnectionProfile): Thenable<void> {
+		return new Promise((r) => r());
+	}
+
 	$parseSyntax(handle: number, ownerUri: string, query: string): Thenable<azdata.SyntaxParseResult> {
 		return this._resolveProvider<azdata.QueryProvider>(handle).parseSyntax(ownerUri, query);
 	}

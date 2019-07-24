@@ -3,7 +3,7 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-// import * as azdata from 'azdata';
+import * as azdata from 'azdata';
 import * as vscode from 'vscode';
 import { LiveShare, SharedService, SharedServiceProxy } from '../liveshare';
 
@@ -32,21 +32,28 @@ export class StatusProvider {
 
 	private registerStatusProvider(): void {
 		let self = this;
-		this._sharedService.onRequest('getDocumentState', (args: any[]) => {
-			if (args && args.length > 0) {
 
+		// Retrieves the current document state associated with the URI parameter.
+		// The URI will be in guest Live Share format and needs to be converted back
+		// to the host file path format.
+		this._sharedService.onRequest('getDocumentState', async (args: any[]) => {
+			if (args && args.length > 0) {
 				let ownerUri =  vscode.Uri.parse(args[0].ownerUri);
 				let localUri: vscode.Uri = self._vslsApi.convertSharedUriToLocal(ownerUri);
-				localUri;
+				let connection = await azdata.connection.getConnection(localUri.toString());
 
-				//	azdata.connection.getUriForConnection
+				let serverName: string = 'liveshare';
+				let databaseName: string = 'liveshare';
+				if (connection) {
+					serverName = connection.serverName;
+					databaseName = connection.databaseName;
+				}
 
 				let documentState: LiveShareDocumentState = {
 					isConnected: true,
-					serverName: 'localhost',
-					databaseName: 'master'
+					serverName: serverName,
+					databaseName: databaseName
 				};
-
 				return documentState;
 			}
 			return undefined;
