@@ -31,10 +31,10 @@ export class StatusProvider {
 			this._sharedServiceProxy = <SharedServiceProxy>service;
 
 			connectionProvider.onConnect(async (args: any) => {
-				if (args && args.ownerUri) {
-					let connection = await azdata.connection.getConnection(args.ownerUri);
-					if (connection) {
-
+				if (args && args.connection) {
+					let connection = await azdata.connection.connect(args.connection);
+					if (connection.errorMessage) {
+						console.log(connection.errorMessage);
 					}
 				}
 			});
