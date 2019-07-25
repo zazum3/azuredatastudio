@@ -32,10 +32,12 @@ export class StatusProvider {
 
 			connectionProvider.onConnect(async (args: any) => {
 				if (args && args.profile) {
-					let connection = await azdata.connection.connect(args.profile);
+					const profile: azdata.IConnectionProfile = args.profile;
+					let connection = await azdata.connection.connect(profile);
 					if (connection.errorMessage) {
 						console.log(connection.errorMessage);
 					}
+					vscode.window.setStatusBarMessage(`${profile.serverName}: ${profile.databaseName}`);
 				}
 			});
 		}
