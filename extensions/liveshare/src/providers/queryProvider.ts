@@ -22,7 +22,7 @@ export class QueryProvider {
 		// this._queryProviderMssql = azdata.dataprotocol.getProvider<azdata.QueryProvider>('MSSQL', azdata.DataProviderType.QueryProvider);
 	}
 
-	public initialize(isHost: boolean, service: any): azdata.QueryProvider | void {
+	public initialize(isHost: boolean, service: SharedService | SharedServiceProxy) {
 		if (this._isHost) {
 			this._sharedService = <SharedService>service;
 

@@ -36,11 +36,10 @@ export class GuestSessionManager {
 				return;
 			}
 
-			new ConnectionProvider(isHost, sharedServiceProxy);
+			const connectionProvider = new ConnectionProvider(isHost, self._vslsApi, sharedServiceProxy);
 
 			const queryProvider = new QueryProvider(false, self._vslsApi);
 			queryProvider.initialize(false, sharedServiceProxy);
-			self._statusProvider = new StatusProvider(isHost, self._vslsApi, sharedServiceProxy);
 			vscode.workspace.onDidOpenTextDocument((params) => {
 				// it's a liveshare doc if opened from here
 				const documentState: LiveShareDocumentState = {
@@ -50,6 +49,12 @@ export class GuestSessionManager {
 				};
 				self.onDidOpenTextDocument(params, documentState);
 			});
+
+			self._statusProvider = new StatusProvider(
+				isHost,
+				self._vslsApi,
+				connectionProvider,
+				sharedServiceProxy);
 		});
 	}
 

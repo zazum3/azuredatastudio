@@ -30,14 +30,17 @@ export class HostSessionManager {
 				return;
 			}
 
-			new StatusProvider(isHost, self._vslsApi, sharedService);
+			const connectionProvider = new ConnectionProvider(isHost, self._vslsApi, sharedService);
 
-			new ConnectionProvider(isHost, sharedService);
 			// let queryProviderMssql = azdata.dataprotocol.getProvider<azdata.QueryProvider>('MSSQL', azdata.DataProviderType.QueryProvider);
 			const queryProvider = new QueryProvider(false, self._vslsApi);
 			queryProvider.initialize(true, sharedService);
 
-			new StatusProvider(isHost, self._vslsApi, sharedService);
+			new StatusProvider(
+				isHost,
+				self._vslsApi,
+				connectionProvider,
+				sharedService);
 		});
 	}
 }
