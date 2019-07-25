@@ -31,8 +31,8 @@ export class StatusProvider {
 			this._sharedServiceProxy = <SharedServiceProxy>service;
 
 			connectionProvider.onConnect(async (args: any) => {
-				if (args && args.connection) {
-					let connection = await azdata.connection.connect(args.connection);
+				if (args && args.profile) {
+					let connection = await azdata.connection.connect(args.profile);
 					if (connection.errorMessage) {
 						console.log(connection.errorMessage);
 					}
