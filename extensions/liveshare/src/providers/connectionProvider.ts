@@ -5,53 +5,53 @@
 
 import * as azdata from 'azdata';
 import * as vscode from 'vscode';
-
-import { SharedService, SharedServiceProxy } from '../liveshare';
 import * as constants from '../constants';
+
+import { LiveShare, SharedService, SharedServiceProxy } from '../liveshare';
 
 export class ConnectionProvider {
 	private _sharedService: SharedService;
 	private _sharedServiceProxy: SharedServiceProxy;
 
+	protected _onConnect: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
+	public readonly onConnect: vscode.Event<any> = this._onConnect.event;
+
+	protected _onDisconnect: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
+	public readonly onDisconnect: vscode.Event<any> = this._onDisconnect.event;
+
+	protected _onConnectionChanged: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
+	public readonly onConnectionChanged: vscode.Event<any> = this._onConnectionChanged.event;
+
 	public constructor(
 		private _isHost: boolean,
-		service: any) {
-
+		private _vslsApi: LiveShare,
+		service: SharedService | SharedServiceProxy) {
 		if (this._isHost) {
 			this._sharedService = <SharedService>service;
-
 			this.registerProviderListener();
 		} else {
 			this._sharedServiceProxy = <SharedServiceProxy>service;
-
 			this.registerProvider();
 		}
 	}
 
-	// public registerListeners(): void {
-	// 	let self = this;
-	// 	if (this._isHost) {
-	// 		azdata.connection.registerConnectionEventListener({
-	// 			onConnectionEvent(type: azdata.connection.ConnectionEvent, ownerUri: string, profile: azdata.IConnectionProfile) {
-	// 				self._sharedService.notify(<string>type, { ownerUri, profile});
-	// 			}
-	// 		});
-	// 	} else {
-	// 		this._sharedServiceProxy.onNotify('onConnect', (args: any) => {
-	// 			return args;
-	// 		});
-
-	// 		this._sharedServiceProxy.onNotify('onDisconnect', (args: any) => {
-	// 			return args;
-	// 		});
-
-	// 		this._sharedServiceProxy.onNotify('onConnectionChanged', (args: any) => {
-	// 			return args;
-	// 		});
-	// 	}
-	// }
-
 	public registerProviderListener(): void {
+		let self = this;
+		azdata.connection.registerConnectionEventListener({
+			onConnectionEvent(type: azdata.connection.ConnectionEvent, ownerUri: string, profile: azdata.IConnectionProfile) {
+				try {
+					let localUri: vscode.Uri = self._vslsApi.convertLocalUriToShared(vscode.Uri.parse(ownerUri));
+					ownerUri = localUri.toString();
+				} catch {
+				}
+
+				self._sharedService.notify(<string>type, {
+					ownerUri: ownerUri,
+					profile: profile
+				});
+			}
+		});
+
 		this._sharedService.onRequest(constants.connectRequest, (args: any) => {
 			return;
 		});
@@ -86,6 +86,21 @@ export class ConnectionProvider {
 
 	public registerProvider(): vscode.Disposable {
 		const self = this;
+		this._sharedServiceProxy.onNotify('onConnect', (args: any) => {
+			this._onConnect.fire(args);
+			return args;
+		});
+
+		this._sharedServiceProxy.onNotify('onDisconnect', (args: any) => {
+			this._onDisconnect.fire(args);
+			return args;
+		});
+
+		this._sharedServiceProxy.onNotify('onConnectionChanged', (args: any) => {
+			this._onConnectionChanged.fire(args);
+			return args;
+		});
+
 		let connect = (ownerUri: string, connInfo: azdata.ConnectionInfo): Thenable<boolean> => {
 			return self._sharedServiceProxy.request(constants.connectRequest, [{
 				ownerUri: ownerUri,

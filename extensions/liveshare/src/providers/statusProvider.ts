@@ -6,6 +6,7 @@
 import * as azdata from 'azdata';
 import * as vscode from 'vscode';
 import { LiveShare, SharedService, SharedServiceProxy } from '../liveshare';
+import { ConnectionProvider } from './connectionProvider';
 
 export class LiveShareDocumentState {
 	public isConnected: boolean;
@@ -20,13 +21,23 @@ export class StatusProvider {
 	public constructor(
 		private _isHost: boolean,
 		private _vslsApi: LiveShare,
-		service: any) {
+		connectionProvider: ConnectionProvider,
+		service: SharedService | SharedServiceProxy) {
 
 		if (this._isHost) {
 			this._sharedService = <SharedService>service;
 			this.registerStatusProvider();
 		} else {
 			this._sharedServiceProxy = <SharedServiceProxy>service;
+
+			connectionProvider.onConnect(async (args: any) => {
+				if (args && args.ownerUri) {
+					let connection = await azdata.connection.getConnection(args.ownerUri);
+					if (connection) {
+
+					}
+				}
+			});
 		}
 	}
 

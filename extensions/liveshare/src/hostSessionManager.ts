@@ -30,12 +30,16 @@ export class HostSessionManager {
 				return;
 			}
 
-			new ConnectionProvider(isHost, sharedService);
+			const connectionProvider = new ConnectionProvider(isHost, vslsApi, sharedService);
 
 			const queryProvider = new QueryProvider(true);
 			queryProvider.initialize(true, sharedService);
 
-			new StatusProvider(isHost, vslsApi, sharedService);
+			new StatusProvider(
+				isHost,
+				vslsApi,
+				connectionProvider,
+				sharedService);
 		});
 
 		// context.subscriptions.push(sharedService.onDidChangeIsServiceAvailable(available => {

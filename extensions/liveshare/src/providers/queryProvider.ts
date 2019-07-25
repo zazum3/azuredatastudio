@@ -15,7 +15,7 @@ export class QueryProvider {
 
 	public constructor(private _isHost: boolean) { }
 
-	public initialize(isHost: boolean, service: any) {
+	public initialize(isHost: boolean, service: SharedService | SharedServiceProxy) {
 		if (this._isHost) {
 			this._sharedService = <SharedService>service;
 

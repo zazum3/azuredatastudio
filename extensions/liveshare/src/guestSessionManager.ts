@@ -36,12 +36,16 @@ export class GuestSessionManager {
 				return;
 			}
 
-			new ConnectionProvider(isHost, sharedServiceProxy);
+			const connectionProvider = new ConnectionProvider(isHost, vslsApi, sharedServiceProxy);
 
 			const queryProvider = new QueryProvider(false);
 			queryProvider.initialize(false, sharedServiceProxy);
 
-			self._statusProvider = new StatusProvider(isHost, vslsApi, sharedServiceProxy);
+			self._statusProvider = new StatusProvider(
+				isHost,
+				vslsApi,
+				connectionProvider,
+				sharedServiceProxy);
 		});
 	}
 
