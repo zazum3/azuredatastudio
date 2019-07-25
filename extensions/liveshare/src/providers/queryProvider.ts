@@ -5,20 +5,24 @@
 
 import * as azdata from 'azdata';
 import * as vscode from 'vscode';
-
 import * as constants from '../constants';
-import { SharedService, SharedServiceProxy } from '../liveshare';
+import { SharedService, SharedServiceProxy, LiveShare } from '../liveshare';
 
 export class QueryProvider {
-	private _sharedService: SharedService;
-	private _sharedServiceProxy: SharedServiceProxy;
+	private _sharedService: SharedService; // host
+	private _sharedServiceProxy: SharedServiceProxy; // guest
+	// private _queryProviderMssql: azdata.QueryProvider;
 
 	public constructor(
 		private _isHost: boolean,
-		private _queryProvider: azdata.QueryProvider
-	) { }
+		private _vslsApi: LiveShare
+		//private _vslsApi: LiveShare
+	) {
+		console.log(this._vslsApi.peers);
+		// this._queryProviderMssql = azdata.dataprotocol.getProvider<azdata.QueryProvider>('MSSQL', azdata.DataProviderType.QueryProvider);
+	}
 
-	public initialize(isHost: boolean, service: any) {
+	public initialize(isHost: boolean, service: any): azdata.QueryProvider | void {
 		if (this._isHost) {
 			this._sharedService = <SharedService>service;
 
@@ -26,7 +30,6 @@ export class QueryProvider {
 		} else {
 			this._sharedServiceProxy = <SharedServiceProxy>service;
 
-			this._queryProvider.runQueryString('test', 'test');
 			this.registerProvider();
 		}
 	}

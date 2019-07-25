@@ -19,18 +19,18 @@ export class GuestSessionManager {
 
 	constructor(
 		context: vscode.ExtensionContext,
-		vslsApi: LiveShare
+		private _vslsApi: LiveShare
 	) {
 		let self = this;
 		// vscode.workspace.onDidOpenTextDocument(params => this.onDidOpenTextDocument(params));
 
-		vslsApi!.onDidChangeSession(async function onLiveShareSessionCHange(e: any) {
+		self._vslsApi!.onDidChangeSession(async function onLiveShareSessionCHange(e: any) {
 			const isHost = e.session.role === vsls.Role.Host;
 			if (!e.session.id && isHost) {
 				return;
 			}
 
-			const sharedServiceProxy: SharedServiceProxy = await vslsApi.getSharedService(LiveShareServiceName);
+			const sharedServiceProxy: SharedServiceProxy = await self._vslsApi.getSharedService(LiveShareServiceName);
 			if (!sharedServiceProxy) {
 				vscode.window.showErrorMessage('Could not access a shared service. You have to set "liveshare.features" to "experimental" in your user settings in order to use this extension.');
 				return;
@@ -38,10 +38,9 @@ export class GuestSessionManager {
 
 			new ConnectionProvider(isHost, sharedServiceProxy);
 
-			let queryProviderMssql = azdata.dataprotocol.getProvider<azdata.QueryProvider>('MSSQL', azdata.DataProviderType.QueryProvider);
-			const queryProvider = new QueryProvider(false, queryProviderMssql);
+			const queryProvider = new QueryProvider(false, self._vslsApi);
 			queryProvider.initialize(false, sharedServiceProxy);
-			self._statusProvider = new StatusProvider(isHost, vslsApi, sharedServiceProxy);
+			self._statusProvider = new StatusProvider(isHost, self._vslsApi, sharedServiceProxy);
 			vscode.workspace.onDidOpenTextDocument((params) => {
 				// it's a liveshare doc if opened from here
 				const documentState: LiveShareDocumentState = {
@@ -55,10 +54,8 @@ export class GuestSessionManager {
 	}
 
 	private async onDidOpenTextDocument(doc: vscode.TextDocument, documentState?: LiveShareDocumentState): Promise<void> {
-		if (!documentState) {
-			if (this._statusProvider && this.isLiveShareDocument(doc)) {
-				documentState = await this._statusProvider.getDocumentState(doc);
-			}
+		if (this._statusProvider && this.isLiveShareDocument(doc)) {
+			documentState = await this._statusProvider.getDocumentState(doc);
 		}
 		let queryDocument = await azdata.queryeditor.getQueryDocument(doc.uri.toString());
 		if (queryDocument) {
@@ -71,6 +68,8 @@ export class GuestSessionManager {
 	}
 
 	private isLiveShareDocument(doc: vscode.TextDocument): boolean {
+		let uri = this._vslsApi.convertLocalUriToShared(doc.uri);
+		console.log(uri.toString());
 		return doc && doc.uri.scheme === VslsSchema;
 	}
 }
