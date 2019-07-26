@@ -26,7 +26,7 @@ export class GuestSessionManager {
 
 		self._vslsApi!.onDidChangeSession(async function onLiveShareSessionCHange(e: any) {
 			const isHost = e.session.role === vsls.Role.Host;
-			if (!e.session.id && isHost) {
+			if (!e.session.id || isHost) {
 				return;
 			}
 
