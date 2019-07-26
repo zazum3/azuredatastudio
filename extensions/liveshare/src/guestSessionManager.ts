@@ -41,8 +41,8 @@ export class GuestSessionManager {
 			const queryProvider = new QueryProvider(false, self._vslsApi);
 			queryProvider.initialize(false, sharedServiceProxy);
 			vscode.workspace.onDidOpenTextDocument(async (params) => {
-				let connection = await azdata.connection.getCurrentConnection();
-				if (!connection) {
+				let connectionProfile = self._statusProvider.sharedConnectionProfile;
+				if (!connectionProfile) {
 					// it's a liveshare doc if opened from here
 					const documentState: LiveShareDocumentState = {
 						isConnected: true,
@@ -51,9 +51,8 @@ export class GuestSessionManager {
 					};
 					self.onDidOpenTextDocument(params, documentState);
 				} else {
-					const profile = await azdata.connection.getConnection(connection.connectionId);
 					let queryDocument = await azdata.queryeditor.getQueryDocument(params.uri.toString());
-					await queryDocument.connect(profile);
+					await queryDocument.connect(connectionProfile);
 				}
 			});
 

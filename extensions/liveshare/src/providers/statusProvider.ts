@@ -17,7 +17,7 @@ export class LiveShareDocumentState {
 export class StatusProvider {
 	private _sharedService: SharedService;
 	private _sharedServiceProxy: SharedServiceProxy;
-	private _sharedConnectionProfile: azdata.IConnectionProfile;
+	private _sharedConnectionProfile: azdata.connection.ConnectionProfile;
 
 	public constructor(
 		private _isHost: boolean,
@@ -39,7 +39,7 @@ export class StatusProvider {
 						console.log(connection.errorMessage);
 						return;
 					}
-					self._sharedConnectionProfile = profile;
+					self.setConnectionProfile(profile, connection.connectionId);
 					vscode.window.setStatusBarMessage(`${self._sharedConnectionProfile.serverName}: ${self._sharedConnectionProfile.databaseName}`);
 				}
 			});
@@ -84,5 +84,15 @@ export class StatusProvider {
 		} else {
 			return Promise.resolve(undefined);
 		}
+	}
+
+	private setConnectionProfile(connectionProfile: azdata.IConnectionProfile, connectionId: string): void {
+		let profile: azdata.connection.ConnectionProfile= { ...connectionProfile, providerId: 'liveshare', connectionId: connectionId };
+		this._sharedConnectionProfile = profile;
+	}
+
+	public get sharedConnectionProfile(): azdata.connection.ConnectionProfile {
+		let profile: azdata.connection.ConnectionProfile= { ...this._sharedConnectionProfile, providerId: 'liveshare'}
+		return profile;
 	}
 }
