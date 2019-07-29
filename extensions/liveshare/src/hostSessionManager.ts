@@ -36,15 +36,11 @@ export class HostSessionManager {
 			const queryProvider = new QueryProvider(false, self._vslsApi);
 			queryProvider.initialize(true, sharedService);
 
-			const statusProvider = new StatusProvider(
+			new StatusProvider(
 				isHost,
 				self._vslsApi,
 				connectionProvider,
 				sharedService);
-
-			vscode.workspace.onDidOpenTextDocument((doc) => {
-				statusProvider.getDocumentState(doc);
-			});
 		});
 	}
 }
