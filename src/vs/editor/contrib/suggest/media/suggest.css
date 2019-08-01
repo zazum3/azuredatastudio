@@ -211,6 +211,15 @@
 .monaco-editor .suggest-widget .monaco-list .monaco-list-row .suggest-icon.customcolor::before { background-image: none; }
 .monaco-editor .suggest-widget .monaco-list .monaco-list-row .suggest-icon.folder::before { background-image: url('folder-light.svg'); }
 
+/* // {{SQL CARBON EDIT}} - Add custom icons */
+.monaco-editor .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-table::before { background-image: url('folder-light.svg'); }
+.monaco-editor .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-view::before { background-image: url('folder-light.svg'); }
+.monaco-editor .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-storedprocedure::before { background-image: url('folder-light.svg'); }
+.monaco-editor .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-tablevaluefunction::before { background-image: url('folder-light.svg'); }
+.monaco-editor .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-column::before { background-image: url('folder-light.svg'); }
+.monaco-editor .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-function::before { background-image: url('folder-light.svg'); }
+/* // {{SQL CARBON EDIT}} - End */
+
 .monaco-editor .suggest-widget .monaco-list .monaco-list-row .icon.customcolor .colorspan {
 	margin: 0 0 0 0.3em;
 	border: 0.1em solid #000;
@@ -379,3 +388,23 @@
 
 .monaco-editor.vs-dark .suggest-widget .monaco-list .monaco-list-row .suggest-icon.folder::before,
 .monaco-editor.hc-black .suggest-widget .monaco-list .monaco-list-row .suggest-icon.folder::before { background-image: url('folder-dark.svg'); }
+
+/* // {{SQL CARBON EDIT}} - Add custom icons */
+.monaco-editor.vs-dark .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-table::before,
+.monaco-editor.hc-black .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-table::before { background-image: url('template-dark.svg'); }
+
+.monaco-editor.vs-dark .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-view::before,
+.monaco-editor.hc-black .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-view::before { background-image: url('template-dark.svg'); }
+
+.monaco-editor.vs-dark .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-storedprocedure::before,
+.monaco-editor.hc-black .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-storedprocedure::before { background-image: url('template-dark.svg'); }
+
+.monaco-editor.vs-dark .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-tablevaluefunction::before,
+.monaco-editor.hc-black .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-tablevaluefunction::before { background-image: url('template-dark.svg'); }
+
+.monaco-editor.vs-dark .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-column::before,
+.monaco-editor.hc-black .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-column::before { background-image: url('template-dark.svg'); }
+
+.monaco-editor.vs-dark .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-function::before,
+.monaco-editor.hc-black .suggest-widget .monaco-list .monaco-list-row .suggest-icon.sql-function::before { background-image: url('template-dark.svg'); }
+/* // {{SQL CARBON EDIT}} - End */

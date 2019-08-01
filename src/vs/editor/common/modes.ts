@@ -281,6 +281,14 @@ export const enum CompletionItemKind {
 	Customcolor,
 	Folder,
 	TypeParameter,
+	// {{SQL CARBON EDIT}} - Add custom icons
+	Table = 1000,
+	View = 1001,
+	StoredProcedure = 1002,
+	TableValueFunction = 1003,
+	Column = 1004,
+	SqlFunction = 1005,
+	// {{SQL CARBON EDIT}} - End
 	Snippet, // <- highest value (used for compare!)
 }
 
@@ -315,6 +323,14 @@ export const completionKindToCssClass = (function () {
 	data[CompletionItemKind.Customcolor] = 'customcolor';
 	data[CompletionItemKind.Folder] = 'folder';
 	data[CompletionItemKind.TypeParameter] = 'type-parameter';
+	// {{SQL CARBON EDIT}} - Add custom icons
+	data[CompletionItemKind.Table] = 'sql-table';
+	data[CompletionItemKind.View] = 'sql-view';
+	data[CompletionItemKind.StoredProcedure] = 'sql-storedprocedure';
+	data[CompletionItemKind.TableValueFunction] = 'sql-tablevaluefunction';
+	data[CompletionItemKind.Column] = 'sql-column';
+	data[CompletionItemKind.SqlFunction] = 'sql-function';
+	// {{SQL CARBON EDIT}} - Add custom icons
 
 	return function (kind: CompletionItemKind) {
 		return data[kind] || 'property';
@@ -357,6 +373,14 @@ export let completionKindFromString: {
 	data['folder'] = CompletionItemKind.Folder;
 	data['type-parameter'] = CompletionItemKind.TypeParameter;
 	data['typeParameter'] = CompletionItemKind.TypeParameter;
+	// {{SQL CARBON EDIT}} - Add custom icons
+	data['sql-table'] = CompletionItemKind.Table;
+	data['sql-view'] = CompletionItemKind.View;
+	data['sql-storedprocedure'] = CompletionItemKind.StoredProcedure;
+	data['sql-tablevaluefunction'] = CompletionItemKind.TableValueFunction;
+	data['sql-column'] = CompletionItemKind.Column;
+	data['sql-function'] = CompletionItemKind.SqlFunction;
+	// {{SQL CARBON EDIT}} - Add custom icons
 
 	return function (value: string, strict?: true) {
 		let res = data[value];

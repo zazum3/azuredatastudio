@@ -578,7 +578,13 @@ export enum CompletionItemKind {
 	Customcolor = 22,
 	Folder = 23,
 	TypeParameter = 24,
-	Snippet = 25
+	Table = 1000,
+	View = 1001,
+	StoredProcedure = 1002,
+	TableValueFunction = 1003,
+	Column = 1004,
+	SqlFunction = 1005,
+	Snippet = 1006
 }
 
 export enum CompletionItemInsertTextRule {

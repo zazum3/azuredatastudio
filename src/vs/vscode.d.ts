@@ -3282,7 +3282,15 @@ declare module 'vscode' {
 		Struct = 21,
 		Event = 22,
 		Operator = 23,
-		TypeParameter = 24
+		TypeParameter = 24,
+		// {{SQL CARBON EDIT}} - Add custom icons
+		Table = 1000,
+		View = 1001,
+		StoredProcedure = 1002,
+		TableValueFunction = 1003,
+		Column = 1004,
+		SqlFunction = 1005
+		// {{SQL CARBON EDIT}} - End
 	}
 
 	/**

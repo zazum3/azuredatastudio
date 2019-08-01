@@ -692,6 +692,14 @@ export namespace CompletionItemKind {
 			case types.CompletionItemKind.Event: return modes.CompletionItemKind.Event;
 			case types.CompletionItemKind.Operator: return modes.CompletionItemKind.Operator;
 			case types.CompletionItemKind.TypeParameter: return modes.CompletionItemKind.TypeParameter;
+			// {{SQL CARBON EDIT}} - Add custom icons
+			case types.CompletionItemKind.Table: return modes.CompletionItemKind.Table;
+			case types.CompletionItemKind.View: return modes.CompletionItemKind.View;
+			case types.CompletionItemKind.StoredProcedure: return modes.CompletionItemKind.StoredProcedure;
+			case types.CompletionItemKind.TableValueFunction: return modes.CompletionItemKind.TableValueFunction;
+			case types.CompletionItemKind.Column: return modes.CompletionItemKind.Column;
+			case types.CompletionItemKind.SqlFunction: return modes.CompletionItemKind.SqlFunction;
+			// {{SQL CARBON EDIT}} - End
 		}
 		return modes.CompletionItemKind.Property;
 	}
@@ -723,6 +731,14 @@ export namespace CompletionItemKind {
 			case modes.CompletionItemKind.Event: return types.CompletionItemKind.Event;
 			case modes.CompletionItemKind.Operator: return types.CompletionItemKind.Operator;
 			case modes.CompletionItemKind.TypeParameter: return types.CompletionItemKind.TypeParameter;
+			// {{SQL CARBON EDIT}} - Add custom icons
+			case modes.CompletionItemKind.Table: return types.CompletionItemKind.Table;
+			case modes.CompletionItemKind.View: return types.CompletionItemKind.View;
+			case modes.CompletionItemKind.StoredProcedure: return types.CompletionItemKind.StoredProcedure;
+			case modes.CompletionItemKind.TableValueFunction: return types.CompletionItemKind.TableValueFunction;
+			case modes.CompletionItemKind.Column: return types.CompletionItemKind.Column;
+			case modes.CompletionItemKind.SqlFunction: return types.CompletionItemKind.SqlFunction;
+			// {{SQL CARBON EDIT}} - End
 		}
 		return types.CompletionItemKind.Property;
 	}

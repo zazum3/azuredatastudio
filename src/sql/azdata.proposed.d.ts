@@ -27,3 +27,14 @@ declare module 'azdata' {
 		export function registerConnectionEventListener(listener: connection.ConnectionEventListener): void;
 	}
 }
+
+// declare module 'vscode' {
+// 	export enum CompletionItemKind {
+// 		Table = 1000,
+// 		View = 1001,
+// 		StoredProcedure = 1002,
+// 		TableValueFunction = 1003,
+// 		Column = 1004,
+// 		SqlFunction = 1005
+// 	}
+// }
