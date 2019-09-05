@@ -188,12 +188,9 @@ export class NotebookTextFileModel {
 		if (!outputsBegin || !textEditorModel.textEditorModel.getLineContent(outputsBegin.startLineNumber).trim().includes('outputs')) {
 			this.updateOutputBeginRange(textEditorModel, cellGuid);
 			outputsBegin = this._outputBeginRange;
-			if (!outputsBegin) {
+			if (!outputsBegin || !textEditorModel.textEditorModel.getLineContent(outputsBegin.startLineNumber).trim().includes('outputs')) {
 				return undefined;
 			}
-		}
-		if (!textEditorModel.textEditorModel.getLineContent(outputsBegin.startLineNumber).trim().includes('outputs')) {
-			return undefined;
 		}
 		let outputsEnd = textEditorModel.textEditorModel.matchBracket({ column: outputsBegin.endColumn - 1, lineNumber: outputsBegin.endLineNumber });
 		if (!outputsEnd || outputsEnd.length < 2) {
@@ -236,9 +233,6 @@ export class NotebookTextFileModel {
 	// Find a cell's location, given its cellGuid
 	// If it doesn't exist (e.g. it's not the active cell), attempt to find it
 	private getCellNodeByGuid(textEditorModel: TextFileEditorModel | UntitledEditorModel, guid: string) {
-		if (!guid) {
-			return undefined;
-		}
 		if (this._activeCellGuid !== guid || !this._sourceBeginRange) {
 			this.updateSourceBeginRange(textEditorModel, guid);
 		}
@@ -246,9 +240,6 @@ export class NotebookTextFileModel {
 	}
 
 	private getOutputNodeByGuid(textEditorModel: TextFileEditorModel | UntitledEditorModel, guid: string) {
-		if (!guid) {
-			return undefined;
-		}
 		if (this._activeCellGuid !== guid) {
 			this.updateOutputBeginRange(textEditorModel, guid);
 		}
