@@ -62,7 +62,7 @@ export class NotebookTextFileModel {
 	}
 
 	public transformAndApplyEditForOutputUpdate(contentChange: NotebookContentChange, textEditorModel: TextFileEditorModel | UntitledEditorModel): boolean {
-		if (Array.isArray(contentChange.cells[0].outputs) && contentChange.cells[0].outputs.length > 0 && contentChange.cells[0].cellGuid) {
+		if (Array.isArray(contentChange.cells[0].outputs) && contentChange.cells[0].outputs.length > 0) {
 			let newOutput = JSON.stringify(contentChange.cells[0].outputs[contentChange.cells[0].outputs.length - 1], undefined, '    ');
 			if (contentChange.cells[0].outputs.length > 1) {
 				newOutput = ', '.concat(newOutput);
@@ -75,10 +75,11 @@ export class NotebookTextFileModel {
 					range: new Range(range.startLineNumber, range.startColumn, range.startLineNumber, range.startColumn),
 					text: newOutput
 				}]);
-				return true;
 			}
+		} else {
+			return false;
 		}
-		return false;
+		return true;
 
 	}
 
