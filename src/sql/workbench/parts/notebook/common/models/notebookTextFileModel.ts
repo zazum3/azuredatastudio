@@ -62,7 +62,7 @@ export class NotebookTextFileModel {
 	}
 
 	public transformAndApplyEditForOutputUpdate(contentChange: NotebookContentChange, textEditorModel: TextFileEditorModel | UntitledEditorModel): boolean {
-		if (Array.isArray(contentChange.cells[0].outputs) && contentChange.cells[0].outputs.length > 0) {
+		if (Array.isArray(contentChange.cells[0].outputs) && contentChange.cells[0].outputs.length > 0 && contentChange.cells[0].cellGuid) {
 			let newOutput = JSON.stringify(contentChange.cells[0].outputs[contentChange.cells[0].outputs.length - 1], undefined, '    ');
 			if (contentChange.cells[0].outputs.length > 1) {
 				newOutput = ', '.concat(newOutput);
@@ -75,11 +75,11 @@ export class NotebookTextFileModel {
 					range: new Range(range.startLineNumber, range.startColumn, range.startLineNumber, range.startColumn),
 					text: newOutput
 				}]);
+				return true;
 			}
-		} else {
-			return false;
 		}
-		return true;
+		return false;
+
 	}
 
 	public transformAndApplyEditForCellUpdated(contentChange: NotebookContentChange, textEditorModel: TextFileEditorModel | UntitledEditorModel): boolean {
@@ -159,11 +159,10 @@ export class NotebookTextFileModel {
 
 	// Find the beginning of a cell's outputs in the text editor model
 	private updateOutputBeginRange(textEditorModel: TextFileEditorModel | UntitledEditorModel, cellGuid: string): void {
+		this._outputBeginRange = undefined;
 		if (!cellGuid) {
 			return undefined;
 		}
-		this._outputBeginRange = undefined;
-
 		let cellGuidMatches = findOrSetCellGuidMatch(textEditorModel, cellGuid);
 		if (cellGuidMatches && cellGuidMatches.length > 0) {
 			let outputsBegin = textEditorModel.textEditorModel.findNextMatch('"outputs": [', { lineNumber: cellGuidMatches[0].range.endLineNumber, column: cellGuidMatches[0].range.endColumn }, false, true, undefined, true);
@@ -179,16 +178,22 @@ export class NotebookTextFileModel {
 	// Find the end of a cell's outputs in the text editor model
 	// This will be used as a starting point for any future outputs
 	private getEndOfOutputs(textEditorModel: TextFileEditorModel | UntitledEditorModel, cellGuid: string) {
+		if (!cellGuid) {
+			return undefined;
+		}
 		let outputsBegin;
 		if (this._activeCellGuid === cellGuid) {
 			outputsBegin = this._outputBeginRange;
 		}
-		if (!outputsBegin || !textEditorModel.textEditorModel.getLineContent(outputsBegin.startLineNumber).trim().includes('output')) {
+		if (!outputsBegin || !textEditorModel.textEditorModel.getLineContent(outputsBegin.startLineNumber).trim().includes('outputs')) {
 			this.updateOutputBeginRange(textEditorModel, cellGuid);
 			outputsBegin = this._outputBeginRange;
 			if (!outputsBegin) {
 				return undefined;
 			}
+		}
+		if (!textEditorModel.textEditorModel.getLineContent(outputsBegin.startLineNumber).trim().includes('outputs')) {
+			return undefined;
 		}
 		let outputsEnd = textEditorModel.textEditorModel.matchBracket({ column: outputsBegin.endColumn - 1, lineNumber: outputsBegin.endLineNumber });
 		if (!outputsEnd || outputsEnd.length < 2) {
@@ -207,7 +212,7 @@ export class NotebookTextFileModel {
 			// Last 2 lines in multi-line output will look like the following:
 			// "                }"
 			// "            ],"
-			if (textEditorModel.textEditorModel.getLineContent(outputsEnd[1].endLineNumber - 1).trim() === '}') {
+			if (textEditorModel.textEditorModel.getLineContent(outputsEnd[1].endLineNumber - 1).trim() === '}' && textEditorModel.textEditorModel.getLineContent(outputsEnd[1].endLineNumber).trim().includes(']')) {
 				return {
 					startColumn: textEditorModel.textEditorModel.getLineFirstNonWhitespaceColumn(outputsEnd[1].endLineNumber - 1) + 1,
 					startLineNumber: outputsEnd[1].endLineNumber - 1,
@@ -231,6 +236,9 @@ export class NotebookTextFileModel {
 	// Find a cell's location, given its cellGuid
 	// If it doesn't exist (e.g. it's not the active cell), attempt to find it
 	private getCellNodeByGuid(textEditorModel: TextFileEditorModel | UntitledEditorModel, guid: string) {
+		if (!guid) {
+			return undefined;
+		}
 		if (this._activeCellGuid !== guid || !this._sourceBeginRange) {
 			this.updateSourceBeginRange(textEditorModel, guid);
 		}
@@ -238,6 +246,9 @@ export class NotebookTextFileModel {
 	}
 
 	private getOutputNodeByGuid(textEditorModel: TextFileEditorModel | UntitledEditorModel, guid: string) {
+		if (!guid) {
+			return undefined;
+		}
 		if (this._activeCellGuid !== guid) {
 			this.updateOutputBeginRange(textEditorModel, guid);
 		}
