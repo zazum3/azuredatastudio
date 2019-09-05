@@ -80,7 +80,6 @@ export class NotebookTextFileModel {
 			return false;
 		}
 		return true;
-
 	}
 
 	public transformAndApplyEditForCellUpdated(contentChange: NotebookContentChange, textEditorModel: TextFileEditorModel | UntitledEditorModel): boolean {
@@ -186,10 +185,10 @@ export class NotebookTextFileModel {
 		if (this._activeCellGuid === cellGuid) {
 			outputsBegin = this._outputBeginRange;
 		}
-		if (!outputsBegin || !textEditorModel.textEditorModel.getLineContent(outputsBegin.startLineNumber).trim().includes('outputs')) {
+		if (!outputsBegin || !textEditorModel.textEditorModel.getLineContent(outputsBegin.startLineNumber).trim().includes('output')) {
 			this.updateOutputBeginRange(textEditorModel, cellGuid);
 			outputsBegin = this._outputBeginRange;
-			if (!outputsBegin || !textEditorModel.textEditorModel.getLineContent(outputsBegin.startLineNumber).trim().includes('outputs')) {
+			if (!outputsBegin || !textEditorModel.textEditorModel.getLineContent(outputsBegin.startLineNumber).trim().includes('output')) {
 				return undefined;
 			}
 		}
@@ -210,7 +209,9 @@ export class NotebookTextFileModel {
 			// Last 2 lines in multi-line output will look like the following:
 			// "                }"
 			// "            ],"
-			if (textEditorModel.textEditorModel.getLineContent(outputsEnd[1].endLineNumber - 1).trim() === '}' && textEditorModel.textEditorModel.getLineContent(outputsEnd[1].endLineNumber).trim().includes(']')) {
+			if (textEditorModel.textEditorModel.getLineContent(outputsEnd[1].endLineNumber - 1).trim() === '}' &&
+				textEditorModel.textEditorModel.getLineContent(outputsEnd[1].endLineNumber).trim().includes(']') &&
+				textEditorModel.textEditorModel.getLineContent(outputsEnd[1].endLineNumber + 1).trim().includes('"execution_count": ')) {
 				return {
 					startColumn: textEditorModel.textEditorModel.getLineFirstNonWhitespaceColumn(outputsEnd[1].endLineNumber - 1) + 1,
 					startLineNumber: outputsEnd[1].endLineNumber - 1,
