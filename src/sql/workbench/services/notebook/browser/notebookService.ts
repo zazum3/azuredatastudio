@@ -30,6 +30,7 @@ export interface ILanguageMagic {
 	language: string;
 	kernels?: string[];
 	executionTarget?: string;
+	isExternalScriptMagic?: boolean;
 }
 
 export interface INotebookService {

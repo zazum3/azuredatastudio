@@ -25,6 +25,7 @@ import { ILanguageMagic } from 'sql/workbench/services/notebook/browser/notebook
 import { ITextResourcePropertiesService } from 'vs/editor/common/services/resourceConfiguration';
 import { URI } from 'vs/base/common/uri';
 import { getUriPrefix, uriPrefixes } from 'sql/platform/connection/common/utils';
+import { ITerminalService, ITerminalInstance } from 'vs/workbench/contrib/terminal/browser/terminal';
 
 export const sqlKernelError: string = localize("sqlKernelError", "SQL kernel error");
 export const MAX_ROWS = 5000;
@@ -33,13 +34,20 @@ export const MaxTableRowsConfigName = 'maxTableRows';
 
 const languageMagics: ILanguageMagic[] = [{
 	language: 'Python',
-	magic: 'lang_python'
+	magic: 'lang_python',
+	isExternalScriptMagic: true
 }, {
 	language: 'R',
-	magic: 'lang_r'
+	magic: 'lang_r',
+	isExternalScriptMagic: true
 }, {
 	language: 'Java',
-	magic: 'lang_java'
+	magic: 'lang_java',
+	isExternalScriptMagic: true
+}, {
+	language: 'PowerShell',
+	magic: 'powershell',
+	isExternalScriptMagic: false
 }];
 
 export interface SQLData {
@@ -162,8 +170,10 @@ class SqlKernel extends Disposable implements nb.IKernel {
 	private _id: string;
 	private _future: SQLFuture;
 	private _executionCount: number = 0;
-	private _magicToExecutorMap = new Map<string, ExternalScriptMagic>();
+	private _magicToExternalScriptExecutorMap = new Map<string, ExternalScriptMagic>();
+	private _magicToScriptingLanguageExecutorMap = new Map<string, ScriptingLanguageMagic>();
 	private _connectionPath: string;
+	_dataEventTracker: TerminalDataEventTracker;
 
 	constructor(private _path: string,
 		@IConnectionManagementService private _connectionManagementService: IConnectionManagementService,
@@ -172,7 +182,8 @@ class SqlKernel extends Disposable implements nb.IKernel {
 		@IErrorMessageService private _errorMessageService: IErrorMessageService,
 		@IConfigurationService private _configurationService: IConfigurationService,
 		@ILogService private readonly logService: ILogService,
-		@ITextResourcePropertiesService private readonly textResourcePropertiesService: ITextResourcePropertiesService
+		@ITextResourcePropertiesService private readonly textResourcePropertiesService: ITextResourcePropertiesService,
+		@ITerminalService private _terminalService: ITerminalService
 	) {
 		super();
 		this.initMagics();
@@ -181,8 +192,13 @@ class SqlKernel extends Disposable implements nb.IKernel {
 
 	private initMagics(): void {
 		for (let magic of languageMagics) {
-			let scriptMagic = new ExternalScriptMagic(magic.language);
-			this._magicToExecutorMap.set(magic.magic, scriptMagic);
+			if (magic.isExternalScriptMagic !== false) {
+				let scriptMagic = new ExternalScriptMagic(magic.language);
+				this._magicToExternalScriptExecutorMap.set(magic.magic, scriptMagic);
+			} else {
+				let scriptingMagic = new ScriptingLanguageMagic(magic.language);
+				this._magicToScriptingLanguageExecutorMap.set(magic.magic, scriptingMagic);
+			}
 		}
 	}
 
@@ -268,40 +284,61 @@ class SqlKernel extends Disposable implements nb.IKernel {
 
 	requestExecute(content: nb.IExecuteRequest, disposeOnDone?: boolean): nb.IFuture {
 		let canRun: boolean = true;
-		let code = this.getCodeWithoutCellMagic(content);
-		if (this._queryRunner) {
-			// Cancel any existing query
-			if (this._future && !this._queryRunner.hasCompleted) {
-				this._queryRunner.cancelQuery().then(ok => undefined, error => this._errorMessageService.showDialog(Severity.Error, sqlKernelError, error));
-				// TODO when we can just show error as an output, should show an "execution canceled" error in output
-				this._future.handleDone();
-			}
-			this._queryRunner.runQuery(code);
-		} else if (this._currentConnection && this._currentConnectionProfile) {
-			this._queryRunner = this._instantiationService.createInstance(QueryRunner, this._connectionPath);
-			this._connectionManagementService.connect(this._currentConnectionProfile, this._connectionPath).then((result) => {
-				this.addQueryEventListeners(this._queryRunner);
-				this._queryRunner.runQuery(code);
+		let magicCellInfo = this.getCodeWithoutCellMagic(content);
+		if (magicCellInfo.magicName && this._magicToScriptingLanguageExecutorMap.get(magicCellInfo.magicName)) {
+			this._future = new SQLFuture(this._queryRunner, 0, this._configurationService, this.logService);
+
+			let instance = this._terminalService.createTerminal({ hideFromUser: true, executable: 'pwsh' });
+			this._dataEventTracker = this._instantiationService.createInstance(TerminalDataEventTracker, (id, data) => {
+				this._onTerminalData(id, data);
 			});
+			instance.sendText(magicCellInfo.cellSourceWithoutMagic, true);
+
+
+
+
+			return this._future;
 		} else {
-			canRun = false;
+			if (this._queryRunner) {
+				// Cancel any existing query
+				if (this._future && !this._queryRunner.hasCompleted) {
+					this._queryRunner.cancelQuery().then(ok => undefined, error => this._errorMessageService.showDialog(Severity.Error, sqlKernelError, error));
+					// TODO when we can just show error as an output, should show an "execution canceled" error in output
+					this._future.handleDone();
+				}
+				this._queryRunner.runQuery(magicCellInfo.cellSourceWithoutMagic);
+			} else if (this._currentConnection && this._currentConnectionProfile) {
+				this._queryRunner = this._instantiationService.createInstance(QueryRunner, this._connectionPath);
+				this._connectionManagementService.connect(this._currentConnectionProfile, this._connectionPath).then((result) => {
+					this.addQueryEventListeners(this._queryRunner);
+					this._queryRunner.runQuery(magicCellInfo.cellSourceWithoutMagic);
+				});
+			} else {
+				canRun = false;
+			}
+
+
+			// Only update execution count if this will run. if not, set as undefined in future so cell isn't shown as having run?
+			// TODO verify this is "canonical" behavior
+			let count = canRun ? ++this._executionCount : undefined;
+
+			this._future = new SQLFuture(this._queryRunner, count, this._configurationService, this.logService);
+			if (!canRun) {
+				// Complete early
+				this._future.handleDone(new Error(localize('connectionRequired', "A connection must be chosen to run notebook cells")));
+			}
+
+			// TODO should we  cleanup old future? I don't think we need to
+			return this._future;
 		}
-
-		// Only update execution count if this will run. if not, set as undefined in future so cell isn't shown as having run?
-		// TODO verify this is "canonical" behavior
-		let count = canRun ? ++this._executionCount : undefined;
-
-		this._future = new SQLFuture(this._queryRunner, count, this._configurationService, this.logService);
-		if (!canRun) {
-			// Complete early
-			this._future.handleDone(new Error(localize('connectionRequired', "A connection must be chosen to run notebook cells")));
-		}
-
-		// TODO should we  cleanup old future? I don't think we need to
-		return this._future;
 	}
 
-	private getCodeWithoutCellMagic(content: nb.IExecuteRequest): string {
+	private _onTerminalData(terminalId: number, data: string): void {
+		this._future.handleMessage(data);
+	}
+
+	private getCodeWithoutCellMagic(content: nb.IExecuteRequest): IMagicCellInfo {
+		let magic;
 		let code = Array.isArray(content.code) ? content.code.join('') : content.code;
 		let firstLineEnd = code.indexOf(this.textResourcePropertiesService.getEOL(URI.file(this._path)));
 		let firstLine = code.substring(0, (firstLineEnd >= 0) ? firstLineEnd : 0).trimLeft();
@@ -309,15 +346,18 @@ class SqlKernel extends Disposable implements nb.IKernel {
 			// Strip out the line
 			code = code.substring(firstLineEnd, code.length);
 			// Try and match to an external script magic. If we add more magics later, should handle transforms better
-			let magic = notebookUtils.tryMatchCellMagic(firstLine);
+			magic = notebookUtils.tryMatchCellMagic(firstLine);
 			if (magic) {
-				let executor = this._magicToExecutorMap.get(magic.toLowerCase());
+				let executor = this._magicToExternalScriptExecutorMap.get(magic.toLowerCase());
 				if (executor) {
 					code = executor.convertToExternalScript(code);
 				}
 			}
 		}
-		return code;
+		return {
+			cellSourceWithoutMagic: code,
+			magicName: magic
+		};
 	}
 
 	requestComplete(content: nb.ICompleteRequest): Thenable<nb.ICompleteReplyMsg> {
@@ -627,6 +667,11 @@ export interface IDataResourceSchema {
 	type?: string;
 }
 
+export interface IMagicCellInfo {
+	cellSourceWithoutMagic: string;
+	magicName: string;
+}
+
 class ExternalScriptMagic {
 
 	constructor(private language: string) {
@@ -637,5 +682,34 @@ class ExternalScriptMagic {
 		@language = N'${this.language}',
 		@script = N'${script}'
 		`;
+	}
+}
+
+class ScriptingLanguageMagic {
+
+	constructor(private language: string) {
+	}
+
+	public runScript(content: string) {
+
+	}
+}
+
+/**
+ * Encapsulates temporary tracking of data events from terminal instances, once disposed all
+ * listeners are removed.
+ */
+class TerminalDataEventTracker extends Disposable {
+	constructor(
+		private readonly _callback: (id: number, data: string) => void,
+		@ITerminalService private readonly _terminalService: ITerminalService
+	) {
+		super();
+		this._terminalService.terminalInstances.forEach(instance => this._registerInstance(instance));
+		this._register(this._terminalService.onInstanceCreated(instance => this._registerInstance(instance)));
+	}
+
+	private _registerInstance(instance: ITerminalInstance): void {
+		this._register(instance.onData(e => this._callback(instance.id, e)));
 	}
 }
