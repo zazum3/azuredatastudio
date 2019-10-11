@@ -25,6 +25,7 @@ import { CreateInsightAction, CopyAction, SaveImageAction, IChartActionContext }
 import { Taskbar } from 'sql/base/browser/ui/taskbar/taskbar';
 import { Checkbox } from 'sql/base/browser/ui/checkbox/checkbox';
 import { ChartState, IInsightOptions, ChartType } from 'sql/workbench/parts/charts/common/interfaces';
+import { DbCellValue } from 'azdata';
 
 declare class Proxy {
 	constructor(object, handler);
@@ -172,6 +173,16 @@ export class ChartView extends Disposable implements IPanelView {
 	public set queryRunner(runner: QueryRunner) {
 		this._queryRunner = runner;
 		this.shouldGraph();
+	}
+
+	public setData(rows: DbCellValue[][], columns: string[]) {
+		this._data = {
+			columns: columns,
+			rows: rows.map(r => r.map(c => c.displayValue))
+		};
+		if (this.insight) {
+			this.insight.data = this._data;
+		}
 	}
 
 	private shouldGraph() {

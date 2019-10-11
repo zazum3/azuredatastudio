@@ -30,7 +30,7 @@ import { GridTableState } from 'sql/workbench/parts/query/common/gridPanelState'
 import { GridTableBase } from 'sql/workbench/parts/query/browser/gridPanel';
 import { getErrorMessage } from 'vs/base/common/errors';
 import { ISerializationService, SerializeDataParams } from 'sql/platform/serialization/common/serializationService';
-import { SaveResultAction } from 'sql/workbench/parts/query/browser/actions';
+import { SaveResultAction, ChartDataAction } from 'sql/workbench/parts/query/browser/actions';
 import { ResultSerializer, SaveResultsResponse } from 'sql/workbench/parts/query/common/resultSerializer';
 import { ActionsOrientation } from 'vs/base/browser/ui/actionbar/actionbar';
 
@@ -161,6 +161,7 @@ class DataResourceTable extends GridTableBase<any> {
 			this.instantiationService.createInstance(SaveResultAction, SaveResultAction.SAVEEXCEL_ID, SaveResultAction.SAVEEXCEL_LABEL, SaveResultAction.SAVEEXCEL_ICON, SaveFormat.EXCEL),
 			this.instantiationService.createInstance(SaveResultAction, SaveResultAction.SAVEJSON_ID, SaveResultAction.SAVEJSON_LABEL, SaveResultAction.SAVEJSON_ICON, SaveFormat.JSON),
 			this.instantiationService.createInstance(SaveResultAction, SaveResultAction.SAVEXML_ID, SaveResultAction.SAVEXML_LABEL, SaveResultAction.SAVEXML_ICON, SaveFormat.XML),
+			this.instantiationService.createInstance(ChartDataAction)
 		];
 	}
 
@@ -171,7 +172,7 @@ class DataResourceTable extends GridTableBase<any> {
 	}
 }
 
-class DataResourceDataProvider implements IGridDataProvider {
+export class DataResourceDataProvider implements IGridDataProvider {
 	private rows: azdata.DbCellValue[][];
 	constructor(source: IDataResource,
 		private resultSet: azdata.ResultSetSummary,

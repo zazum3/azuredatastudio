@@ -81,6 +81,10 @@ export class NotebookEditor extends BaseEditor {
 		}
 	}
 
+	public chart(dataId: { batchId: number, resultId: number }): void {
+		// this.resultsEditor.chart(dataId);
+	}
+
 	/**
 	 * Load the angular components and record for this input that we have done so
 	 */
