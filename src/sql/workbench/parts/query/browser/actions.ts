@@ -224,7 +224,7 @@ export class ChartDataAction extends Action {
 
 		if (this.editorService.activeControl instanceof NotebookEditor) {
 			const activeEditor = this.editorService.activeControl as NotebookEditor;
-			activeEditor.chart({ batchId: context.batchId, resultId: context.resultId }, context);
+			activeEditor.chart(context);
 		}
 		else {
 			const activeEditor = this.editorService.activeControl as QueryEditor;

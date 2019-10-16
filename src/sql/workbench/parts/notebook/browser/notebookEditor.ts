@@ -86,7 +86,7 @@ export class NotebookEditor extends BaseEditor {
 		}
 	}
 
-	public chart(dataId: { batchId: number, resultId: number }, context: IGridActionContext): void {
+	public chart(context: IGridActionContext): void {
 		let chartView = this.instantiationService.createInstance(ChartView);
 		chartView.state = new ChartState();
 		let renderingContainer = context.table.grid.getContainerNode().parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement;
