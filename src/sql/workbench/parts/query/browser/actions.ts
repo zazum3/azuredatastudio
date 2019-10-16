@@ -22,14 +22,9 @@ import { GridTableState } from 'sql/workbench/parts/query/common/gridPanelState'
 import * as Constants from 'sql/workbench/contrib/extensions/common/constants';
 import { IAdsTelemetryService } from 'sql/platform/telemetry/common/telemetry';
 import * as TelemetryKeys from 'sql/platform/telemetry/common/telemetryKeys';
-import { IEnvironmentService } from 'vs/platform/environment/common/environment';
 import { getErrorMessage } from 'vs/base/common/errors';
 import { NotebookEditor } from 'sql/workbench/parts/notebook/browser/notebookEditor';
-import { ChartView } from 'sql/workbench/parts/charts/browser/chartView';
-import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { ChartState } from 'sql/workbench/parts/charts/common/interfaces';
 
-import { DataResourceDataProvider } from 'sql/workbench/parts/notebook/browser/outputs/gridOutput.component';
 
 export interface IGridActionContext {
 	gridDataProvider: IGridDataProvider;
@@ -218,9 +213,7 @@ export class ChartDataAction extends Action {
 
 	constructor(
 		@IEditorService private editorService: IEditorService,
-		@IExtensionTipsService private readonly extensionTipsService: IExtensionTipsService,
-		@IEnvironmentService private readonly environmentService: IEnvironmentService,
-		@IInstantiationService private readonly instantiationService: IInstantiationService
+		@IExtensionTipsService private readonly extensionTipsService: IExtensionTipsService
 	) {
 		super(ChartDataAction.ID, ChartDataAction.LABEL, ChartDataAction.ICON);
 	}
@@ -231,19 +224,7 @@ export class ChartDataAction extends Action {
 
 		if (this.editorService.activeControl instanceof NotebookEditor) {
 			const activeEditor = this.editorService.activeControl as NotebookEditor;
-			let chartView = this.instantiationService.createInstance(ChartView);
-			// context.table.grid.getContainerNode().style.visibility = 'hidden';
-			chartView.state = new ChartState();
-			// (context.gridDataProvider as DataResourceDataProvider).g
-
-			(context.gridDataProvider as DataResourceDataProvider).getRowData(0, 5).then((result) => {
-				chartView.setData(result.resultSubset.rows, ['fake', 'columns', 'galore']);
-				chartView.chart({ batchId: context.batchId, resultId: context.resultId });
-				chartView.render(context.table.grid.getContainerNode().parentElement);
-			});
-
-			// context.table.grid.getContainerNode();
-			// activeEditor.chart({ batchId: context.batchId, resultId: context.resultId });
+			activeEditor.chart({ batchId: context.batchId, resultId: context.resultId }, context);
 		}
 		else {
 			const activeEditor = this.editorService.activeControl as QueryEditor;

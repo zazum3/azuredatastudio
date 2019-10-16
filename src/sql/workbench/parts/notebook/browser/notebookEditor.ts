@@ -16,6 +16,11 @@ import { NotebookModule } from 'sql/workbench/parts/notebook/browser/notebook.mo
 import { NOTEBOOK_SELECTOR } from 'sql/workbench/parts/notebook/browser/notebook.component';
 import { INotebookParams } from 'sql/workbench/services/notebook/browser/notebookService';
 import { IStorageService } from 'vs/platform/storage/common/storage';
+import { ChartView } from 'sql/workbench/parts/charts/browser/chartView';
+import { ChartState } from 'sql/workbench/parts/charts/common/interfaces';
+import { IGridActionContext } from 'sql/workbench/parts/query/browser/actions';
+import { DataResourceDataProvider } from 'sql/workbench/parts/notebook/browser/outputs/gridOutput.component';
+
 
 export class NotebookEditor extends BaseEditor {
 
@@ -81,8 +86,15 @@ export class NotebookEditor extends BaseEditor {
 		}
 	}
 
-	public chart(dataId: { batchId: number, resultId: number }): void {
-		// this.resultsEditor.chart(dataId);
+	public chart(dataId: { batchId: number, resultId: number }, context: IGridActionContext): void {
+		let chartView = this.instantiationService.createInstance(ChartView);
+		chartView.state = new ChartState();
+
+		(context.gridDataProvider as DataResourceDataProvider).getRowData(0, 5).then((result) => {
+			chartView.setData(result.resultSubset.rows, ['fake', 'columns', 'galore']);
+			chartView.chart({ batchId: context.batchId, resultId: context.resultId });
+			chartView.render(context.table.grid.getContainerNode().parentElement);
+		});
 	}
 
 	/**
