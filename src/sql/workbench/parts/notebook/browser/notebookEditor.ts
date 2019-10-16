@@ -89,9 +89,11 @@ export class NotebookEditor extends BaseEditor {
 	public chart(dataId: { batchId: number, resultId: number }, context: IGridActionContext): void {
 		let chartView = this.instantiationService.createInstance(ChartView);
 		chartView.state = new ChartState();
+		let renderingContainer = context.table.grid.getContainerNode().parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement;
 		chartView.setData(context.gridDataProvider['rows'], context.table.columns.map(c => c.name));
 		chartView.chart({ batchId: context.batchId, resultId: context.resultId });
-		chartView.render(context.table.grid.getContainerNode().parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement);
+		chartView.render(renderingContainer);
+		renderingContainer.style.marginBottom = '10px';
 	}
 
 	/**
