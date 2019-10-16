@@ -26,12 +26,28 @@ import { Taskbar } from 'sql/base/browser/ui/taskbar/taskbar';
 import { Checkbox } from 'sql/base/browser/ui/checkbox/checkbox';
 import { ChartState, IInsightOptions, ChartType } from 'sql/workbench/parts/charts/common/interfaces';
 import { DbCellValue } from 'azdata';
+import * as nls from 'vs/nls';
 
 declare class Proxy {
 	constructor(object, handler);
 }
 
 const insightRegistry = Registry.as<IInsightRegistry>(Extensions.InsightContribution);
+
+//Map used to store names and alternative names for chart types.
+//This is mainly used for comparison when options are parsed into the constructor.
+const altNameHash: { [oldName: string]: string } = {
+	'horizontalBar': nls.localize('horizontalBarAltName', "Horizontal Bar"),
+	'bar': nls.localize('barAltName', "Bar"),
+	'line': nls.localize('lineAltName', "Line"),
+	'pie': nls.localize('pieAltName', "Pie"),
+	'scatter': nls.localize('scatterAltName', "Scatter"),
+	'timeSeries': nls.localize('timeSeriesAltName', "Time Series"),
+	'image': nls.localize('imageAltName', "Image"),
+	'count': nls.localize('countAltName', "Count"),
+	'table': nls.localize('tableAltName', "Table"),
+	'doughnut': nls.localize('doughnutAltName', "Doughnut")
+};
 
 export class ChartView extends Disposable implements IPanelView {
 	private insight: Insight;
@@ -117,6 +133,7 @@ export class ChartView extends Disposable implements IPanelView {
 			}
 		}) as IInsightOptions;
 
+
 		ChartOptions.general[0].options = insightRegistry.getAllIds();
 		ChartOptions.general.map(o => {
 			this.createOption(o, generalControls);
@@ -126,6 +143,14 @@ export class ChartView extends Disposable implements IPanelView {
 
 	public clear() {
 
+	}
+
+	/**
+	 * Function used to generate list of alternative names for use with SelectBox
+	 * @param option - the original option names.
+	 */
+	private changeToAltNames(option: string[]): string[] {
+		return option.map(o => altNameHash[o] || o);
 	}
 
 	public dispose() {
@@ -288,8 +313,8 @@ export class ChartView extends Disposable implements IPanelView {
 				};
 				break;
 			case ControlType.combo:
-
-				let dropdown = new SelectBox(option.displayableOptions || option.options, undefined, this._contextViewService);
+				//pass options into changeAltNames in order for SelectBox to show user-friendly names.
+				let dropdown = new SelectBox(option.displayableOptions || this.changeToAltNames(option.options), undefined, this._contextViewService);
 				dropdown.select(option.options.indexOf(value));
 				dropdown.render(optionContainer);
 				dropdown.onDidSelect(e => {
