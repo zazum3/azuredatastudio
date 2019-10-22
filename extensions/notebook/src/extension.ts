@@ -126,7 +126,7 @@ function newNotebook(connectionProfile: azdata.IConnectionProfile) {
 		defaultKernel: null
 	} : null;
 	azdata.nb.showNotebookDocument(untitledUri, options).then(success => {
-
+		azdata.connection.connect(connectionProfile, false, false).then();
 	}, (err: Error) => {
 		vscode.window.showErrorMessage(err.message);
 	});

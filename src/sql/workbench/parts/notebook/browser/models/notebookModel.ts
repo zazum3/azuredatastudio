@@ -700,7 +700,13 @@ export class NotebookModel extends Disposable implements INotebookModel {
 				if (this._activeConnection && this._activeConnection.id !== newConnection.id) {
 					this._otherConnections.push(this._activeConnection);
 				}
-				this._activeConnection = newConnection;
+				if (this._activeConnection) {
+					if (this._activeConnection.id !== newConnection.id) {
+						this._activeConnection = newConnection;
+					} else {
+						newConnection = this._activeConnection;
+					}
+				}
 				this.refreshConnections(newConnection);
 				this._activeClientSession.updateConnection(newConnection.toIConnectionProfile()).then(
 					result => {

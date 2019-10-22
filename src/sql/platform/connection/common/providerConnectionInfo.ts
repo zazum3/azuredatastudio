@@ -59,7 +59,7 @@ export class ProviderConnectionInfo extends Disposable implements azdata.Connect
 	 * This handles the case where someone hasn't passed in a valid property bag, but doesn't cause errors when
 	 */
 	private updateSpecialValueType(typeName: SettableProperty, model: azdata.IConnectionProfile): void {
-		if (!this[typeName]) {
+		if (!this[typeName] || typeName === ConnectionOptionSpecialType.databaseName) {
 			this[typeName] = model[typeName];
 		}
 	}

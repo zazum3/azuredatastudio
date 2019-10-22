@@ -95,6 +95,8 @@ export class NotebookContexts {
 				if (profile && profile.options) {
 					if (connections.find(connection => connection.serverName === profile.serverName)) {
 						defaultConnection = connections.find(connection => connection.serverName === profile.serverName);
+					} else {
+						defaultConnection = NotebookContexts.DefaultContext.defaultConnection;
 					}
 				}
 			} else if (connections.length === 0) {
