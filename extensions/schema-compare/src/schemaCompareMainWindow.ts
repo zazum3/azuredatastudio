@@ -388,7 +388,12 @@ export class SchemaCompareMainWindow {
 			if (checkboxState) {
 				let diff = this.comparisonResult.differences[checkboxState.row];
 				await service.schemaCompareIncludeExcludeNode(this.comparisonResult.operationId, diff, checkboxState.checked, azdata.TaskExecutionMode.execute);
+
+				// check if if the called worked or not - if worked
 				this.saveExcludeState(checkboxState);
+
+				// if failed or needs to do something more, call the following or something more
+				this.differencesTable.checked = { row: checkboxState.row, columnName: 'Include', checked: !checkboxState.checked };
 			}
 		}));
 	}
