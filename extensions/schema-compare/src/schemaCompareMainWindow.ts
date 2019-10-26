@@ -393,7 +393,10 @@ export class SchemaCompareMainWindow {
 				this.saveExcludeState(checkboxState);
 
 				// if failed or needs to do something more, call the following or something more
-				this.differencesTable.checked = { row: checkboxState.row, columnName: 'Include', checked: !checkboxState.checked };
+				let dependencies = [];
+				dependencies.push({ row: checkboxState.row, columnName: 'Include', checked: !checkboxState.checked });
+				dependencies.push({ row: checkboxState.row - 1 /*some row*/, columnName: 'Include', checked: !checkboxState.checked });
+				this.differencesTable.checked = dependencies;
 			}
 		}));
 	}
