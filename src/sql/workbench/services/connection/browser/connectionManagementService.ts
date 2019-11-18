@@ -558,8 +558,12 @@ export class ConnectionManagementService extends Disposable implements IConnecti
 
 	}
 
-	public getConnectionGroups(providers?: string[]): ConnectionProfileGroup[] {
-		return this._connectionStore.getConnectionProfileGroups(false, providers);
+	public getConnectionGroups(providers?: string[], workspaceOnly?: boolean): ConnectionProfileGroup[] {
+		return this._connectionStore.getConnectionProfileGroups(false, providers, workspaceOnly);
+	}
+
+	public getWorkspaceConnection(providers?: string[]): ConnectionProfile[] {
+		return this._connectionStore.getWorkspaceConnectionProfile(providers);
 	}
 
 	public getRecentConnections(providers?: string[]): ConnectionProfile[] {

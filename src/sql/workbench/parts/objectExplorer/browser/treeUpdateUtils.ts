@@ -133,7 +133,7 @@ export class TreeUpdateUtils {
 		return Promise.resolve();
 	}
 
-	public static getTreeInput(connectionManagementService: IConnectionManagementService, providers?: string[]): ConnectionProfileGroup {
+	public static getTreeInput(connectionManagementService: IConnectionManagementService, providers?: string[], workspaceOnly?: boolean): ConnectionProfileGroup {
 
 		let groups = connectionManagementService.getConnectionGroups(providers);
 		if (groups && groups.length > 0) {

@@ -116,6 +116,51 @@ export interface IFileTemplateData {
 	container: HTMLElement;
 }
 
+export interface IDataSourceRenderer {
+	elementDisposable: IDisposable;
+	label: IResourceLabel;
+	container: HTMLElement;
+}
+
+export class DataSourceRenderer implements ITreeRenderer<ExplorerItem, FuzzyScore, IDataSourceRenderer>, IDisposable {
+	static readonly ID = 'datasource';
+
+	constructor(
+		private labels: ResourceLabels
+	) {
+
+	}
+
+	get templateId(): string {
+		return DataSourceRenderer.ID;
+	}
+
+	renderTemplate(container: HTMLElement): IDataSourceRenderer {
+		const elementDisposable = Disposable.None;
+		const label = this.labels.create(container, { supportHighlights: true });
+
+		return { elementDisposable, label, container };
+	}
+
+	renderElement(node: ITreeNode<ExplorerItem, FuzzyScore>, index: number, templateData: IDataSourceRenderer): void {
+
+
+	}
+
+	disposeElement?(element: ITreeNode<ExplorerItem, FuzzyScore>, index: number, templateData: IDataSourceRenderer): void {
+		templateData.elementDisposable.dispose();
+	}
+
+	disposeTemplate(templateData: IDataSourceRenderer): void {
+		templateData.elementDisposable.dispose();
+		templateData.label.dispose();
+	}
+
+	dispose(): void {
+		//this.configListener.dispose();
+	}
+}
+
 export class FilesRenderer implements ITreeRenderer<ExplorerItem, FuzzyScore, IFileTemplateData>, IDisposable {
 	static readonly ID = 'file';
 

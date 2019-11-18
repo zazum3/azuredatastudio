@@ -16,6 +16,7 @@ import { IDisposable, dispose } from 'vs/base/common/lifecycle';
 import { memoize } from 'vs/base/common/decorators';
 import { Emitter, Event } from 'vs/base/common/event';
 import { IExplorerService } from 'vs/workbench/contrib/files/common/files';
+import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 
 export class ExplorerModel implements IDisposable {
 
@@ -23,10 +24,18 @@ export class ExplorerModel implements IDisposable {
 	private _listener: IDisposable;
 	private readonly _onDidChangeRoots = new Emitter<void>();
 
-	constructor(private readonly contextService: IWorkspaceContextService) {
+	constructor(private readonly contextService: IWorkspaceContextService,
+		private connectionManagementService: IConnectionManagementService) {
 		const setRoots = () => this._roots = this.contextService.getWorkspace().folders
 			.map(folder => new ExplorerItem(folder.uri, undefined, true, false, false, folder.name));
 		setRoots();
+
+		let connections = this.connectionManagementService.getWorkspaceConnection();
+		if (connections) {
+			connections.forEach(connection => {
+				this.roots.push(new ExplorerItem(URI.parse(this.connectionManagementService.getConnectionUriFromId(connection.id)), undefined, true, false, false, 'Connections'));
+			});
+		}
 
 		this._listener = this.contextService.onDidChangeWorkspaceFolders(() => {
 			setRoots();

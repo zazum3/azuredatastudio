@@ -273,7 +273,7 @@ export class ConnectionStore {
 		}
 	}
 
-	public getConnectionProfileGroups(withoutConnections?: boolean, providers?: string[]): ConnectionProfileGroup[] {
+	public getConnectionProfileGroups(withoutConnections?: boolean, providers?: string[], workspaceOnly?: boolean): ConnectionProfileGroup[] {
 		let profilesInConfiguration: ConnectionProfile[] | undefined;
 		if (!withoutConnections) {
 			profilesInConfiguration = this.connectionConfig.getConnections(true);
@@ -284,6 +284,14 @@ export class ConnectionStore {
 		const groups = this.connectionConfig.getAllGroups();
 
 		return this.convertToConnectionGroup(groups, profilesInConfiguration);
+	}
+
+	public getWorkspaceConnectionProfile(providers?: string[]): ConnectionProfile[] {
+		let profilesInConfiguration = this.connectionConfig.getWorkspaceConnections();
+		if (providers && providers.length > 0) {
+			profilesInConfiguration = profilesInConfiguration.filter(x => find(providers, p => p === x.providerName));
+		}
+		return profilesInConfiguration;
 	}
 
 	private convertToConnectionGroup(groups: IConnectionProfileGroup[], connections?: ConnectionProfile[], parent?: ConnectionProfileGroup): ConnectionProfileGroup[] {

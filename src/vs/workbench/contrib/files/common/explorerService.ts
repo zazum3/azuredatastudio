@@ -18,6 +18,7 @@ import { IConfigurationService, IConfigurationChangeEvent } from 'vs/platform/co
 import { IExpression } from 'vs/base/common/glob';
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
+import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 
 function getFileEventsExcludes(configurationService: IConfigurationService, root?: URI): IExpression {
 	const scope = root ? { resource: root } : undefined;
@@ -48,7 +49,8 @@ export class ExplorerService implements IExplorerService {
 		@IConfigurationService private configurationService: IConfigurationService,
 		@IWorkspaceContextService private contextService: IWorkspaceContextService,
 		@IClipboardService private clipboardService: IClipboardService,
-		@IEditorService private editorService: IEditorService
+		@IEditorService private editorService: IEditorService,
+		@IConnectionManagementService private connectionManagementService: IConnectionManagementService,
 	) {
 		this._sortOrder = this.configurationService.getValue('explorer.sortOrder');
 	}
@@ -94,7 +96,7 @@ export class ExplorerService implements IExplorerService {
 	}
 
 	@memoize get model(): ExplorerModel {
-		const model = new ExplorerModel(this.contextService);
+		const model = new ExplorerModel(this.contextService, this.connectionManagementService);
 		this.disposables.add(model);
 		this.disposables.add(this.fileService.onAfterOperation(e => this.onFileOperation(e)));
 		this.disposables.add(this.fileService.onFileChanges(e => this.onFileChanges(e)));

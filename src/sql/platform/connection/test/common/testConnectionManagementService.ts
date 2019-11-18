@@ -68,7 +68,7 @@ export class TestConnectionManagementService implements IConnectionManagementSer
 		return undefined;
 	}
 
-	getConnectionGroups(providers?: string[]): ConnectionProfileGroup[] {
+	getConnectionGroups(providers?: string[], workspaceOnly?: boolean): ConnectionProfileGroup[] {
 		return [];
 	}
 
@@ -297,5 +297,9 @@ export class TestConnectionManagementService implements IConnectionManagementSer
 
 	getConnection(uri: string): ConnectionProfile {
 		return undefined;
+	}
+
+	getWorkspaceConnection(providers?: string[]): ConnectionProfile[] {
+		return [];
 	}
 }

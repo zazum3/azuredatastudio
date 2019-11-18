@@ -34,6 +34,7 @@ import { KeyChord, KeyMod, KeyCode } from 'vs/base/common/keyCodes';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { IProgressService, ProgressLocation } from 'vs/platform/progress/common/progress';
 import { withUndefinedAsNull } from 'vs/base/common/types';
+import { ConnectionViewletPanel } from 'sql/workbench/parts/dataExplorer/browser/connectionViewletPanel';
 
 export class ExplorerViewletViewsContribution extends Disposable implements IWorkbenchContribution {
 
@@ -69,6 +70,11 @@ export class ExplorerViewletViewsContribution extends Disposable implements IWor
 		const openEditorsViewDescriptor = this.createOpenEditorsViewDescriptor();
 		if (!viewDescriptors.some(v => v.id === openEditorsViewDescriptor.id)) {
 			viewDescriptorsToRegister.push(openEditorsViewDescriptor);
+		}
+
+		const dataSourceViewDescriptor = this.createObjectExplorerViewDescriptor();
+		if (!viewDescriptors.some(v => v.id === dataSourceViewDescriptor.id)) {
+			viewDescriptorsToRegister.push(dataSourceViewDescriptor);
 		}
 
 		const explorerViewDescriptor = this.createExplorerViewDescriptor();
@@ -112,6 +118,17 @@ export class ExplorerViewletViewsContribution extends Disposable implements IWor
 				id: 'workbench.files.action.focusOpenEditorsView',
 				keybindings: { primary: KeyChord(KeyMod.CtrlCmd | KeyCode.KEY_K, KeyCode.KEY_E) }
 			}
+		};
+	}
+
+	private createObjectExplorerViewDescriptor(): IViewDescriptor {
+		return {
+			id: ConnectionViewletPanel.ID,
+			name: localize('dataExplorer.servers', "Servers"),
+			ctorDescriptor: { ctor: ConnectionViewletPanel },
+			weight: 100,
+			canToggleVisibility: true,
+			order: 0
 		};
 	}
 

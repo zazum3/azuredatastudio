@@ -213,6 +213,20 @@ export class ConnectionConfig {
 		return connectionProfiles;
 	}
 
+	public getWorkspaceConnections(): ConnectionProfile[] {
+		let profiles: IConnectionProfileStore[] = [];
+		let workspaceProfiles: IConnectionProfileStore[] = this.getConnectionProfilesForTarget(ConfigurationTarget.WORKSPACE);
+		if (workspaceProfiles !== undefined) {
+			profiles = profiles.concat(workspaceProfiles);
+		}
+
+		let connectionProfiles = profiles.map(p => {
+			return ConnectionProfile.createFromStoredProfile(p, this._capabilitiesService);
+		});
+
+		return connectionProfiles;
+	}
+
 	/**
 	 * Delete a connection profile from settings.
 	 */

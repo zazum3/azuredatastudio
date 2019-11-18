@@ -111,7 +111,7 @@ export interface IConnectionManagementService {
 
 	onConnectionChangedNotification(handle: number, changedConnInfo: azdata.ChangedConnectionInfo): void;
 
-	getConnectionGroups(providers?: string[]): ConnectionProfileGroup[];
+	getConnectionGroups(providers?: string[], workspaceOnly?: boolean): ConnectionProfileGroup[];
 
 	getRecentConnections(providers?: string[]): ConnectionProfile[];
 
@@ -278,6 +278,8 @@ export interface IConnectionManagementService {
 	getConnections(activeConnectionsOnly?: boolean): ConnectionProfile[];
 
 	getConnection(uri: string): ConnectionProfile;
+
+	getWorkspaceConnection(providers?: string[]): ConnectionProfile[];
 }
 
 export enum RunQueryOnConnectionMode {
