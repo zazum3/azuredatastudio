@@ -7,6 +7,7 @@ import { IModelStore, IComponentDescriptor, IComponent } from './interfaces';
 import { Deferred } from 'sql/base/common/promise';
 import { entries } from 'sql/base/common/collections';
 import { find } from 'vs/base/common/arrays';
+import { onUnexpectedError } from 'vs/base/common/errors';
 
 class ComponentDescriptor implements IComponentDescriptor {
 	constructor(public readonly id: string, public readonly type: string) {
@@ -18,7 +19,7 @@ export class ModelStore implements IModelStore {
 
 	private _descriptorMappings: { [x: string]: IComponentDescriptor } = {};
 	private _componentMappings: { [x: string]: IComponent } = {};
-	private _componentActions: { [x: string]: Deferred<IComponent> } = {};
+	private _componentActions: { [x: string]: Deferred<IComponent>[] } = {};
 	private _validationCallbacks: ((componentId: string) => Thenable<boolean>)[] = [];
 	constructor() {
 	}
@@ -36,7 +37,7 @@ export class ModelStore implements IModelStore {
 	registerComponent(component: IComponent): void {
 		let id = component.descriptor.id;
 		this._componentMappings[id] = component;
-		this.runPendingActions(id, component);
+		this.runPendingActions(id, component).catch(err => onUnexpectedError(err));
 	}
 
 	unregisterComponent(component: IComponent): void {
@@ -53,7 +54,9 @@ export class ModelStore implements IModelStore {
 
 	eventuallyRunOnComponent<T>(componentId: string, action: (component: IComponent) => T): Promise<T> {
 		let component = this.getComponent(componentId);
-		if (component) {
+		// Immediately resolve if we have the component registered already and don't have any
+		// pending promises
+		if (component && !this._componentActions[componentId]) {
 			return Promise.resolve(action(component));
 		} else {
 			return this.addPendingAction(componentId, action);
@@ -72,21 +75,28 @@ export class ModelStore implements IModelStore {
 	private addPendingAction<T>(componentId: string, action: (component: IComponent) => T): Promise<T> {
 		// We create a promise and chain it onto a tracking promise whose resolve method
 		// will only be called once the component is created
-		let deferredPromise = this._componentActions[componentId];
-		if (!deferredPromise) {
-			deferredPromise = new Deferred();
-			this._componentActions[componentId] = deferredPromise;
+		let promises = this._componentActions[componentId];
+		if (!promises) {
+			this._componentActions[componentId] = [];
+			promises = this._componentActions[componentId];
 		}
-		let promise = deferredPromise.promise.then((component) => {
+		const deferred = new Deferred<IComponent>();
+		const promise = deferred.then((component) => {
 			return action(component);
 		});
+		promises.push(deferred);
 		return promise;
 	}
 
-	private runPendingActions(componentId: string, component: IComponent) {
-		let promiseTracker = this._componentActions[componentId];
-		if (promiseTracker) {
-			promiseTracker.resolve(component);
+	private async runPendingActions(componentId: string, component: IComponent): Promise<void> {
+		let promiseMappings = this._componentActions[componentId];
+		if (promiseMappings) {
+			while (promiseMappings.length > 0) {
+				const deferred = promiseMappings.splice(0, 1)[0];
+				deferred.resolve(component);
+				await deferred.promise;
+			}
 		}
+		this._componentActions[componentId] = undefined;
 	}
 }
