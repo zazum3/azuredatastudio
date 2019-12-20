@@ -16,6 +16,7 @@ import { NotebookModule } from 'sql/workbench/contrib/notebook/browser/notebook.
 import { NOTEBOOK_SELECTOR } from 'sql/workbench/contrib/notebook/browser/notebook.component';
 import { INotebookParams } from 'sql/workbench/services/notebook/browser/notebookService';
 import { IStorageService } from 'vs/platform/storage/common/storage';
+import { localize } from 'vs/nls';
 
 export class NotebookEditor extends BaseEditor {
 
@@ -55,6 +56,10 @@ export class NotebookEditor extends BaseEditor {
 		if (this.notebookInput) {
 			this.notebookInput.doChangeLayout();
 		}
+	}
+
+	public getTitle(): string {
+		return this.input ? this.input.getName() : localize('notebookEditor', "Notebook Editor");
 	}
 
 	public setInput(input: NotebookInput, options: EditorOptions): Promise<void> {
