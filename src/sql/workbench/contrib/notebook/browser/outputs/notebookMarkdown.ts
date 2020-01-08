@@ -62,6 +62,18 @@ export class NotebookMarkdownRenderer {
 		if (!this._baseUrls.some(x => x === notebookFolder)) {
 			this._baseUrls.push(notebookFolder);
 		}
+		let markdownValue = markdown.value;
+
+		// The markdown renderer doesn't parse raw HTML, so if a link is in an <a> tag, we need to first process them
+		let htmlLinks = markdown.value.match(/href="(.*?)"/g);
+		if (htmlLinks && htmlLinks.length > 0) {
+			for (let i = htmlLinks.length - 1; i >= 0; i--) {
+				let href = htmlLinks[i].substring(6, htmlLinks[i].length - 1);
+				href = this.cleanUrl(!markdown.isTrusted, notebookFolder, href);
+				markdownValue = markdown.value.replace(htmlLinks[i], 'href="' + href + '"');
+			}
+		}
+
 		const renderer = new marked.Renderer({ baseUrl: notebookFolder });
 		renderer.image = (href: string, title: string, text: string) => {
 			href = this.cleanUrl(!markdown.isTrusted, notebookFolder, href);
@@ -171,7 +183,7 @@ export class NotebookMarkdownRenderer {
 			baseUrl: notebookFolder
 		};
 
-		element.innerHTML = marked.parse(markdown.value, markedOptions);
+		element.innerHTML = marked.parse(markdownValue, markedOptions);
 		signalInnerHTML!();
 
 		return element;
