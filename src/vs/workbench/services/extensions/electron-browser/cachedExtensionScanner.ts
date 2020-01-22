@@ -259,11 +259,7 @@ export class CachedExtensionScanner {
 		let finalBuiltinExtensions: Promise<IExtensionDescription[]> = builtinExtensions;
 
 		if (devMode) {
-			// {{SQL CARBON EDIT}}
-			let builtInFilename = product.quality === 'stable' ? 'builtInExtensions.json' : 'builtInExtensions-insiders.json';
-			const builtInExtensionsFilePath = path.normalize(path.join(getPathFromAmdModule(require, ''), '..', 'build', builtInFilename));
-			// {{SQL CARBON EDIT}} - END
-			const builtInExtensions = pfs.readFile(builtInExtensionsFilePath, 'utf8')
+			const builtInExtensionsFilePath = path.normalize(path.join(getPathFromAmdModule(require, ''), '..', 'build', 'builtInExtensions.json')); const builtInExtensions = pfs.readFile(builtInExtensionsFilePath, 'utf8')
 				.then<IBuiltInExtension[]>(raw => JSON.parse(raw));
 
 			const controlFilePath = path.join(os.homedir(), '.vscode-oss-dev', 'extensions', 'control.json');
