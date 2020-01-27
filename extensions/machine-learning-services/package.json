@@ -30,6 +30,16 @@
       "type": "object",
       "title": "%mls.configuration.title%",
       "properties": {
+        "machineLearningServices.enablePython": {
+          "type": "boolean",
+          "default": "true",
+          "description": "%mls.enablePython.description%"
+        },
+        "machineLearningServices.enableR": {
+          "type": "boolean",
+          "default": "true",
+          "description": "%mls.enableR.description%"
+        },
         "machineLearningServices.pythonPath": {
           "type": "string",
           "default": "python",
@@ -81,14 +91,26 @@
             },
             {
               "name": "%title.tasks%",
-              "row": 0,
-              "col": 1,
+              "row": 1,
+              "col": 0,
               "widget": {
                 "tasks-widget": [
                   "mls.command.managePackages",
                   "mls.command.odbcdriver",
                   "mls.command.mlsdocs"
                 ]
+              }
+            },
+            {
+              "name": "%title.books%",
+              "row": 0,
+              "col": 1,
+              "colspan": 2,
+              "rowspan": 2,
+              "widget": {
+                "modelview": {
+                  "id": "ml-bookstree"
+                }
               }
             }
           ]

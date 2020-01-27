@@ -17,6 +17,7 @@ import { Config } from '../configurations/config';
 import { ServerConfigWidget } from '../widgets/serverConfigWidgets';
 import { ServerConfigManager } from '../serverConfig/serverConfigManager';
 import { HttpClient } from '../common/httpClient';
+import { registerMlBooksTreeWidget } from '../widgets/mlBooksTreeWidget';
 
 /**
  * The main controller class that initializes the extension
@@ -92,6 +93,7 @@ export default class MainController implements vscode.Disposable {
 		this._apiWrapper.registerTaskHandler(constants.mlsDocumentsCommand, async () => {
 			await this.serverConfigManager.openDocuments();
 		});
+		registerMlBooksTreeWidget(this._context);
 	}
 
 	/**
