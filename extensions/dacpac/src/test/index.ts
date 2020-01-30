@@ -3,12 +3,12 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import * as path from 'path';
-const testRunner = require('vscodetestcover');
+const path = require('path');
+const testRunner = require('vscode/lib/testrunner');
 
 const suite = 'dacpac Extension Tests';
 
-const mochaOptions: any = {
+const testOptions: any = {
 	ui: 'bdd',
 	useColors: true,
 	timeout: 10000
@@ -16,25 +16,25 @@ const mochaOptions: any = {
 
 // set relevant mocha options from the environment
 if (process.env.ADS_TEST_GREP) {
-	mochaOptions.grep = process.env.ADS_TEST_GREP;
-	console.log(`setting options.grep to: ${mochaOptions.grep}`);
+	testOptions.grep = process.env.ADS_TEST_GREP;
+	console.log(`setting options.grep to: ${testOptions.grep}`);
 }
 if (process.env.ADS_TEST_INVERT_GREP) {
-	mochaOptions.invert = parseInt(process.env.ADS_TEST_INVERT_GREP);
-	console.log(`setting options.invert to: ${mochaOptions.invert}`);
+	testOptions.invert = parseInt(process.env.ADS_TEST_INVERT_GREP);
+	console.log(`setting options.invert to: ${testOptions.invert}`);
 }
 if (process.env.ADS_TEST_TIMEOUT) {
-	mochaOptions.timeout = parseInt(process.env.ADS_TEST_TIMEOUT);
-	console.log(`setting options.timeout to: ${mochaOptions.timeout}`);
+	testOptions.timeout = parseInt(process.env.ADS_TEST_TIMEOUT);
+	console.log(`setting options.timeout to: ${testOptions.timeout}`);
 }
 if (process.env.ADS_TEST_RETRIES) {
-	mochaOptions.retries = parseInt(process.env.ADS_TEST_RETRIES);
-	console.log(`setting options.retries to: ${mochaOptions.retries}`);
+	testOptions.retries = parseInt(process.env.ADS_TEST_RETRIES);
+	console.log(`setting options.retries to: ${testOptions.retries}`);
 }
 
 if (process.env.BUILD_ARTIFACTSTAGINGDIRECTORY) {
-	mochaOptions.reporter = 'mocha-multi-reporters';
-	mochaOptions.reporterOptions = {
+	testOptions.reporter = 'mocha-multi-reporters';
+	testOptions.reporterOptions = {
 		reporterEnabled: 'spec, mocha-junit-reporter',
 		mochaJunitReporterReporterOptions: {
 			testsuitesTitle: `${suite} ${process.platform}`,
@@ -43,6 +43,6 @@ if (process.env.BUILD_ARTIFACTSTAGINGDIRECTORY) {
 	};
 }
 
-testRunner.configure(mochaOptions, { coverConfig: '../../coverConfig.json' });
+testRunner.configure(testOptions);
 
 export = testRunner;

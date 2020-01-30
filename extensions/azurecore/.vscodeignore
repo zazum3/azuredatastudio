@@ -1,7 +1,5 @@
-src
-out
+src/**
+out/**
 tsconfig.json
 extension.webpack.config.js
 yarn.lock
-coverage
-coverConfig.json

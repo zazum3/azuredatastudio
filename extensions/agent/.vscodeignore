@@ -1,5 +1,3 @@
-src
-out/test
+src/**
+out/test/**
 tsconfig.json
-coverage
-coverConfig.json

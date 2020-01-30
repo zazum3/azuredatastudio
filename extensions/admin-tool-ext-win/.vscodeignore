@@ -1,8 +1,6 @@
-coverage
-out/test
-src
+out/test/**
+src/**
 .gitignore
-coverConfig.json
 tsconfig.json
 InstallSsmsMin.bat
 cgmanifest.json
