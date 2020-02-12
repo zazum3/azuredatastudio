@@ -33,7 +33,7 @@ import { ILogService } from 'vs/platform/log/common/log';
 import { deepClone, assign } from 'vs/base/common/objects';
 import { Emitter, Event } from 'vs/base/common/event';
 import { equals } from 'vs/base/common/arrays';
-import * as nls from 'vs/nls';
+import * as DOM from 'vs/base/browser/dom';
 
 export class EditDataGridPanel extends GridParentComponent {
 	// The time(in milliseconds) we wait before refreshing the grid.
@@ -111,6 +111,7 @@ export class EditDataGridPanel extends GridParentComponent {
 	onInit(): void {
 		const self = this;
 		this.baseInit();
+		this._register(DOM.addDisposableListener(this.nativeElement, DOM.EventType.KEY_DOWN, e => this.tryHandleKeyEvent(new StandardKeyboardEvent(e))));
 
 		// Add the subscription to the list of things to be disposed on destroy, or else on a new component init
 		// may get the "destroyed" object still getting called back.
@@ -215,44 +216,32 @@ export class EditDataGridPanel extends GridParentComponent {
 
 		// Setup a function for generating a promise to lookup result subsets
 		this.loadDataFunction = (offset: number, count: number): Promise<{}[]> => {
-
-			try {
-				return self.dataService.getEditRows(offset, count).then(result => {
-					try {
-						let gridData = result.subset.map(r => {
-							let dataWithSchema = {};
-							// skip the first column since its a number column
-							for (let i = 1; i < this.dataSet.columnDefinitions.length; i++) {
-								dataWithSchema[this.dataSet.columnDefinitions[i].field] = {
-									displayValue: r.cells[i - 1].displayValue,
-									ariaLabel: escape(r.cells[i - 1].displayValue),
-									isNull: r.cells[i - 1].isNull
-								};
-							}
-							return dataWithSchema;
-						});
-
-						// should add null row?
-						if (offset + count > this.dataSet.totalRows - 1) {
-							gridData.push(this.dataSet.columnDefinitions.reduce((p, c) => {
-								if (c.id !== 'rowNumber') {
-									p[c.field] = { displayValue: 'NULL', ariaLabel: 'NULL', isNull: true };
-								}
-								return p;
-							}, {}));
-						}
-
-						return gridData;
+			return self.dataService.getEditRows(offset, count).then(result => {
+				let gridData = result.subset.map(r => {
+					let dataWithSchema = {};
+					// skip the first column since its a number column
+					for (let i = 1; i < this.dataSet.columnDefinitions.length; i++) {
+						dataWithSchema[this.dataSet.columnDefinitions[i].field] = {
+							displayValue: r.cells[i - 1].displayValue,
+							ariaLabel: escape(r.cells[i - 1].displayValue),
+							isNull: r.cells[i - 1].isNull
+						};
 					}
-					catch {
-						throw new Error('Failed to load table data');
-					}
+					return dataWithSchema;
 				});
-			}
-			catch {
-				//table data has failed to load, must reject promise to avoid overwriting table.
-				return Promise.reject();
-			}
+
+				// should add null row?
+				if (offset + count > this.dataSet.totalRows - 1) {
+					gridData.push(this.dataSet.columnDefinitions.reduce((p, c) => {
+						if (c.id !== 'rowNumber') {
+							p[c.field] = { displayValue: 'NULL', ariaLabel: 'NULL', isNull: true };
+						}
+						return p;
+					}, {}));
+				}
+
+				return gridData;
+			});
 		};
 	}
 
@@ -409,7 +398,6 @@ export class EditDataGridPanel extends GridParentComponent {
 
 		// Setup the state of the selected cell
 		this.resetCurrentCell();
-		this.currentEditCellValue = undefined;
 		this.removingNewRow = false;
 		this.newRowVisible = false;
 		this.dirtyCells = [];
@@ -438,20 +426,15 @@ export class EditDataGridPanel extends GridParentComponent {
 			clearTimeout(self.refreshGridTimeoutHandle);
 			this.refreshGridTimeoutHandle = setTimeout(() => {
 
-				try {
-					if (self.dataSet && self.placeHolderDataSets[0].resized) {
-						self.placeHolderDataSets[0].dataRows = self.dataSet.dataRows;
-						self.placeHolderDataSets[0].resized.fire();
-					}
-
-
-					if (self.oldDataRows !== self.placeHolderDataSets[0].dataRows) {
-						self.detectChange();
-						self.oldDataRows = self.placeHolderDataSets[0].dataRows;
-					}
+				if (self.dataSet && self.placeHolderDataSets[0].resized) {
+					self.placeHolderDataSets[0].dataRows = self.dataSet.dataRows;
+					self.placeHolderDataSets[0].resized.fire();
 				}
-				catch {
-					this.notificationService.error(nls.localize('refreshTableError', 'Unable to refresh table data'));
+
+
+				if (self.oldDataRows !== self.placeHolderDataSets[0].dataRows) {
+					self.detectChange();
+					self.oldDataRows = self.placeHolderDataSets[0].dataRows;
 				}
 
 				if (self.firstRender) {
@@ -540,7 +523,6 @@ export class EditDataGridPanel extends GridParentComponent {
 				// so clear any existing client-side edit and refresh on-screen data
 				// do not refresh the whole dataset as it will move the focus away to the first row.
 				//
-				this.currentEditCellValue = undefined;
 				this.dirtyCells = [];
 				let row = this.currentCell.row;
 				this.resetCurrentCell();
@@ -779,6 +761,7 @@ export class EditDataGridPanel extends GridParentComponent {
 			isEditable: false,
 			isDirty: false
 		};
+		this.currentEditCellValue = undefined;
 	}
 
 	private setCurrentCell(row: number, column: number) {
@@ -1084,7 +1067,7 @@ export class EditDataGridPanel extends GridParentComponent {
 			cellClasses += ' missing-value';
 		}
 		else if (Services.DBCellValue.isDBCellValue(value)) {
-			valueToDisplay = (value.displayValue + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			valueToDisplay = (value.displayValue + '');
 			valueToDisplay = escape(valueToDisplay.length > 250 ? valueToDisplay.slice(0, 250) + '...' : valueToDisplay);
 		}
 		else if (typeof value === 'string' || (value && value.text)) {
