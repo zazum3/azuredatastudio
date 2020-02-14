@@ -28,11 +28,12 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
 import { KeyCode } from 'vs/base/common/keyCodes';
 import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
-import { EditUpdateCellResult } from 'azdata';
+import * as azdata from 'azdata';
 import { ILogService } from 'vs/platform/log/common/log';
 import { deepClone, assign } from 'vs/base/common/objects';
 import { Emitter, Event } from 'vs/base/common/event';
 import { equals } from 'vs/base/common/arrays';
+
 import * as DOM from 'vs/base/browser/dom';
 
 export class EditDataGridPanel extends GridParentComponent {
@@ -259,6 +260,19 @@ export class EditDataGridPanel extends GridParentComponent {
 				return;
 			}
 			else {
+				//do check to prevent deleting row if possible.
+				// 		this.schemaLoader.loading = true;
+				// 		let connectionUri = await azdata.connection.getUriForConnection(this.model.server.connectionId);
+				// 		let queryProvider = azdata.dataprotocol.getProvider<azdata.QueryProvider>(this.model.server.providerName, azdata.DataProviderType.QueryProvider);
+
+				// const escapedQuotedDb = this.databaseDropdown.value ? `[${(<azdata.CategoryValue>this.databaseDropdown.value).name.replace(/]/g, ']]')}].` : '';
+				// const query = `SELECT name FROM ${escapedQuotedDb}sys.schemas`;
+
+				// let results = await queryProvider.runQueryAndReturn(connectionUri, query);
+
+				// const query;
+				// let results = await queryProvider.runQueryAndReturn(connectionUri, query);
+
 				self.dataService.deleteRow(index)
 					.then(() => self.dataService.commitEdit())
 					.then(() => self.removeRow(index));
@@ -290,7 +304,7 @@ export class EditDataGridPanel extends GridParentComponent {
 		}
 
 		let cellSelectTasks: Promise<void> = this.submitCurrentCellChange(
-			(result: EditUpdateCellResult) => {
+			(result: azdata.EditUpdateCellResult) => {
 				// Cell update was successful, update the flags
 				self.setCellDirtyState(self.currentCell.row, self.currentCell.column, result.cell.isDirty);
 				self.setRowDirtyState(self.currentCell.row, result.isRowDirty);
@@ -705,7 +719,7 @@ export class EditDataGridPanel extends GridParentComponent {
 			// when committing the changes for the row.
 			if (this.currentCell.row !== undefined && this.currentCell.column !== undefined && this.currentCell.isEditable) {
 				gridObject._grid.getEditorLock().commitCurrentEdit();
-				this.submitCurrentCellChange((result: EditUpdateCellResult) => {
+				this.submitCurrentCellChange((result: azdata.EditUpdateCellResult) => {
 					self.setCellDirtyState(self.currentCell.row, self.currentCell.column, result.cell.isDirty);
 				}, (error: any) => {
 					self.notificationService.error(error);
