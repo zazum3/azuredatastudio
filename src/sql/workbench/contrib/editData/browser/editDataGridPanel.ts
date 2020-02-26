@@ -262,12 +262,24 @@ export class EditDataGridPanel extends GridParentComponent {
 			else {
 				//do check to prevent deleting row if possible.
 
-
-				self.dataService.deleteRow(index)
-					.then(() => self.dataService.commitEdit())
-					.then(() => self.removeRow(index));
+				this.checkQuery('SELECT *', self.dataService.getURI()).then(() =>
+					self.dataService.deleteRow(index)
+						.then(() => self.dataService.commitEdit())
+						.then(() => self.removeRow(index)));
 			}
 		};
+	}
+
+	async checkQuery(query: string, ownerUri: string): Promise<azdata.SimpleExecuteResult> {
+		try {
+			let queryProvider = azdata.dataprotocol.getProvider<azdata.QueryProvider>('MSSQL', azdata.DataProviderType.QueryProvider);
+			let result = await queryProvider.runQueryAndReturn(ownerUri, query);
+			return result;
+		}
+		catch (ex) {
+			throw ex;
+		}
+
 	}
 
 	onRevertRow(): () => void {
