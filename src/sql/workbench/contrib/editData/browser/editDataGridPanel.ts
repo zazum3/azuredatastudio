@@ -261,17 +261,7 @@ export class EditDataGridPanel extends GridParentComponent {
 			}
 			else {
 				//do check to prevent deleting row if possible.
-				// 		this.schemaLoader.loading = true;
-				// 		let connectionUri = await azdata.connection.getUriForConnection(this.model.server.connectionId);
-				// 		let queryProvider = azdata.dataprotocol.getProvider<azdata.QueryProvider>(this.model.server.providerName, azdata.DataProviderType.QueryProvider);
 
-				// const escapedQuotedDb = this.databaseDropdown.value ? `[${(<azdata.CategoryValue>this.databaseDropdown.value).name.replace(/]/g, ']]')}].` : '';
-				// const query = `SELECT name FROM ${escapedQuotedDb}sys.schemas`;
-
-				// let results = await queryProvider.runQueryAndReturn(connectionUri, query);
-
-				// const query;
-				// let results = await queryProvider.runQueryAndReturn(connectionUri, query);
 
 				self.dataService.deleteRow(index)
 					.then(() => self.dataService.commitEdit())

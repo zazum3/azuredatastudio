@@ -48,6 +48,12 @@ export class DataService {
 		return this._queryModel.getEditRows(this._uri, rowStart, numberOfRows);
 	}
 
+	checkDelete(rowId: number): Thenable<void> {
+		const self = this;
+
+		return self.editQueue;
+	}
+
 	updateCell(rowId: number, columnId: number, newValue: string): Thenable<EditUpdateCellResult> {
 		const self = this;
 		self.editQueue = self.editQueue.then(() => {
