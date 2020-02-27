@@ -31,7 +31,7 @@ import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import * as azdata from 'azdata';
 import { ILogService } from 'vs/platform/log/common/log';
 import { deepClone, assign } from 'vs/base/common/objects';
-import { Emitter, Event } from 'vs/base/common/event';
+import { Event } from 'vs/base/common/event';
 import { equals } from 'vs/base/common/arrays';
 
 import * as DOM from 'vs/base/browser/dom';
@@ -51,6 +51,7 @@ export class EditDataGridPanel extends GridParentComponent {
 	// FIELDS
 	// All datasets
 	private gridDataProvider: AsyncDataProvider<any>;
+	//main dataset to work on.
 	private dataSet: IGridDataSet;
 	private oldDataRows: VirtualizedCollection<any>;
 	private firstRender = true;
@@ -394,7 +395,6 @@ export class EditDataGridPanel extends GridParentComponent {
 		let undefinedDataSet = deepClone(dataSet);
 		undefinedDataSet.columnDefinitions = dataSet.columnDefinitions;
 		undefinedDataSet.dataRows = undefined;
-		undefinedDataSet.resized = new Emitter();
 		self.placeHolderDataSets.push(undefinedDataSet);
 		if (self.placeHolderDataSets[0]) {
 			this.refreshDatasets();
@@ -427,33 +427,35 @@ export class EditDataGridPanel extends GridParentComponent {
 
 	private refreshGrid(): Thenable<void> {
 		return new Promise<void>(async (resolve, reject) => {
-			const self = this;
-			clearTimeout(self.refreshGridTimeoutHandle);
+
+			clearTimeout(this.refreshGridTimeoutHandle);
+
 			this.refreshGridTimeoutHandle = setTimeout(() => {
 
-				if (self.dataSet && self.placeHolderDataSets[0].resized) {
-					self.placeHolderDataSets[0].dataRows = self.dataSet.dataRows;
-					self.placeHolderDataSets[0].resized.fire();
+				if (this.dataSet) {
+					this.placeHolderDataSets[0].dataRows = this.dataSet.dataRows;
+					this.onResize();
 				}
 
 
-				if (self.oldDataRows !== self.placeHolderDataSets[0].dataRows) {
-					self.detectChange();
-					self.oldDataRows = self.placeHolderDataSets[0].dataRows;
+				if (this.oldDataRows !== this.placeHolderDataSets[0].dataRows) {
+					this.detectChange();
+					this.oldDataRows = this.placeHolderDataSets[0].dataRows;
 				}
 
-				if (self.firstRender) {
-					let setActive = function () {
-						if (self.firstRender && self.table) {
-							self.table.setActive();
-							self.firstRender = false;
-						}
-					};
-					setTimeout(() => setActive());
+				if (this.firstRender) {
+					setTimeout(() => this.setActive());
 				}
 				resolve();
-			}, self.refreshGridTimeoutInMs);
+			}, this.refreshGridTimeoutInMs);
 		});
+	}
+
+	private setActive() {
+		if (this.firstRender && this.table) {
+			this.table.setActive();
+			this.firstRender = false;
+		}
 	}
 
 	protected detectChange(): void {
@@ -756,7 +758,7 @@ export class EditDataGridPanel extends GridParentComponent {
 		let cellBox = grid.getCellNodeBox(row, column);
 		return viewport && cellBox
 			&& viewport.leftPx <= cellBox.left && viewport.rightPx >= cellBox.right
-			&& viewport.top <= row && viewport.bottom >= row;
+			&& viewport.top < row + 1 && viewport.bottom > row + 1;
 	}
 
 	private resetCurrentCell() {
@@ -1004,9 +1006,6 @@ export class EditDataGridPanel extends GridParentComponent {
 	}
 
 	private setupEvents(): void {
-		this.table.grid.onScroll.subscribe((e, args) => {
-			this.onScroll(args);
-		});
 		this.table.grid.onCellChange.subscribe((e, args) => {
 			this.onCellEditEnd(args);
 		});
@@ -1039,14 +1038,8 @@ export class EditDataGridPanel extends GridParentComponent {
 		// handleInitializeTable() will be called *after* the first time handleChanges() is called
 		// so, grid must be there already
 
-		if (this.dataSet.dataRows && this.dataSet.dataRows.getLength() > 0) {
+		if (this.placeHolderDataSets[0].dataRows && this.placeHolderDataSets[0].dataRows.getLength() > 0) {
 			this.table.grid.scrollRowToTop(0);
-		}
-
-		if (this.dataSet.resized) {
-			// Re-rendering the grid is expensive. Throttle so we only do so every 100ms.
-			this.dataSet.resized.throttleTime(100)
-				.subscribe(() => this.onResize());
 		}
 
 		// subscribe to slick events
@@ -1054,12 +1047,6 @@ export class EditDataGridPanel extends GridParentComponent {
 		this.setupEvents();
 	}
 
-	private onResize(): void {
-		if (this.table.grid !== undefined) {
-			// this will make sure the grid header and body to be re-rendered
-			this.table.grid.resizeCanvas();
-		}
-	}
 
 	/*Formatter for Column*/
 	private getColumnFormatter(row: number | undefined, cell: any | undefined, value: any, columnDef: any | undefined, dataContext: any | undefined): string {
