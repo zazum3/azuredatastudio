@@ -91,9 +91,6 @@ export class DataService {
 		return self.editQueue;
 	}
 
-	getURI(): string {
-		return this._uri;
-	}
 
 	deleteRow(rowId: number): Thenable<void> {
 		const self = this;
