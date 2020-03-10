@@ -230,7 +230,7 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 							}
 						}
 						try {
-							if (path.extname(pythonPackagePathLocal).toLowerCase() === 'zip') {
+							if (path.extname(pythonPackagePathLocal).toLowerCase() === '.zip') {
 								await compressing.gzip.uncompress(pythonPackagePathLocal, installPath);
 							} else {
 								await compressing.tgz.uncompress(pythonPackagePathLocal, installPath);
