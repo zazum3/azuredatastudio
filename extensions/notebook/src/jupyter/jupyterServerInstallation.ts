@@ -8,7 +8,7 @@ import * as path from 'path';
 import * as nls from 'vscode-nls';
 import * as azdata from 'azdata';
 import { ExecOptions } from 'child_process';
-import * as decompress from 'decompress';
+import * as compressing from 'compressing';
 import * as request from 'request';
 
 import { ApiWrapper } from '../common/apiWrapper';
@@ -229,22 +229,28 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 								return reject(err);
 							}
 						}
-						decompress(pythonPackagePathLocal, installPath).then(files => {
-							//Delete zip/tar file
-							fs.unlink(pythonPackagePathLocal, (err) => {
-								if (err) {
-									backgroundOperation.updateStatus(azdata.TaskStatus.InProgress, msgPythonUnpackError);
-									reject(err);
-								}
-							});
-
-							outputChannel.appendLine(msgPythonDownloadComplete);
-							backgroundOperation.updateStatus(azdata.TaskStatus.InProgress, msgPythonDownloadComplete);
-							resolve();
-						}).catch(err => {
+						try {
+							if (path.extname(pythonPackagePathLocal).toLowerCase() === 'zip') {
+								await compressing.gzip.uncompress(pythonPackagePathLocal, installPath);
+							} else {
+								await compressing.tgz.uncompress(pythonPackagePathLocal, installPath);
+							}
+						} catch (err) {
 							backgroundOperation.updateStatus(azdata.TaskStatus.InProgress, msgPythonUnpackError);
 							reject(err);
+						}
+
+						//Delete zip/tar file
+						fs.unlink(pythonPackagePathLocal, (err) => {
+							if (err) {
+								backgroundOperation.updateStatus(azdata.TaskStatus.InProgress, msgPythonUnpackError);
+								reject(err);
+							}
 						});
+
+						outputChannel.appendLine(msgPythonDownloadComplete);
+						backgroundOperation.updateStatus(azdata.TaskStatus.InProgress, msgPythonDownloadComplete);
+						resolve();
 					})
 					.on('error', (downloadError) => {
 						backgroundOperation.updateStatus(azdata.TaskStatus.InProgress, msgPythonDownloadError);
