@@ -553,7 +553,7 @@ export class SearchView extends ViewPane {
 		const matches = folderMatch.matches().sort((a, b) => searchMatchComparer(a, b, sortOrder));
 
 		return Iterable.map(matches, fileMatch => {
-			const children = this.createFileIterator(fileMatch);
+			// const children = this.createFileIterator(fileMatch);
 
 			let nodeExists = true;
 			try { this.tree.getNode(fileMatch); } catch (e) { nodeExists = false; }
@@ -561,7 +561,8 @@ export class SearchView extends ViewPane {
 			const collapsed = nodeExists ? undefined :
 				(collapseResults === 'alwaysCollapse' || (fileMatch.matches().length > 10 && collapseResults !== 'alwaysExpand'));
 
-			return <ITreeElement<RenderableMatch>>{ element: fileMatch, children, collapsed };
+			// Should only set children to undefined if there is a setting which controls whether results should be displayed
+			return <ITreeElement<RenderableMatch>>{ element: fileMatch, undefined, collapsed, collapsible: false };
 		});
 	}
 
@@ -723,6 +724,12 @@ export class SearchView extends ViewPane {
 					listBackground: this.getBackgroundColor()
 				}
 			}));
+		// This should only check if the setting to not show results is true instead of always opening
+		this._register(this.tree.onDidChangeSelection((e) => {
+			if (this.tree.getSelection().length) {
+				this.open(this.tree.getSelection()[0] as Match, true, false, false);
+			}
+		}));
 		this._register(this.tree.onContextMenu(e => this.onContextMenu(e)));
 		this._register(this.tree.onDidChangeCollapseState(() =>
 			this.toggleCollapseStateDelayer.trigger(() => this.toggleCollapseAction.onTreeCollapseStateChange())
