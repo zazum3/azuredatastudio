@@ -28,6 +28,10 @@
       {
         "command": "arc.managePostgres",
         "title": "%arc.managePostgres%"
+      },
+      {
+        "command": "arc.azureArcResourceManage",
+        "title": "%arc.azureArcResourceManage%"
       }
     ]
   },

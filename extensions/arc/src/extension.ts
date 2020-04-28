@@ -10,6 +10,7 @@ import { BasicAuth } from './controller/auth';
 import { PostgresDashboard } from './ui/dashboards/postgres/postgresDashboard';
 import { ControllerModel } from './models/controllerModel';
 import { PostgresModel } from './models/postgresModel';
+import { AzureResourceViewer } from './ui/azure/azureResourceViewer';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
 	IconPathHelper.setExtensionContext(context);
@@ -27,6 +28,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		const databaseModel = new PostgresModel(controllerUrl, auth, dbNamespace, dbName);
 		const postgresDashboard = new PostgresDashboard(loc.postgresDashboard, controllerModel, databaseModel);
 		await postgresDashboard.showDashboard();
+	});
+
+	vscode.commands.registerCommand('arc.azureArcResourceManage', async () => {
+		const azureResourcesView = new AzureResourceViewer('Azure Arc Resources');
+		azureResourcesView.showDashboard();
 	});
 }
 

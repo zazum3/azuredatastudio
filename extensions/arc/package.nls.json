@@ -1,5 +1,6 @@
 {
 	"arc.description": "Support for Azure Arc",
 	"arc.manageMiaa": "Manage MIAA",
-	"arc.managePostgres": "Manage Postgres"
+	"arc.managePostgres": "Manage Postgres",
+	"arc.azureArcResourceManage": "Manage Azure Arc Resources"
 }

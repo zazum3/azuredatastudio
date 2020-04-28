@@ -63,15 +63,22 @@ export interface GraphData {
 	location: string;
 	type: string;
 	resourceGroup: string;
+	subscriptionId?: string;
 }
 
 
-export async function queryGraphResources<T extends GraphData>(resourceClient: ResourceGraphClient, subId: string, resourceQuery: string): Promise<T[]> {
+export async function queryGraphResources<T extends GraphData>(resourceClient: ResourceGraphClient, subscriptions: string | string[], resourceQuery: string): Promise<T[]> {
 	const allResources: T[] = [];
 	let totalProcessed = 0;
+	let subs: string[];
+	if (!Array.isArray(subscriptions)) {
+		subs = [subscriptions];
+	} else {
+		subs = subscriptions;
+	}
 	let doQuery = async (skipToken?: string) => {
 		const response = await resourceClient.resources({
-			subscriptions: [subId],
+			subscriptions: subs,
 			query: resourceQuery,
 			options: {
 				resultFormat: 'objectArray',
@@ -125,6 +132,23 @@ export abstract class ResourceServiceBase<T extends GraphData, U extends azureRe
 		const convertedResources: U[] = [];
 		const resourceClient = new ResourceGraphClient(credential, { baseUri: account.properties.providerSettings.settings.armResource.endpoint });
 		let graphResources = await queryGraphResources<T>(resourceClient, subscription.id, this.query);
+		let ids = new Set<string>();
+		graphResources.forEach((res) => {
+			if (!ids.has(res.id)) {
+				ids.add(res.id);
+				let converted = this.convertResource(res);
+				convertedResources.push(converted);
+			}
+		});
+
+		return convertedResources;
+	}
+
+	public async getResourcesMultipleSubscriptions(_subscriptions: azureResource.AzureResourceSubscription[], credential: msRest.ServiceClientCredentials, account: azdata.Account): Promise<U[]> {
+		const convertedResources: U[] = [];
+		const resourceClient = new ResourceGraphClient(credential, { baseUri: account.properties.providerSettings.settings.armResource.endpoint });
+		let subIds = _subscriptions.map(s => s.id);
+		let graphResources = await queryGraphResources<T>(resourceClient, subIds, this.query);
 		let ids = new Set<string>();
 		graphResources.forEach((res) => {
 			if (!ids.has(res.id)) {

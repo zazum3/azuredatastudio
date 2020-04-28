@@ -46,5 +46,10 @@ export namespace azureResource {
 		defaultDatabaseName: string;
 	}
 
-
+	export interface AzureResourceDatabaseServerExtendedProperties extends AzureResourceDatabaseServer {
+		location: string;
+		type: string;
+		resourceGroup: string;
+		subscriptionId: string;
+	}
 }

@@ -58,4 +58,9 @@ export class AzureResourceDatabaseService implements IAzureResourceService<azure
 
 		return databases;
 	}
+
+	public getResourcesMultipleSubscriptions(subscriptions: azureResource.AzureResourceSubscription[], credential: ServiceClientCredentials, account: Account): Promise<azureResource.AzureResourceDatabase[]> {
+		let x: azureResource.AzureResourceDatabase[] = [];
+		return Promise.resolve(x);
+	}
 }

@@ -19,4 +19,5 @@ export const enum extension {
 
 export type GetSubscriptionsResult = { subscriptions: azureResource.AzureResourceSubscription[], errors: Error[] };
 export type GetResourceGroupsResult = { resourceGroups: azureResource.AzureResourceResourceGroup[], errors: Error[] };
+export type GetAllResourcesResult = { resources: azureResource.AzureResourceDatabaseServerExtendedProperties[], errors: Error[] };
 

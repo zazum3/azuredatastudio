@@ -19,9 +19,10 @@ import { AzureResourceAccountTreeNode } from './tree/accountTreeNode';
 import { IAzureResourceSubscriptionService, IAzureResourceSubscriptionFilterService, IAzureTerminalService } from '../azureResource/interfaces';
 import { AzureResourceServiceNames } from './constants';
 import { AzureResourceGroupService } from './providers/resourceGroup/resourceGroupService';
-import { GetSubscriptionsResult, GetResourceGroupsResult } from '../azurecore';
+import { GetSubscriptionsResult, GetResourceGroupsResult, GetAllResourcesResult } from '../azurecore';
 import { isArray } from 'util';
 import { AzureAccount, Tenant } from '../account-provider/interfaces';
+import { AllArcResourcesService } from './providers/allResources/allArcResourcesService';
 
 export function registerAzureResourceCommands(appContext: AppContext, tree: AzureResourceTreeProvider): void {
 	appContext.apiWrapper.registerCommand('azure.resource.startterminal', async (node?: TreeNode) => {
@@ -134,6 +135,44 @@ export function registerAzureResourceCommands(appContext: AppContext, tree: Azur
 					account.displayInfo.userId,
 					subscription.id,
 					subscription.name,
+					tenant.id,
+					err instanceof Error ? err.message : err));
+				console.warn(error);
+				if (!ignoreErrors) {
+					throw error;
+				}
+				result.errors.push(error);
+			}
+			return Promise.resolve();
+		}));
+
+		return result;
+	});
+
+	appContext.apiWrapper.registerCommand('azure.accounts.getResourcesInSubscription', async (account: azdata.Account, subscriptions: azureResource.AzureResourceSubscription[], ignoreErrors: boolean = false): Promise<GetAllResourcesResult> => {
+		const result: GetAllResourcesResult = { resources: [], errors: [] };
+		if (!account?.properties?.tenants || !isArray(account.properties.tenants) || !subscriptions) {
+			const error = new Error(localize('azure.accounts.getResourceGroups.invalidParamsError', "Invalid account or subscription"));
+			if (!ignoreErrors) {
+				throw error;
+			}
+			result.errors.push(error);
+			return result;
+		}
+		const service = new AllArcResourcesService();
+		await Promise.all(account.properties.tenants.map(async (tenant: { id: string | number; }) => {
+			try {
+				const tokens = await appContext.apiWrapper.getSecurityToken(account, azdata.AzureResource.ResourceManagement);
+				const token = tokens[tenant.id].token;
+				const tokenType = tokens[tenant.id].tokenType;
+
+				result.resources.push(...await service.getResourcesMultipleSubscriptions(subscriptions, new TokenCredentials(token, tokenType), account));
+			} catch (err) {
+				const error = new Error(localize('azure.accounts.getResourcesInSubscription.queryError', "Error fetching resources for account {0} ({1}) subscription {2} ({3}) tenant {4} : {5}",
+					account.displayInfo.displayName,
+					account.displayInfo.userId,
+					subscriptions.map(s => s.id).toString(),
+					subscriptions.map(s => s.name).toString(),
 					tenant.id,
 					err instanceof Error ? err.message : err));
 				console.warn(error);
