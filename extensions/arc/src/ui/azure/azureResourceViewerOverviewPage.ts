@@ -13,17 +13,18 @@ import { azureResource } from '../../../../azurecore/src/azureResource/azure-res
 export class AzureViewerOverviewPage extends DashboardPage {
 	private model: AzureResourceViewerModel;
 	private azureResourcesTable: azdata.DeclarativeTableComponent;
+	private _allResourcesData: any[][];
 	constructor(protected modelView: azdata.ModelView) {
 		super(modelView);
 		this.initialized = false;
 		azdata.accounts.getAllAccounts().then((accounts) => {
 			this.model = new AzureResourceViewerModel(accounts[0]);
 			this.model.getAllResourcesForSubscription(accounts[0]).then((resources: azureResource.AzureResourceDatabaseServerExtendedProperties[]) => {
-				let resourceData: any[][] = [];
+				this._allResourcesData = [];
 				resources.forEach(resource => {
-					resourceData.push([resource.name, resource.type, resource.resourceGroup, resource.location, resource.subscriptionId]);
+					this._allResourcesData.push([resource.name, resource.type, resource.resourceGroup, resource.location, resource.subscriptionId]);
 				});
-				this.azureResourcesTable.data = resourceData;
+				this.azureResourcesTable.data = this._allResourcesData;
 				this.initialized = true;
 			});
 		});
@@ -43,7 +44,35 @@ export class AzureViewerOverviewPage extends DashboardPage {
 
 	protected get container(): azdata.Component {
 		let resourceData: any[][] = [];
-		const overview = this.modelView.modelBuilder.divContainer().component();
+		const outerDiv = this.modelView.modelBuilder.divContainer().component();
+		const inputBoxAndFiltersDiv = this.modelView.modelBuilder.divContainer().withProperties<azdata.DivContainerProperties>({
+			height: 40,
+			display: 'flex',
+			CSSStyles: { 'flex-direction': 'row', 'padding-top': '20px', 'padding-bottom': '20px', 'padding-left': '15px' }
+
+		}).component();
+		let filterInputBox = this.modelView.modelBuilder.inputBox().withProperties<azdata.InputBoxProperties>({
+			placeHolder: 'Filter by name',
+			width: 180,
+			height: 24,
+			ariaLabel: 'Resource name filter input box'
+		}).component();
+
+		let subscriptionPill = this.modelView.modelBuilder.dom().withProperties<azdata.DomProperties>({
+			height: 24,
+			CSSStyles: { 'border': '1px solid #161616', 'box-sizing': 'border-box', 'border-radius': '12px' }
+		}).component();
+		inputBoxAndFiltersDiv.addItems([filterInputBox, subscriptionPill]);
+		filterInputBox.onTextChanged(text => {
+			if (text) {
+				this.azureResourcesTable.data = this._allResourcesData.filter(e => {
+					return e[0].toLowerCase().includes(text.toLowerCase());
+				});
+			} else {
+				this.azureResourcesTable.data = this._allResourcesData;
+			}
+		});
+
 		// Azure Resources
 		this.azureResourcesTable = this.modelView.modelBuilder.declarativeTable().withProperties<azdata.DeclarativeTableProperties>({
 			width: '100%',
@@ -54,10 +83,14 @@ export class AzureViewerOverviewPage extends DashboardPage {
 				createDefaultDeclarativeTableColumn(loc.locationColumn, '10%'),
 				createDefaultDeclarativeTableColumn(loc.subscriptionColumn)
 			],
-			data: resourceData
+			data: resourceData,
+			CSSStyles: { 'margin-left': '10px', 'margin-right': '10px' }
 		}).component();
-		overview.addItem(this.azureResourcesTable, { CSSStyles: { 'margin-left': '10px', 'margin-right': '10px' } });
-		return overview;
+		outerDiv.addItems([
+			inputBoxAndFiltersDiv,
+			this.azureResourcesTable
+		]);
+		return outerDiv;
 	}
 
 	protected get toolbarContainer(): azdata.ToolbarContainer {
