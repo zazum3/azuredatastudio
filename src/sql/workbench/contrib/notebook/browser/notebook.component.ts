@@ -56,6 +56,7 @@ import { NotebookInput } from 'sql/workbench/contrib/notebook/browser/models/not
 import { IColorTheme } from 'vs/platform/theme/common/themeService';
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import { IAdsTelemetryService } from 'sql/platform/telemetry/common/telemetry';
+import { DropdownMenuActionViewItem } from 'vs/base/browser/ui/dropdown/dropdown';
 
 export const NOTEBOOK_SELECTOR: string = 'notebook-component';
 
@@ -395,6 +396,8 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 	}
 
 	protected initActionBar(): void {
+		let buttonDropdownContainer = document.createElement('div');
+
 		let kernelContainer = document.createElement('div');
 		let kernelDropdown = this.instantiationService.createInstance(KernelsDropdown, kernelContainer, this.contextViewService, this.modelReady);
 		kernelDropdown.render(kernelContainer);
@@ -423,9 +426,13 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 		let taskbar = <HTMLElement>this.toolbar.nativeElement;
 		this._actionBar = new Taskbar(taskbar, { actionViewItemProvider: action => this.actionItemProvider(action as Action) });
 		this._actionBar.context = this;
+
+		let dropdownMenuActionViewItem = new DropdownMenuActionViewItem(addCodeCellButton, [addCodeCellButton, addTextCellButton], this.contextMenuService, this.actionItemProvider, this._actionBar.actionRunner, undefined, undefined);
+		dropdownMenuActionViewItem.render(buttonDropdownContainer);
+		dropdownMenuActionViewItem.setActionContext(this);
+
 		this._actionBar.setContent([
-			{ action: addCodeCellButton },
-			{ action: addTextCellButton },
+			{ element: buttonDropdownContainer },
 			{ element: kernelContainer },
 			{ element: attachToContainer },
 			{ action: this._trustedAction },
