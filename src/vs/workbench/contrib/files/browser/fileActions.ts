@@ -52,6 +52,8 @@ import { IEditorGroup } from 'vs/workbench/services/editor/common/editorGroupsSe
 import { Codicon } from 'vs/base/common/codicons';
 import { IViewsService } from 'vs/workbench/common/views';
 import { openEditorWith, getAllAvailableEditors } from 'vs/workbench/contrib/files/common/openWith';
+// {{SQL CARBON EDIT}} - Import for New Query.
+import { openNewQuery } from 'sql/workbench/contrib/query/browser/queryActions';
 
 export const NEW_FILE_COMMAND_ID = 'explorer.newFile';
 export const NEW_FILE_LABEL = nls.localize('newFile', "New File");
@@ -144,20 +146,24 @@ export class GlobalNewUntitledPlainFileAction extends Action {
 }
 
 /* Create new file from anywhere: Open untitled */
+// {{SQL CARBON EDIT}}
 export class GlobalNewUntitledFileAction extends Action {
+	// {{SQL CARBON EDIT}} - openNewQuery instead of untitled file as its more accurate.
 	static readonly ID = 'workbench.action.files.newUntitledFile';
 	static readonly LABEL = nls.localize('newUntitledFile', "New Untitled File");
 
 	constructor(
 		id: string,
 		label: string,
-		@IEditorService private readonly editorService: IEditorService
+		@IInstantiationService private readonly instantiationService: IInstantiationService,
+		//	@IEditorService private readonly editorService: IEditorService
 	) {
 		super(id, label);
 	}
 
 	async run(): Promise<void> {
-		await this.editorService.openEditor({ options: { pinned: true } }); // untitled are always pinned
+		//await this.editorService.openEditor({ options: { pinned: true } }); // untitled are always pinned
+		await this.instantiationService.invokeFunction(openNewQuery);
 	}
 }
 
