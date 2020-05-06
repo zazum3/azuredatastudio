@@ -23,7 +23,6 @@ import { IUntitledTextEditorModel, UntitledTextEditorModel } from 'vs/workbench/
  */
 export class EditDataInput extends EditorInput implements IConnectableInput {
 	public static ID: string = 'workbench.editorinputs.editDataInput';
-	private _hasBootstrapped: boolean;
 	private _updateTaskbar: Emitter<EditDataInput>;
 	private _editorInitializing: Emitter<boolean>;
 	private _showResultsEditor: Emitter<EditDataInput | undefined>;
@@ -48,7 +47,6 @@ export class EditDataInput extends EditorInput implements IConnectableInput {
 		@INotificationService private notificationService: INotificationService
 	) {
 		super();
-		this._hasBootstrapped = false;
 		this._updateTaskbar = new Emitter<EditDataInput>();
 		this._showResultsEditor = new Emitter<EditDataInput>();
 		this._editorInitializing = new Emitter<boolean>();
@@ -72,21 +70,19 @@ export class EditDataInput extends EditorInput implements IConnectableInput {
 
 		// Attach to event callbacks
 		if (this._queryModelService) {
-			let self = this;
-
 			// Register callbacks for the Actions
 			this._register(
 				this._queryModelService.onRunQueryStart(uri => {
-					if (self.uri === uri) {
-						self.initEditStart();
+					if (this.uri === uri) {
+						this.initEditStart();
 					}
 				})
 			);
 
 			this._register(
 				this._queryModelService.onEditSessionReady((result) => {
-					if (self.uri === result.ownerUri) {
-						self.initEditEnd(result);
+					if (this.uri === result.ownerUri) {
+						this.initEditEnd(result);
 					}
 				})
 			);
@@ -105,7 +101,6 @@ export class EditDataInput extends EditorInput implements IConnectableInput {
 	public get showResultsEditorEvent(): Event<EditDataInput | undefined> { return this._showResultsEditor.event; }
 	public get stopButtonEnabled(): boolean { return this._stopButtonEnabled; }
 	public get refreshButtonEnabled(): boolean { return this._refreshButtonEnabled; }
-	public get hasBootstrapped(): boolean { return this._hasBootstrapped; }
 	public get setup(): boolean { return this._setup; }
 	public get rowLimit(): number | undefined { return this._rowLimit; }
 	public get objectType(): string { return this._objectType; }
@@ -113,7 +108,6 @@ export class EditDataInput extends EditorInput implements IConnectableInput {
 	public isDirty(): boolean { return false; }
 	public save(): Promise<IEditorInput | undefined> { return Promise.resolve(undefined); }
 	public getTypeId(): string { return EditDataInput.ID; }
-	public setBootstrappedTrue(): void { this._hasBootstrapped = true; }
 	public get resource(): URI { return this._uri; }
 	public supportsSplitEditor(): boolean { return false; }
 	public setupComplete() { this._setup = true; }

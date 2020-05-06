@@ -12,10 +12,10 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 
 import { IConnectionManagementService, IConnectableInput, INewConnectionParams, RunQueryOnConnectionMode } from 'sql/platform/connection/common/connectionManagement';
 import { QueryResultsInput } from 'sql/workbench/common/editor/query/queryResultsInput';
-import { IQueryModelService } from 'sql/workbench/services/query/common/queryModel';
 
-import { ISelectionData, ExecutionPlanOptions } from 'azdata';
+import { ISelectionData } from 'azdata';
 import { startsWith } from 'vs/base/common/strings';
+import { IQueryService } from 'sql/platform/query/common/queryService';
 
 const MAX_SIZE = 13;
 
@@ -46,8 +46,8 @@ export class QueryEditorState extends Disposable {
 	private _executing = false;
 	private _connecting = false;
 
-	private _onChange = this._register(new Emitter<IQueryEditorStateChange>());
-	public onChange = this._onChange.event;
+	private readonly _onChange = this._register(new Emitter<IQueryEditorStateChange>());
+	public readonly onChange = this._onChange.event;
 
 	public set connected(val: boolean) {
 		if (val !== this._connected) {
@@ -121,7 +121,7 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 		protected _text: TextResourceEditorInput,
 		protected _results: QueryResultsInput,
 		@IConnectionManagementService private readonly connectionManagementService: IConnectionManagementService,
-		@IQueryModelService private readonly queryModelService: IQueryModelService,
+		@IQueryService private readonly queryService: IQueryService,
 		@IConfigurationService private readonly configurationService: IConfigurationService
 	) {
 		super();
@@ -130,22 +130,6 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 		this._register(this._results);
 
 		this._text.onDidChangeDirty(() => this._onDidChangeDirty.fire());
-
-		this._register(
-			this.queryModelService.onRunQueryStart(uri => {
-				if (this.uri === uri) {
-					this.onRunQuery();
-				}
-			})
-		);
-
-		this._register(
-			this.queryModelService.onRunQueryComplete(uri => {
-				if (this.uri === uri) {
-					this.onQueryComplete();
-				}
-			})
-		);
 
 		this._register(this.connectionManagementService.onDisconnect(result => {
 			if (result.connectionUri === this.uri) {
@@ -228,22 +212,6 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 		return this.getName(true);
 	}
 
-	// State update funtions
-	public runQuery(selection?: ISelectionData, executePlanOptions?: ExecutionPlanOptions): void {
-		this.queryModelService.runQuery(this.uri, selection, executePlanOptions);
-		this.state.executing = true;
-	}
-
-	public runQueryStatement(selection?: ISelectionData): void {
-		this.queryModelService.runQueryStatement(this.uri, selection);
-		this.state.executing = true;
-	}
-
-	public runQueryString(text: string): void {
-		this.queryModelService.runQueryString(this.uri, text);
-		this.state.executing = true;
-	}
-
 	public onConnectStart(): void {
 		this.state.connecting = true;
 		this.state.connected = false;
@@ -308,7 +276,6 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 
 	public dispose() {
 		super.dispose(); // we want to dispose first so that for future logic we know we are disposed
-		this.queryModelService.disposeQuery(this.uri);
 		this.connectionManagementService.disconnectEditor(this, true);
 	}
 
