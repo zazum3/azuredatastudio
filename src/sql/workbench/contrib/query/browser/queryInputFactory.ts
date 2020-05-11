@@ -22,6 +22,7 @@ import { onUnexpectedError } from 'vs/base/common/errors';
 import { IFileService } from 'vs/platform/files/common/files';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IQueryEditorService } from 'sql/workbench/services/queryEditor/common/queryEditorService';
+import * as Utils from 'sql/platform/connection/common/utils';
 
 const editorInputFactoryRegistry = Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories);
 
@@ -29,6 +30,7 @@ export class QueryEditorLanguageAssociation implements ILanguageAssociation {
 	static readonly isDefault = true;
 	static readonly languages = ['sql'];
 	lastProfile = undefined;
+	lastURI = undefined;
 
 	constructor(@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@IObjectExplorerService private readonly objectExplorerService: IObjectExplorerService,
@@ -50,7 +52,8 @@ export class QueryEditorLanguageAssociation implements ILanguageAssociation {
 
 		//const profile = getCurrentGlobalConnection(this.objectExplorerService, this.connectionManagementService, this.editorService);
 		let profile = getCurrentGlobalConnection(this.objectExplorerService, this.connectionManagementService, this.editorService);
-		if (!profile && this.lastProfile && this.connectionManagementService.isProfileConnected(this.lastProfile)) {
+		if (!profile && this.lastProfile && this.connectionManagementService.isConnected(this.lastURI)) {
+			this.connectionManagementService.connect(this.lastProfile, this.lastURI);
 			profile = this.lastProfile;
 		}
 
@@ -64,6 +67,7 @@ export class QueryEditorLanguageAssociation implements ILanguageAssociation {
 			};
 			this.connectionManagementService.connect(profile, queryEditorInput.uri, options).catch(err => onUnexpectedError(err));
 			this.lastProfile = profile;
+			this.lastURI = Utils.generateUri(this.lastProfile);
 		}
 
 		return queryEditorInput;
