@@ -10,11 +10,12 @@ import { URI } from 'vs/base/common/uri';
 import { EditorInput, GroupIdentifier, IRevertOptions, ISaveOptions, IEditorInput, TextResourceEditorInput } from 'vs/workbench/common/editor';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 
-import { IConnectionManagementService, IConnectableInput, INewConnectionParams, RunQueryOnConnectionMode } from 'sql/platform/connection/common/connectionManagement';
+import { IConnectionManagementService, IConnectableInput, INewConnectionParams } from 'sql/platform/connection/common/connectionManagement';
 import { QueryResultsInput } from 'sql/workbench/common/editor/query/queryResultsInput';
 
 import { startsWith } from 'vs/base/common/strings';
-import { IQueryService } from 'sql/platform/query/common/queryService';
+import { IQueryService, IQuery, QueryState } from 'sql/platform/query/common/queryService';
+import { memoize } from 'vs/base/common/decorators';
 
 const MAX_SIZE = 13;
 
@@ -143,9 +144,7 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 		}));
 
 		this.connectionManagementService.ensureDefaultLanguageFlavor(this.uri);
-
-		this.onDisconnect();
-		this.onQueryComplete();
+		this.results.query = this.query;
 	}
 
 	// Getters for private properties
@@ -157,6 +156,20 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 	public supportsSplitEditor(): boolean { return false; }
 	public revert(group: GroupIdentifier, options?: IRevertOptions): Promise<void> {
 		return this._text.revert(group, options);
+	}
+
+	@memoize
+	public get query(): IQuery {
+		const query = this.queryService.createOrGetQuery(this.resource);
+		query.onDidStateChange(e => {
+			if (e === QueryState.EXECUTING) {
+				this.state.executing = true;
+				this.state.resultsVisible = true;
+			} else {
+				this.state.executing = false;
+			}
+		});
+		return query;
 	}
 
 	public isReadonly(): boolean {
@@ -234,19 +247,19 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 		this.state.connected = true;
 		this.state.connecting = false;
 
-		let isRunningQuery = this.queryModelService.isRunningQuery(this.uri);
-		if (!isRunningQuery && params && params.runQueryOnCompletion) {
-			let range: IRange | undefined = params ? params.queryRange : undefined;
-			if (params.runQueryOnCompletion === RunQueryOnConnectionMode.executeCurrentQuery) {
-				this.runQueryStatement(range);
-			} else if (params.runQueryOnCompletion === RunQueryOnConnectionMode.executeQuery) {
-				this.runQuery(range);
-			} else if (params.runQueryOnCompletion === RunQueryOnConnectionMode.estimatedQueryPlan) {
-				this.runQuery(range, { displayEstimatedQueryPlan: true });
-			} else if (params.runQueryOnCompletion === RunQueryOnConnectionMode.actualQueryPlan) {
-				this.runQuery(range, { displayActualQueryPlan: true });
-			}
-		}
+		// let isRunningQuery = this.queryModelService.isRunningQuery(this.uri);
+		// if (!isRunningQuery && params && params.runQueryOnCompletion) {
+		// 	let range: IRange | undefined = params ? params.queryRange : undefined;
+		// 	if (params.runQueryOnCompletion === RunQueryOnConnectionMode.executeCurrentQuery) {
+		// 		this.runQueryStatement(range);
+		// 	} else if (params.runQueryOnCompletion === RunQueryOnConnectionMode.executeQuery) {
+		// 		this.runQuery(range);
+		// 	} else if (params.runQueryOnCompletion === RunQueryOnConnectionMode.estimatedQueryPlan) {
+		// 		this.runQuery(range, { displayEstimatedQueryPlan: true });
+		// 	} else if (params.runQueryOnCompletion === RunQueryOnConnectionMode.actualQueryPlan) {
+		// 		this.runQuery(range, { displayActualQueryPlan: true });
+		// 	}
+		// }
 		this._onDidChangeLabel.fire();
 	}
 
@@ -255,15 +268,6 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 		if (!this.isDisposed()) {
 			this._onDidChangeLabel.fire();
 		}
-	}
-
-	public onRunQuery(): void {
-		this.state.executing = true;
-		this.state.resultsVisible = true;
-	}
-
-	public onQueryComplete(): void {
-		this.state.executing = false;
 	}
 
 	/**

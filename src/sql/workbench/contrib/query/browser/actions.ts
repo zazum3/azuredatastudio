@@ -11,7 +11,6 @@ import { QueryEditor } from './queryEditor';
 import { CellSelectionModel } from 'sql/base/browser/ui/table/plugins/cellSelectionModel.plugin';
 import { IGridDataProvider } from 'sql/workbench/services/query/common/gridDataProvider';
 import { INotificationService } from 'vs/platform/notification/common/notification';
-import QueryRunner from 'sql/workbench/services/query/common/queryRunner';
 import { GridTableState } from 'sql/workbench/common/editor/query/gridTableState';
 import * as Constants from 'sql/workbench/contrib/extensions/common/constants';
 import { IAdsTelemetryService } from 'sql/platform/telemetry/common/telemetry';
@@ -19,6 +18,7 @@ import * as TelemetryKeys from 'sql/platform/telemetry/common/telemetryKeys';
 import { getErrorMessage } from 'vs/base/common/errors';
 import { SaveFormat } from 'sql/workbench/services/query/common/resultSerializer';
 import { IExtensionRecommendationsService } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
+import { IQuery } from 'sql/platform/query/common/queryService';
 
 export interface IGridActionContext {
 	gridDataProvider: IGridDataProvider;
@@ -27,8 +27,7 @@ export interface IGridActionContext {
 	cell?: { row: number; cell: number; };
 	selection?: Slick.Range[];
 	selectionModel?: CellSelectionModel<any>;
-	batchId: number;
-	resultId: number;
+	id: string;
 }
 
 function mapForNumberColumn(ranges: Slick.Range[]): Slick.Range[] {
@@ -170,7 +169,7 @@ export class ChartDataAction extends Action {
 		this.extensionTipsService.promptRecommendedExtensionsByScenario(Constants.visualizerExtensions);
 
 		const activeEditor = this.editorService.activeEditorPane as QueryEditor;
-		activeEditor.chart({ batchId: context.batchId, resultId: context.resultId });
+		activeEditor.chart(context.id);
 		return Promise.resolve(true);
 	}
 }
@@ -181,7 +180,7 @@ export class VisualizerDataAction extends Action {
 	public static ICON = 'viewVisualizer';
 
 	constructor(
-		private runner: QueryRunner,
+		private query: IQuery,
 		@IAdsTelemetryService private adsTelemetryService: IAdsTelemetryService
 	) {
 		super(VisualizerDataAction.ID, VisualizerDataAction.LABEL, VisualizerDataAction.ICON);
@@ -194,7 +193,7 @@ export class VisualizerDataAction extends Action {
 			'VisualizerButton',
 			'VisualizerDataAction'
 		);
-		this.runner.notifyVisualizeRequested(context.batchId, context.resultId);
+		this.query.notifyVisualizeRequested(context.batchId, context.resultId);
 		return Promise.resolve(true);
 	}
 }

@@ -13,8 +13,6 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IDataResource } from 'sql/workbench/services/notebook/browser/sql/sqlSessionManager';
 import { ITextResourcePropertiesService } from 'vs/editor/common/services/textResourceConfigurationService';
-import { getEolString, shouldIncludeHeaders, shouldRemoveNewLines } from 'sql/workbench/services/query/common/queryRunner';
-import { ICellValue, ResultSetSummary, ResultSetSubset } from 'sql/workbench/services/query/common/query';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
 import { attachTableStyler } from 'sql/platform/theme/common/styler';
@@ -40,6 +38,7 @@ import { Orientation } from 'vs/base/browser/ui/splitview/splitview';
 import { ToggleableAction } from 'sql/workbench/contrib/notebook/browser/notebookActions';
 import { IInsightOptions } from 'sql/workbench/common/editor/query/chartState';
 import { NotebookChangeType } from 'sql/workbench/services/notebook/common/contracts';
+import { IResultSet } from 'sql/platform/query/common/queryService';
 
 @Component({
 	selector: GridOutputComponent.SELECTOR,
@@ -227,9 +226,9 @@ class DataResourceTable extends GridTableBase<any> {
 }
 
 class DataResourceDataProvider implements IGridDataProvider {
-	private rows: ICellValue[][];
+	private rows: string[][];
 	constructor(source: IDataResource,
-		private resultSet: ResultSetSummary,
+		private resultSet: IResultSet,
 		private documentUri: string,
 		@INotificationService private _notificationService: INotificationService,
 		@IClipboardService private _clipboardService: IClipboardService,
@@ -243,26 +242,22 @@ class DataResourceDataProvider implements IGridDataProvider {
 
 	private transformSource(source: IDataResource): void {
 		this.rows = source.data.map(row => {
-			let rowData: azdata.DbCellValue[] = [];
+			let rowData: string[] = [];
 			Object.keys(row).forEach((val, index) => {
 				let displayValue = String(values(row)[index]);
 				// Since the columns[0] represents the row number, start at 1
-				rowData.push({
-					displayValue: displayValue,
-					isNull: false,
-					invariantCultureDisplayValue: displayValue
-				});
+				rowData.push(displayValue);
 			});
 			return rowData;
 		});
 	}
 
-	getRowData(rowStart: number, numberOfRows: number): Thenable<ResultSetSubset> {
+	getRowData(rowStart: number, numberOfRows: number): Thenable<IResultSet> {
 		let rowEnd = rowStart + numberOfRows;
 		if (rowEnd > this.rows.length) {
 			rowEnd = this.rows.length;
 		}
-		let resultSubset: ResultSetSubset = {
+		let resultSubset: IResultSet = {
 			rowCount: rowEnd - rowStart,
 			rows: this.rows.slice(rowStart, rowEnd)
 		};

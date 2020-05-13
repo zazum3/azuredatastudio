@@ -16,7 +16,6 @@ import {
 	DisconnectDatabaseAction, ConnectDatabaseAction, QueryTaskbarAction
 } from 'sql/workbench/contrib/query/browser/queryActions';
 import { QueryEditor } from 'sql/workbench/contrib/query/browser/queryEditor';
-import { QueryModelService } from 'sql/workbench/services/query/common/queryModelService';
 import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
 
 import * as TypeMoq from 'typemoq';
@@ -25,7 +24,6 @@ import { TestFileService, workbenchInstantiationService } from 'vs/workbench/tes
 import { MockContextKeyService } from 'vs/platform/keybinding/test/common/mockKeybindingService';
 import { UntitledQueryEditorInput } from 'sql/workbench/common/editor/query/untitledQueryEditorInput';
 import { TestThemeService } from 'vs/platform/theme/test/common/testThemeService';
-import { TestQueryModelService } from 'sql/workbench/services/query/test/common/testQueryModelService';
 import { URI } from 'vs/base/common/uri';
 import { TestConnectionManagementService } from 'sql/platform/connection/test/common/testConnectionManagementService';
 import { TestConfigurationService } from 'vs/platform/configuration/test/common/testConfigurationService';
@@ -33,6 +31,7 @@ import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/u
 import { IUntitledTextEditorService } from 'vs/workbench/services/untitled/common/untitledTextEditorService';
 import { TestStorageService } from 'vs/workbench/test/common/workbenchTestServices';
 import { IRange } from 'vs/editor/common/core/range';
+import { TestQueryService } from 'sql/platform/query/test/testQueryService';
 
 suite('SQL QueryAction Tests', () => {
 
@@ -41,7 +40,6 @@ suite('SQL QueryAction Tests', () => {
 	let calledRunQueryOnInput: boolean = undefined;
 	let testQueryInput: TypeMoq.Mock<UntitledQueryEditorInput>;
 	let configurationService: TypeMoq.Mock<TestConfigurationService>;
-	let queryModelService: TypeMoq.Mock<TestQueryModelService>;
 	let connectionManagementService: TypeMoq.Mock<TestConnectionManagementService>;
 
 	setup(() => {
@@ -63,9 +61,6 @@ suite('SQL QueryAction Tests', () => {
 		configurationService.setup(x => x.getValue(TypeMoq.It.isAny())).returns(() => {
 			return {};
 		});
-		queryModelService = TypeMoq.Mock.ofType<TestQueryModelService>(TestQueryModelService);
-		queryModelService.setup(q => q.onRunQueryStart).returns(() => Event.None);
-		queryModelService.setup(q => q.onRunQueryComplete).returns(() => Event.None);
 		connectionManagementService = TypeMoq.Mock.ofType<TestConnectionManagementService>(TestConnectionManagementService);
 		connectionManagementService.setup(q => q.onDisconnect).returns(() => Event.None);
 		const workbenchinstantiationService = workbenchInstantiationService();
@@ -73,7 +68,7 @@ suite('SQL QueryAction Tests', () => {
 		const service = accessor.untitledTextEditorService;
 		let fileInput = workbenchinstantiationService.createInstance(UntitledTextEditorInput, service.create({ associatedResource: URI.parse('file://testUri') }));
 		// Setup a reusable mock QueryInput
-		testQueryInput = TypeMoq.Mock.ofType(UntitledQueryEditorInput, TypeMoq.MockBehavior.Strict, undefined, fileInput, undefined, connectionManagementService.object, queryModelService.object, configurationService.object);
+		testQueryInput = TypeMoq.Mock.ofType(UntitledQueryEditorInput, TypeMoq.MockBehavior.Strict, undefined, fileInput, undefined, connectionManagementService.object, new TestQueryService(), configurationService.object);
 		testQueryInput.setup(x => x.uri).returns(() => testUri);
 		testQueryInput.setup(x => x.runQuery(undefined)).callback(() => { calledRunQueryOnInput = true; });
 	});
@@ -132,12 +127,8 @@ suite('SQL QueryAction Tests', () => {
 			})
 			.returns(() => Promise.resolve());
 
-		// ... Mock QueryModelService
-		let queryModelService = TypeMoq.Mock.ofType(QueryModelService, TypeMoq.MockBehavior.Loose);
-		queryModelService.setup(x => x.runQuery(TypeMoq.It.isAny(), undefined, TypeMoq.It.isAny()));
-
 		// If I call run on RunQueryAction when I am not connected
-		let queryAction: RunQueryAction = new RunQueryAction(editor.object, queryModelService.object, connectionManagementService.object);
+		let queryAction: RunQueryAction = new RunQueryAction(editor.object, connectionManagementService.object);
 		isConnected = false;
 		calledRunQueryOnInput = false;
 		await queryAction.run();
@@ -197,7 +188,7 @@ suite('SQL QueryAction Tests', () => {
 		queryEditor.setup(x => x.isSelectionEmpty()).returns(() => isSelectionEmpty);
 
 		// If I call run on RunQueryAction when I have a non empty selection
-		let queryAction: RunQueryAction = new RunQueryAction(queryEditor.object, queryModelService.object, connectionManagementService.object);
+		let queryAction: RunQueryAction = new RunQueryAction(queryEditor.object, connectionManagementService.object);
 		isSelectionEmpty = false;
 		await queryAction.run();
 

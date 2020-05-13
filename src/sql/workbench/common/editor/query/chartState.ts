@@ -55,10 +55,7 @@ export interface IInsightOptions {
 }
 
 export class ChartState {
-	dataId?: {
-		batchId: number;
-		resultId: number;
-	};
+	id?: string;
 	options: IInsightOptions = {
 		type: ChartType.Bar
 	};

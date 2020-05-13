@@ -4,8 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import 'vs/css!./media/messagePanel';
-import QueryRunner from 'sql/workbench/services/query/common/queryRunner';
-import { IQueryMessage } from 'sql/workbench/services/query/common/query';
 
 import { ITreeRenderer, IDataSource, ITreeNode, ITreeContextMenuEvent } from 'vs/base/browser/ui/tree/tree';
 import { generateUuid } from 'vs/base/common/uuid';
@@ -32,6 +30,8 @@ import { QueryEditor } from 'sql/workbench/contrib/query/browser/queryEditor';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { IDataTreeViewState } from 'vs/base/browser/ui/tree/dataTree';
 import { IRange } from 'vs/editor/common/core/range';
+import { IQuery, QueryState, IResultMessage } from 'sql/platform/query/common/queryService';
+import { Event } from 'vs/base/common/event';
 
 export interface IResultMessageIntern {
 	id?: string;
@@ -92,7 +92,7 @@ export class MessagePanel extends Disposable {
 
 	private queryRunnerDisposables = this._register(new DisposableStore());
 	private _treeStates = new Map<string, IDataTreeViewState>();
-	private currenturi: string;
+	private currenturi: URI;
 
 	private tree: WorkbenchDataTree<Model, IResultMessageIntern, FuzzyScore>;
 
@@ -181,26 +181,26 @@ export class MessagePanel extends Disposable {
 		this.tree.domFocus();
 	}
 
-	public set queryRunner(runner: QueryRunner) {
+	public set query(query: IQuery) {
 		if (this.currenturi) {
-			this._treeStates.set(this.currenturi, this.tree.getViewState());
+			this._treeStates.set(this.currenturi.toString(), this.tree.getViewState());
 		}
 		this.queryRunnerDisposables.clear();
 		this.reset();
-		this.currenturi = runner.uri;
-		this.queryRunnerDisposables.add(runner.onQueryStart(() => this.reset()));
-		this.queryRunnerDisposables.add(runner.onMessage(e => this.onMessage(e)));
-		this.onMessage(runner.messages, true);
+		this.currenturi = query.associatedFile;
+		this.queryRunnerDisposables.add(Event.filter(query.onDidStateChange, e => e === QueryState.EXECUTING)(() => this.reset()));
+		this.queryRunnerDisposables.add(query.onMessage(e => this.onMessage(e)));
+		this.onMessage(query.messages, true);
 	}
 
-	private onMessage(message: IQueryMessage | IQueryMessage[], setInput: boolean = false) {
+	private onMessage(message: IResultMessage | readonly IResultMessage [], setInput: boolean = false) {
 		if (isArray(message)) {
-			this.model.messages.push(...message);
+			this.model.messages.push(...(message as IResultMessage[]));
 		} else {
 			this.model.messages.push(message);
 		}
 		if (setInput) {
-			this.tree.setInput(this.model, this._treeStates.get(this.currenturi));
+			this.tree.setInput(this.model, this._treeStates.get(this.currenturi.toString()));
 		} else {
 			this.tree.updateChildren();
 		}

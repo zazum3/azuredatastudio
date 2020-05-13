@@ -7,8 +7,6 @@ import 'vs/css!./media/chartView';
 
 import { IPanelView } from 'sql/base/browser/ui/panel/panel';
 import { Insight } from './insight';
-import QueryRunner from 'sql/workbench/services/query/common/queryRunner';
-import { ICellValue } from 'sql/workbench/services/query/common/query';
 import { ChartOptions, IChartOption, ControlType } from './chartOptions';
 import { Extensions, IInsightRegistry, IInsightData } from 'sql/platform/dashboard/browser/insightRegistry';
 import { Registry } from 'vs/platform/registry/common/platform';
@@ -30,6 +28,7 @@ import * as nls from 'vs/nls';
 import { find } from 'vs/base/common/arrays';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { Event, Emitter } from 'vs/base/common/event';
+import { IQuery } from 'sql/platform/query/common/queryService';
 
 const insightRegistry = Registry.as<IInsightRegistry>(Extensions.InsightContribution);
 
@@ -50,9 +49,9 @@ const altNameHash: { [oldName: string]: string } = {
 
 export class ChartView extends Disposable implements IPanelView {
 	private insight: Insight;
-	private _queryRunner: QueryRunner;
+	private _query: IQuery;
 	private _data: IInsightData;
-	private _currentData: { batchId: number, resultId: number };
+	private _currentData: string;
 	private taskbar: Taskbar;
 
 	private _createInsightAction: CreateInsightAction;
@@ -188,14 +187,14 @@ export class ChartView extends Disposable implements IPanelView {
 		if (this._data) {
 			this.insight.data = this._data;
 		} else {
-			this.queryRunner = this._queryRunner;
+			this.query = this._query;
 		}
 		this.verifyOptions();
 	}
 
-	public chart(dataId: { batchId: number, resultId: number }) {
-		this.state.dataId = dataId;
-		this._currentData = dataId;
+	public chart(id: string) {
+		this.state.id = id;
+		this._currentData = id;
 		this.shouldGraph();
 	}
 
@@ -208,19 +207,19 @@ export class ChartView extends Disposable implements IPanelView {
 	focus(): void {
 	}
 
-	public set queryRunner(runner: QueryRunner) {
-		this._queryRunner = runner;
+	public set query(query: IQuery) {
+		this._query = query;
 		this.shouldGraph();
 	}
 
-	public setData(rows: ICellValue[][], columns: string[]): void {
+	public setData(rows: ReadonlyArray<ReadonlyArray<string>>, columns: string[]): void {
 		if (!rows) {
 			this._data = { columns: [], rows: [] };
 			this._notificationService.error(nls.localize('charting.failedToGetRows', "Failed to get rows for the dataset to chart."));
 		} else {
 			this._data = {
 				columns: columns,
-				rows: rows.map(r => r.map(c => c.displayValue))
+				rows: rows.map(r => r.map(c => c))
 			};
 		}
 
@@ -231,18 +230,15 @@ export class ChartView extends Disposable implements IPanelView {
 
 	private shouldGraph() {
 		// Check if we have the necessary information
-		if (this._currentData && this._queryRunner) {
+		if (this._currentData && this._query) {
 			// check if we are being asked to graph something that is available
-			let batch = this._queryRunner.batchSets[this._currentData.batchId];
-			if (batch) {
-				let summary = batch.resultSetSummaries[this._currentData.resultId];
-				if (summary) {
-					this._queryRunner.getQueryRows(0, summary.rowCount, this._currentData.batchId, this._currentData.resultId).then(d => {
-						let rows = d.rows;
-						let columns = summary.columnInfo.map(c => c.columnName);
-						this.setData(rows, columns);
-					});
-				}
+			let result = this._query.resultSets.find(r => r.id === this._currentData);
+			if (result) {
+				result.fetch(0, result.rowCount).then(d => {
+					let rows = d.rows;
+					let columns = result.columns.map(c => c.title);
+					this.setData(rows, columns);
+				});
 			}
 			// if we have the necessary information but the information isn't available yet,
 			// we should be smart and retrying when the information might be available
@@ -430,8 +426,8 @@ export class ChartView extends Disposable implements IPanelView {
 	public set state(val: ChartState) {
 		this._state = val;
 		this.options = this._state.options;
-		if (this._state.dataId) {
-			this.chart(this._state.dataId);
+		if (this._state.id) {
+			this.chart(this._state.id);
 		}
 	}
 

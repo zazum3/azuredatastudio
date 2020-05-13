@@ -6,6 +6,7 @@
 // This is the place for API experiments and proposal.
 
 import * as vscode from 'vscode';
+import * as azdata from 'azdata';
 
 declare module 'azdata' {
 	/**
@@ -27,6 +28,47 @@ declare module 'azdata' {
 		export function registerConnectionEventListener(listener: connection.ConnectionEventListener): void;
 
 		export function getConnection(uri: string): Thenable<ConnectionProfile>;
+	}
+
+	export interface QueryProvider2 {
+		readonly providerId: string;
+		cancelQuery(ownerUri: string): Thenable<QueryCancelResult>;
+		runQuery(ownerUri: string, selection: ISelectionData, runOptions?: ExecutionPlanOptions): Thenable<void>;
+		runQueryStatement(ownerUri: string, line: number, column: number): Thenable<void>;
+		runQueryString(ownerUri: string, queryString: string): Thenable<void>;
+		runQueryAndReturn(ownerUri: string, queryString: string): Thenable<SimpleExecuteResult>;
+		parseSyntax(ownerUri: string, query: string): Thenable<SyntaxParseResult>;
+		getQueryRows(rowData: QueryExecuteSubsetParams): Thenable<QueryExecuteSubsetResult>;
+		disposeQuery(ownerUri: string): Thenable<void>;
+		saveResults(requestParams: SaveResultsRequestParams): Thenable<SaveResultRequestResult>;
+		setQueryExecutionOptions(ownerUri: string, options: QueryExecutionOptions): Thenable<void>;
+
+		// Notifications
+		readonly onQueryComplete: vscode.Event<QueryExecuteCompleteNotificationResult>;
+		readonly onBatchStart: vscode.Event<QueryExecuteBatchNotificationParams>;
+		readonly onBatchComplete: vscode.Event<QueryExecuteBatchNotificationParams>;
+		readonly onResultSetAvailable: vscode.Event<QueryExecuteResultSetNotificationParams>;
+		readonly onResultSetUpdated: vscode.Event<QueryExecuteResultSetNotificationParams>;
+		readonly onMessage: vscode.Event<QueryExecuteMessageParams>;
+
+		// Edit Data Requests
+		commitEdit(ownerUri: string): Thenable<void>;
+		createRow(ownerUri: string): Thenable<EditCreateRowResult>;
+		deleteRow(ownerUri: string, rowId: number): Thenable<void>;
+		disposeEdit(ownerUri: string): Thenable<void>;
+		initializeEdit(ownerUri: string, schemaName: string, objectName: string, objectType: string, rowLimit: number, queryString: string): Thenable<void>;
+		revertCell(ownerUri: string, rowId: number, columnId: number): Thenable<EditRevertCellResult>;
+		revertRow(ownerUri: string, rowId: number): Thenable<void>;
+		updateCell(ownerUri: string, rowId: number, columnId: number, newValue: string): Thenable<EditUpdateCellResult>;
+		getEditRows(rowData: EditSubsetParams): Thenable<EditSubsetResult>;
+
+		// Edit Data Notifications
+		readonly onEditSessionReady: vscode.Event<{ ownerUri: string; success: boolean; message: string }>;
+	}
+
+	export namespace query {
+		export function registerProvider(provider: azdata.QueryProvider): vscode.Disposable;
+		export function registerProvider2(provider: QueryProvider2): vscode.Disposable;
 	}
 
 	export namespace nb {

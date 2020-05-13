@@ -24,9 +24,7 @@ import { ILogService, NullLogService } from 'vs/platform/log/common/log';
 import { TestConfigurationService } from 'vs/platform/configuration/test/common/testConfigurationService';
 import { TestEditorService, workbenchInstantiationService } from 'vs/workbench/test/browser/workbenchTestServices';
 import { URI } from 'vs/base/common/uri';
-import { TestQueryModelService } from 'sql/workbench/services/query/test/common/testQueryModelService';
 import { Event } from 'vs/base/common/event';
-import { IQueryModelService } from 'sql/workbench/services/query/common/queryModel';
 import { IDialogService } from 'vs/platform/dialogs/common/dialogs';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { TestNotificationService } from 'vs/platform/notification/test/common/testNotificationService';
@@ -34,6 +32,7 @@ import { isUndefinedOrNull } from 'vs/base/common/types';
 import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
 import { FileQueryEditorInput } from 'sql/workbench/contrib/query/common/fileQueryEditorInput';
 import { TestDialogService } from 'vs/platform/dialogs/test/common/testDialogService';
+import { TestQueryService } from 'sql/platform/query/test/testQueryService';
 
 class TestParsedArgs implements ParsedArgs {
 	[arg: string]: any;
@@ -387,13 +386,10 @@ suite('commandLineService tests', () => {
 		connectionManagementService.setup(c => c.onDisconnect).returns(() => Event.None);
 		connectionManagementService.setup(c => c.ensureDefaultLanguageFlavor(TypeMoq.It.isAny()));
 		const configurationService = getConfigurationServiceMock(true);
-		const querymodelService = TypeMoq.Mock.ofType<IQueryModelService>(TestQueryModelService, TypeMoq.MockBehavior.Strict);
-		querymodelService.setup(c => c.onRunQueryStart).returns(() => Event.None);
-		querymodelService.setup(c => c.onRunQueryComplete).returns(() => Event.None);
 		let uri = URI.file(args._[0]);
 		const workbenchinstantiationService = workbenchInstantiationService();
 		const editorInput = workbenchinstantiationService.createInstance(FileEditorInput, uri, undefined, undefined);
-		const queryInput = new FileQueryEditorInput(undefined, editorInput, undefined, connectionManagementService.object, querymodelService.object, configurationService.object);
+		const queryInput = new FileQueryEditorInput(undefined, editorInput, undefined, connectionManagementService.object, new TestQueryService(), configurationService.object);
 		queryInput.state.connected = true;
 		const editorService: TypeMoq.Mock<IEditorService> = TypeMoq.Mock.ofType<IEditorService>(TestEditorService, TypeMoq.MockBehavior.Strict);
 		editorService.setup(e => e.editors).returns(() => [queryInput]);

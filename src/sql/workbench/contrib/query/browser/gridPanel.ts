@@ -6,8 +6,6 @@
 import 'vs/css!./media/gridPanel';
 
 import { attachTableStyler } from 'sql/platform/theme/common/styler';
-import QueryRunner, { QueryGridDataProvider } from 'sql/workbench/services/query/common/queryRunner';
-import { ResultSetSummary, IColumn } from 'sql/workbench/services/query/common/query';
 import { VirtualizedCollection, AsyncDataProvider } from 'sql/base/browser/ui/table/asyncDataView';
 import { Table } from 'sql/base/browser/ui/table/table';
 import { ScrollableSplitView, IView } from 'sql/base/browser/ui/scrollableSplitview/scrollableSplitview';
@@ -28,7 +26,7 @@ import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { Emitter, Event } from 'vs/base/common/event';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { isUndefinedOrNull } from 'vs/base/common/types';
-import { range, find } from 'vs/base/common/arrays';
+import { range } from 'vs/base/common/arrays';
 import { Orientation } from 'vs/base/browser/ui/splitview/splitview';
 import { Disposable, dispose, DisposableStore } from 'vs/base/common/lifecycle';
 import { generateUuid } from 'vs/base/common/uuid';
@@ -40,13 +38,14 @@ import { IAction } from 'vs/base/common/actions';
 import { ScrollbarVisibility } from 'vs/base/common/scrollable';
 import { ILogService } from 'vs/platform/log/common/log';
 import { localize } from 'vs/nls';
-import { IGridDataProvider } from 'sql/workbench/services/query/common/gridDataProvider';
+import { IGridDataProvider, QueryGridDataProvider } from 'sql/workbench/services/query/common/gridDataProvider';
 import { formatDocumentWithSelectedProvider, FormattingMode } from 'vs/editor/contrib/format/format';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { GridPanelState, GridTableState } from 'sql/workbench/common/editor/query/gridTableState';
 import { IUntitledTextEditorService } from 'vs/workbench/services/untitled/common/untitledTextEditorService';
 import { SaveFormat } from 'sql/workbench/services/query/common/resultSerializer';
 import { Progress } from 'vs/platform/progress/common/progress';
+import { IQuery, IResultSet, IColumn, ColumnType, QueryState } from 'sql/platform/query/common/queryService';
 
 const ROW_HEIGHT = 29;
 const HEADER_HEIGHT = 26;
@@ -69,7 +68,7 @@ export class GridPanel extends Disposable {
 	private queryRunnerDisposables = this._register(new DisposableStore());
 	private currentHeight: number;
 
-	private runner: QueryRunner;
+	private _query: IQuery;
 
 	private maximizedGrid: GridTable<any>;
 	private _state: GridPanelState | undefined;
@@ -110,26 +109,19 @@ export class GridPanel extends Disposable {
 		this.tables[0].focus();
 	}
 
-	public set queryRunner(runner: QueryRunner) {
+	public set query(query: IQuery) {
 		this.queryRunnerDisposables.clear();
 		this.reset();
-		this.runner = runner;
-		this.queryRunnerDisposables.add(this.runner.onResultSet(this.onResultSet, this));
-		this.queryRunnerDisposables.add(this.runner.onResultSetUpdate(this.updateResultSet, this));
-		this.queryRunnerDisposables.add(this.runner.onQueryStart(() => {
+		this._query = query;
+		this.queryRunnerDisposables.add(this._query.onResultSetAvailable(this.onResultSet, this));
+		this.queryRunnerDisposables.add(this._query.onResultSetUpdated(this.updateResultSet, this));
+		this.queryRunnerDisposables.add(Event.filter(this._query.onDidStateChange, e => e === QueryState.EXECUTING)(() => {
 			if (this.state) {
 				this.state.tableStates = [];
 			}
 			this.reset();
 		}));
-		this.addResultSet(this.runner.batchSets.reduce<ResultSetSummary[]>((p, e) => {
-			if (this.configurationService.getValue<boolean>('sql.results.streaming')) {
-				p = p.concat(e.resultSetSummaries);
-			} else {
-				p = p.concat(e.resultSetSummaries.filter(c => c.complete));
-			}
-			return p;
-		}, []));
+		this.addResultSet(this._query.resultSets.filter(e => this.configurationService.getValue<boolean>('sql.results.streaming') || e.completed));
 
 		if (this.state && this.state.scrollPosition) {
 			this.splitView.setScrollPosition(this.state.scrollPosition);
@@ -140,8 +132,8 @@ export class GridPanel extends Disposable {
 		this.splitView.setScrollPosition(this.state.scrollPosition);
 	}
 
-	private onResultSet(resultSet: ResultSetSummary | ResultSetSummary[]) {
-		let resultsToAdd: ResultSetSummary[];
+	private onResultSet(resultSet: IResultSet | IResultSet[]) {
+		let resultsToAdd: IResultSet[];
 		if (!Array.isArray(resultSet)) {
 			resultsToAdd = [resultSet];
 		} else {
@@ -161,7 +153,7 @@ export class GridPanel extends Disposable {
 			this.addResultSet(resultsToAdd);
 			sizeChanges();
 		} else {
-			resultsToAdd = resultsToAdd.filter(e => e.complete);
+			resultsToAdd = resultsToAdd.filter(e => e.completed);
 			if (resultsToAdd.length > 0) {
 				this.addResultSet(resultsToAdd);
 			}
@@ -169,8 +161,8 @@ export class GridPanel extends Disposable {
 		}
 	}
 
-	private updateResultSet(resultSet: ResultSetSummary | ResultSetSummary[]) {
-		let resultsToUpdate: ResultSetSummary[];
+	private updateResultSet(resultSet: IResultSet | IResultSet[]) {
+		let resultsToUpdate: IResultSet[];
 		if (!Array.isArray(resultSet)) {
 			resultsToUpdate = [resultSet];
 		} else {
@@ -185,7 +177,7 @@ export class GridPanel extends Disposable {
 
 		if (this.configurationService.getValue<boolean>('sql.results.streaming')) {
 			for (let set of resultsToUpdate) {
-				let table = find(this.tables, t => t.resultSet.batchId === set.batchId && t.resultSet.id === set.id);
+				let table = this.tables.find(t => t.resultSet.id === set.id);
 				if (table) {
 					table.updateResult(set);
 				} else {
@@ -194,7 +186,7 @@ export class GridPanel extends Disposable {
 			}
 			sizeChanges();
 		} else {
-			resultsToUpdate = resultsToUpdate.filter(e => e.complete);
+			resultsToUpdate = resultsToUpdate.filter(e => e.completed);
 			if (resultsToUpdate.length > 0) {
 				this.addResultSet(resultsToUpdate);
 			}
@@ -202,25 +194,25 @@ export class GridPanel extends Disposable {
 		}
 	}
 
-	private addResultSet(resultSet: ResultSetSummary[]) {
+	private addResultSet(resultSet: IResultSet[]) {
 		let tables: GridTable<any>[] = [];
 
 		for (let set of resultSet) {
 			// ensure we aren't adding a resultSet that is already visible
-			if (find(this.tables, t => t.resultSet.batchId === set.batchId && t.resultSet.id === set.id)) {
+			if (this.tables.find(t => t.resultSet.id === set.id)) {
 				continue;
 			}
 			let tableState: GridTableState;
 			if (this.state) {
-				tableState = find(this.state.tableStates, e => e.batchId === set.batchId && e.resultId === set.id);
+				tableState = this.state.tableStates.find(e => e.id === set.id);
 			}
 			if (!tableState) {
-				tableState = new GridTableState(set.id, set.batchId);
+				tableState = new GridTableState(set.id);
 				if (this.state) {
 					this.state.tableStates.push(tableState);
 				}
 			}
-			let table = this.instantiationService.createInstance(GridTable, this.runner, set, tableState);
+			let table = this.instantiationService.createInstance(GridTable, this.query, set, tableState);
 			this.tableDisposable.add(tableState.onMaximizedChange(e => {
 				if (e) {
 					this.maximizeTable(table.id);
@@ -263,7 +255,7 @@ export class GridPanel extends Disposable {
 	}
 
 	private maximizeTable(tableid: string): void {
-		if (!find(this.tables, t => t.id === tableid)) {
+		if (!this.tables.find(t => t.id === tableid)) {
 			return;
 		}
 
@@ -291,7 +283,7 @@ export class GridPanel extends Disposable {
 		this._state = val;
 		if (this.state) {
 			this.tables.map(t => {
-				let state = find(this.state.tableStates, s => s.batchId === t.resultSet.batchId && s.resultId === t.resultSet.id);
+				let state = this.state.tableStates.find(s => s.id === t.resultSet.id);
 				if (!state) {
 					this.state.tableStates.push(t.state);
 				}
@@ -362,7 +354,7 @@ export abstract class GridTableBase<T> extends Disposable implements IView {
 
 	constructor(
 		state: GridTableState,
-		protected _resultSet: ResultSetSummary,
+		protected _resultSet: IResultSet,
 		protected contextMenuService: IContextMenuService,
 		protected instantiationService: IInstantiationService,
 		protected editorService: IEditorService,
@@ -376,14 +368,14 @@ export abstract class GridTableBase<T> extends Disposable implements IView {
 		this.container.style.width = '100%';
 		this.container.style.height = '100%';
 
-		this.columns = this.resultSet.columnInfo.map((c, i) => {
-			let isLinked = c.isXml || c.isJson;
+		this.columns = this.resultSet.columns.map((c, i) => {
+			let isLinked = c.type === ColumnType.JSON || c.type === ColumnType.XML;
 
 			return <Slick.Column<T>>{
 				id: i.toString(),
-				name: c.columnName === 'Microsoft SQL Server 2005 XML Showplan'
+				name: c.title === 'Microsoft SQL Server 2005 XML Showplan'
 					? localize('xmlShowplan', "XML Showplan")
-					: escape(c.columnName),
+					: escape(c.title),
 				field: i.toString(),
 				formatter: isLinked ? hyperLinkFormatter : textFormatter,
 				width: this.state.columnSizes && this.state.columnSizes[i] ? this.state.columnSizes[i] : undefined
@@ -393,7 +385,7 @@ export abstract class GridTableBase<T> extends Disposable implements IView {
 
 	abstract get gridDataProvider(): IGridDataProvider;
 
-	public get resultSet(): ResultSetSummary {
+	public get resultSet(): IResultSet {
 		return this._resultSet;
 	}
 
@@ -496,8 +488,7 @@ export abstract class GridTableBase<T> extends Disposable implements IView {
 			gridDataProvider: this.gridDataProvider,
 			table: this.table,
 			tableState: this.state,
-			batchId: this.resultSet.batchId,
-			resultId: this.resultSet.id
+			id: this.resultSet.id
 		};
 		this.actionBar = new ActionBar(actionBarContainer, {
 			orientation: actionsOrientation, context: context
@@ -582,14 +573,13 @@ export abstract class GridTableBase<T> extends Disposable implements IView {
 
 	private onTableClick(event: ITableMouseEvent) {
 		// account for not having the number column
-		let column = this.resultSet.columnInfo[event.cell.cell - 1];
+		let column = this.resultSet.columns[event.cell.cell - 1];
 		// handle if a showplan link was clicked
-		if (column && (column.isXml || column.isJson)) {
+		if (column && (column.type === ColumnType.XML || column.type === ColumnType.JSON)) {
 			this.gridDataProvider.getRowData(event.cell.row, 1).then(async d => {
 				let value = d.rows[0][event.cell.cell - 1];
-				let content = value.displayValue;
 
-				const input = this.untitledEditorService.create({ mode: column.isXml ? 'xml' : 'json', initialValue: content });
+				const input = this.untitledEditorService.create({ mode: column.type === ColumnType.XML ? 'xml' : 'json', initialValue: value });
 				await input.load();
 				await this.instantiationService.invokeFunction(formatDocumentWithSelectedProvider, input.textEditorModel, FormattingMode.Explicit, Progress.None, CancellationToken.None);
 				return this.editorService.openEditor(input);
@@ -597,7 +587,7 @@ export abstract class GridTableBase<T> extends Disposable implements IView {
 		}
 	}
 
-	public updateResult(resultSet: ResultSetSummary) {
+	public updateResult(resultSet: IResultSet) {
 		this._resultSet = resultSet;
 		if (this.table && this.visible) {
 			this.dataProvider.length = resultSet.rowCount;
@@ -662,9 +652,9 @@ export abstract class GridTableBase<T> extends Disposable implements IView {
 				// skip the first column since its a number column
 				for (let i = 1; i < this.columns.length; i++) {
 					dataWithSchema[this.columns[i].field] = {
-						displayValue: r[i - 1].displayValue,
-						ariaLabel: escape(r[i - 1].displayValue),
-						isNull: r[i - 1].isNull
+						displayValue: r[i - 1],
+						ariaLabel: escape(r[i - 1]),
+						isNull: false
 					};
 				}
 				return dataWithSchema as T;
@@ -754,8 +744,8 @@ export abstract class GridTableBase<T> extends Disposable implements IView {
 class GridTable<T> extends GridTableBase<T> {
 	private _gridDataProvider: IGridDataProvider;
 	constructor(
-		private _runner: QueryRunner,
-		resultSet: ResultSetSummary,
+		private _query: IQuery,
+		resultSet: IResultSet,
 		state: GridTableState,
 		@IContextMenuService contextMenuService: IContextMenuService,
 		@IInstantiationService instantiationService: IInstantiationService,
@@ -765,7 +755,7 @@ class GridTable<T> extends GridTableBase<T> {
 		@IConfigurationService configurationService: IConfigurationService
 	) {
 		super(state, resultSet, contextMenuService, instantiationService, editorService, untitledEditorService, configurationService);
-		this._gridDataProvider = this.instantiationService.createInstance(QueryGridDataProvider, this._runner, resultSet.batchId, resultSet.id);
+		this._gridDataProvider = this.instantiationService.createInstance(QueryGridDataProvider, resultSet);
 	}
 
 	get gridDataProvider(): IGridDataProvider {
@@ -793,7 +783,7 @@ class GridTable<T> extends GridTableBase<T> {
 		);
 
 		if (this.contextKeyService.getContextKeyValue('showVisualizer')) {
-			actions.push(this.instantiationService.createInstance(VisualizerDataAction, this._runner));
+			actions.push(this.instantiationService.createInstance(VisualizerDataAction, this._query));
 		}
 
 		return actions;

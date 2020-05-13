@@ -12,7 +12,6 @@ import { IDashboardComponentParams, IBootstrapParams } from 'sql/workbench/servi
 import { IMetadataService } from 'sql/platform/metadata/common/metadataService';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 import { IAdminService } from 'sql/workbench/services/admin/common/adminService';
-import { IQueryManagementService } from 'sql/workbench/services/query/common/queryManagement';
 import { AngularEventType, IAngularEvent, IAngularEventingService } from 'sql/platform/angularEventing/browser/angularEventingService';
 import { IDashboardTab } from 'sql/workbench/services/dashboard/browser/common/interfaces';
 import { TabSettingConfig } from 'sql/workbench/contrib/dashboard/browser/core/dashboardWidget';
@@ -66,14 +65,13 @@ export class DashboardServiceInterface extends CommonServiceInterface {
 		@Inject(IMetadataService) metadataService: IMetadataService,
 		@Inject(IConnectionManagementService) connectionManagementService: IConnectionManagementService,
 		@Inject(IAdminService) adminService: IAdminService,
-		@Inject(IQueryManagementService) queryManagementService: IQueryManagementService,
 		@Inject(IBootstrapParams) params: IDashboardComponentParams,
 		@Inject(forwardRef(() => Router)) private _router: Router,
 		@Inject(INotificationService) private _notificationService: INotificationService,
 		@Inject(IAngularEventingService) private angularEventingService: IAngularEventingService,
 		@Inject(IConfigurationService) private _configService: IConfigurationService
 	) {
-		super(params, metadataService, connectionManagementService, adminService, queryManagementService);
+		super(params, metadataService, connectionManagementService, adminService);
 		// during testing there may not be params
 		if (this._params) {
 			this.dashboardContextKey = this._dashboardContextKey.bindTo(this.scopedContextKeyService);

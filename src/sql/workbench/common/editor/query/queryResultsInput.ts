@@ -12,6 +12,7 @@ import { QueryPlanState } from 'sql/workbench/common/editor/query/queryPlanState
 import { GridPanelState } from 'sql/workbench/common/editor/query/gridTableState';
 import { QueryModelViewState } from 'sql/workbench/common/editor/query/modelViewState';
 import { URI } from 'vs/base/common/uri';
+import { IQuery } from 'sql/platform/query/common/queryService';
 
 export class ResultsViewState {
 	public readonly gridPanelState: GridPanelState = new GridPanelState();
@@ -45,6 +46,8 @@ export class QueryResultsInput extends EditorInput {
 	public get state(): ResultsViewState | undefined {
 		return this._state;
 	}
+
+	public query: IQuery | undefined;
 
 	constructor(private _uri: string) {
 		super();

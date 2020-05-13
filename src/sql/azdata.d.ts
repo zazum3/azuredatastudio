@@ -33,6 +33,11 @@ declare module 'azdata' {
 
 		export function registerMetadataProvider(provider: MetadataProvider): vscode.Disposable;
 
+		/**
+		 * @deprecated
+		 * @param provider
+		 * @param isLiveShare
+		 */
 		export function registerQueryProvider(provider: QueryProvider, isLiveShare?: boolean): vscode.Disposable;
 
 		export function registerAdminServicesProvider(provider: AdminServicesProvider): vscode.Disposable;
@@ -810,7 +815,8 @@ declare module 'azdata' {
 		options: { [option: string]: any; };
 	}
 
-	export interface QueryProvider extends DataProvider {
+	export interface QueryProvider {
+		readonly providerId: string;
 		cancelQuery(ownerUri: string): Thenable<QueryCancelResult>;
 		runQuery(ownerUri: string, selection: ISelectionData, runOptions?: ExecutionPlanOptions): Thenable<void>;
 		runQueryStatement(ownerUri: string, line: number, column: number): Thenable<void>;

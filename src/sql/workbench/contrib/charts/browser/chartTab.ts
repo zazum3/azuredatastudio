@@ -5,10 +5,10 @@
 
 import { IPanelTab } from 'sql/base/browser/ui/panel/panel';
 import { ChartView } from './chartView';
-import QueryRunner from 'sql/workbench/services/query/common/queryRunner';
 
 import { localize } from 'vs/nls';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { IQuery } from 'sql/platform/query/common/queryService';
 
 export class ChartTab implements IPanelTab {
 	public readonly title = localize('chartTabTitle', "Chart");
@@ -19,12 +19,12 @@ export class ChartTab implements IPanelTab {
 		this.view = instantiationService.createInstance(ChartView, true);
 	}
 
-	public set queryRunner(runner: QueryRunner) {
-		this.view.queryRunner = runner;
+	public set query(query: IQuery) {
+		this.view.query = query;
 	}
 
-	public chart(dataId: { batchId: number, resultId: number }): void {
-		this.view.chart(dataId);
+	public chart(id: string): void {
+		this.view.chart(id);
 	}
 
 	public dispose() {

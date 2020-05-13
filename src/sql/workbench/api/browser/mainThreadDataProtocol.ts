@@ -10,7 +10,6 @@ import {
 } from 'sql/workbench/api/common/sqlExtHost.protocol';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 import { ICapabilitiesService } from 'sql/platform/capabilities/common/capabilitiesService';
-import { IQueryManagementService } from 'sql/workbench/services/query/common/queryManagement';
 import * as azdata from 'azdata';
 import { IMetadataService } from 'sql/platform/metadata/common/metadataService';
 import { IObjectExplorerService, NodeExpandInfoWithProviderId } from 'sql/workbench/services/objectExplorer/browser/objectExplorerService';
@@ -26,7 +25,6 @@ import { IFileBrowserService } from 'sql/workbench/services/fileBrowser/common/i
 import { IExtHostContext } from 'vs/workbench/api/common/extHost.protocol';
 import { extHostNamedCustomer } from 'vs/workbench/api/common/extHostCustomers';
 import { assign } from 'vs/base/common/objects';
-import { serializableToMap } from 'sql/base/common/map';
 
 /**
  * Main thread class for handling data protocol management registration.
@@ -42,7 +40,6 @@ export class MainThreadDataProtocol extends Disposable implements MainThreadData
 		extHostContext: IExtHostContext,
 		@IConnectionManagementService private _connectionManagementService: IConnectionManagementService,
 		@ICapabilitiesService private _capabilitiesService: ICapabilitiesService,
-		@IQueryManagementService private _queryManagementService: IQueryManagementService,
 		@IMetadataService private _metadataService: IMetadataService,
 		@IObjectExplorerService private _objectExplorerService: IObjectExplorerService,
 		@IScriptingService private _scriptingService: IScriptingService,
@@ -90,80 +87,6 @@ export class MainThreadDataProtocol extends Disposable implements MainThreadData
 			},
 			rebuildIntelliSenseCache(connectionUri: string): Thenable<void> {
 				return self._proxy.$rebuildIntelliSenseCache(handle, connectionUri);
-			}
-		});
-
-		return undefined;
-	}
-
-	public $registerQueryProvider(providerId: string, handle: number): Promise<any> {
-		const self = this;
-		this._queryManagementService.addQueryRequestHandler(providerId, {
-			cancelQuery(ownerUri: string): Promise<azdata.QueryCancelResult> {
-				return Promise.resolve(self._proxy.$cancelQuery(handle, ownerUri));
-			},
-			runQuery(ownerUri: string, selection: azdata.ISelectionData, runOptions?: azdata.ExecutionPlanOptions): Promise<void> {
-				return Promise.resolve(self._proxy.$runQuery(handle, ownerUri, selection, runOptions));
-			},
-			runQueryStatement(ownerUri: string, line: number, column: number): Promise<void> {
-				return Promise.resolve(self._proxy.$runQueryStatement(handle, ownerUri, line, column));
-			},
-			runQueryString(ownerUri: string, queryString: string): Promise<void> {
-				return Promise.resolve(self._proxy.$runQueryString(handle, ownerUri, queryString));
-			},
-			runQueryAndReturn(ownerUri: string, queryString: string): Promise<azdata.SimpleExecuteResult> {
-				return Promise.resolve(self._proxy.$runQueryAndReturn(handle, ownerUri, queryString));
-			},
-			parseSyntax(ownerUri: string, query: string): Promise<azdata.SyntaxParseResult> {
-				return Promise.resolve(self._proxy.$parseSyntax(handle, ownerUri, query));
-			},
-			getQueryRows(rowData: azdata.QueryExecuteSubsetParams): Promise<azdata.QueryExecuteSubsetResult> {
-				return Promise.resolve(self._proxy.$getQueryRows(handle, rowData));
-			},
-			setQueryExecutionOptions(ownerUri: string, options: azdata.QueryExecutionOptions): Promise<void> {
-				return Promise.resolve(self._proxy.$setQueryExecutionOptions(handle, ownerUri, options));
-			},
-			disposeQuery(ownerUri: string): Promise<void> {
-				return Promise.resolve(self._proxy.$disposeQuery(handle, ownerUri));
-			},
-			saveResults(requestParams: azdata.SaveResultsRequestParams): Promise<azdata.SaveResultRequestResult> {
-				let saveResultsFeatureInfo = self._serializationService.getSaveResultsFeatureMetadataProvider(requestParams.ownerUri);
-				if (saveResultsFeatureInfo && saveResultsFeatureInfo.enabled) {
-					return Promise.resolve(self._proxy.$saveResults(handle, requestParams));
-				}
-				else if (saveResultsFeatureInfo && !saveResultsFeatureInfo.enabled) {
-					return Promise.resolve(self._serializationService.disabledSaveAs());
-				}
-				else {
-					return Promise.resolve(self._serializationService.saveAs(requestParams.resultFormat, requestParams.filePath, undefined, true));
-				}
-			},
-			initializeEdit(ownerUri: string, schemaName: string, objectName: string, objectType: string, rowLimit: number, queryString: string): Promise<void> {
-				return Promise.resolve(self._proxy.$initializeEdit(handle, ownerUri, schemaName, objectName, objectType, rowLimit, queryString));
-			},
-			updateCell(ownerUri: string, rowId: number, columnId: number, newValue: string): Promise<azdata.EditUpdateCellResult> {
-				return Promise.resolve(self._proxy.$updateCell(handle, ownerUri, rowId, columnId, newValue));
-			},
-			commitEdit(ownerUri): Promise<void> {
-				return Promise.resolve(self._proxy.$commitEdit(handle, ownerUri));
-			},
-			createRow(ownerUri: string): Promise<azdata.EditCreateRowResult> {
-				return Promise.resolve(self._proxy.$createRow(handle, ownerUri));
-			},
-			deleteRow(ownerUri: string, rowId: number): Promise<void> {
-				return Promise.resolve(self._proxy.$deleteRow(handle, ownerUri, rowId));
-			},
-			disposeEdit(ownerUri: string): Promise<void> {
-				return Promise.resolve(self._proxy.$disposeEdit(handle, ownerUri));
-			},
-			revertCell(ownerUri: string, rowId: number, columnId: number): Promise<azdata.EditRevertCellResult> {
-				return Promise.resolve(self._proxy.$revertCell(handle, ownerUri, rowId, columnId));
-			},
-			revertRow(ownerUri: string, rowId: number): Promise<void> {
-				return Promise.resolve(self._proxy.$revertRow(handle, ownerUri, rowId));
-			},
-			getEditRows(rowData: azdata.EditSubsetParams): Promise<azdata.EditSubsetResult> {
-				return Promise.resolve(self._proxy.$getEditRows(handle, rowData));
 			}
 		});
 
@@ -483,29 +406,6 @@ export class MainThreadDataProtocol extends Disposable implements MainThreadData
 
 	public $onConnectionChangeNotification(handle: number, changedConnInfo: azdata.ChangedConnectionInfo): void {
 		this._connectionManagementService.onConnectionChangedNotification(handle, changedConnInfo);
-	}
-
-	// Query Management handlers
-	public $onQueryComplete(handle: number, result: azdata.QueryExecuteCompleteNotificationResult): void {
-		this._queryManagementService.onQueryComplete(result);
-	}
-	public $onBatchStart(handle: number, batchInfo: azdata.QueryExecuteBatchNotificationParams): void {
-		this._queryManagementService.onBatchStart(batchInfo);
-	}
-	public $onBatchComplete(handle: number, batchInfo: azdata.QueryExecuteBatchNotificationParams): void {
-		this._queryManagementService.onBatchComplete(batchInfo);
-	}
-	public $onResultSetAvailable(handle: number, resultSetInfo: azdata.QueryExecuteResultSetNotificationParams): void {
-		this._queryManagementService.onResultSetAvailable(resultSetInfo);
-	}
-	public $onResultSetUpdated(handle: number, resultSetInfo: azdata.QueryExecuteResultSetNotificationParams): void {
-		this._queryManagementService.onResultSetUpdated(resultSetInfo);
-	}
-	public $onQueryMessage(messages: [string, azdata.QueryExecuteMessageParams[]][]): void {
-		this._queryManagementService.onMessage(serializableToMap(messages));
-	}
-	public $onEditSessionReady(handle: number, ownerUri: string, success: boolean, message: string): void {
-		this._queryManagementService.onEditSessionReady(ownerUri, success, message);
 	}
 
 	// Script Handlers

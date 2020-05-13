@@ -10,10 +10,7 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 
 import * as azdata from 'azdata';
 
-import { IQueryManagementService } from 'sql/workbench/services/query/common/queryManagement';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
-import { QueryEditor } from 'sql/workbench/contrib/query/browser/queryEditor';
-import { IQueryModelService } from 'sql/workbench/services/query/common/queryModel';
 import * as WorkbenchUtils from 'sql/workbench/common/sqlWorkbenchUtils';
 import * as Constants from 'sql/platform/query/common/constants';
 import * as ConnectionConstants from 'sql/platform/connection/common/constants';
@@ -22,20 +19,20 @@ import { INotificationService, Severity } from 'vs/platform/notification/common/
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { QueryEditorInput } from 'sql/workbench/common/editor/query/queryEditorInput';
 import { firstIndex } from 'vs/base/common/arrays';
+import { getCodeEditor } from 'vs/editor/browser/editorBrowser';
 
 const singleQuote = '\'';
 
-function isConnected(editor: QueryEditor, connectionManagementService: IConnectionManagementService): boolean {
-	if (!editor || !editor.input) {
+function isConnected(editor: QueryEditorInput | undefined, connectionManagementService: IConnectionManagementService): boolean {
+	if (!editor) {
 		return false;
 	}
-	return connectionManagementService.isConnected(editor.input.uri);
+	return connectionManagementService.isConnected(editor.uri);
 }
 
 function runActionOnActiveQueryEditor(editorService: IEditorService, action: (QueryEditor) => void): void {
-	const candidates = [editorService.activeEditorPane, ...editorService.visibleEditorPanes].filter(e => e instanceof QueryEditor);
-	if (candidates.length > 0) {
-		action(candidates[0]);
+	if (editorService.activeEditor instanceof QueryEditorInput) {
+		action(editorService.activeEditor);
 	}
 }
 
@@ -99,9 +96,9 @@ export class RunQueryKeyboardAction extends Action {
 	}
 
 	public run(): Promise<void> {
-		const editor = this._editorService.activeEditorPane;
-		if (editor instanceof QueryEditor || editor instanceof EditDataEditor) {
-			editor.runQuery();
+		const editor = this._editorService.activeEditor;
+		if (editor instanceof QueryEditorInput) {
+			editor.query.execute();
 		}
 		return Promise.resolve(null);
 	}
@@ -124,7 +121,7 @@ export class RunCurrentQueryKeyboardAction extends Action {
 	}
 
 	public run(): Promise<void> {
-		const editor = this._editorService.activeEditorPane;
+		const editor = this._editorService.activeEditor;
 		if (editor instanceof QueryEditor) {
 			editor.runCurrentQuery();
 		}
@@ -240,8 +237,6 @@ export class RunQueryShortcutAction extends Action {
 
 	constructor(
 		@IEditorService private readonly editorService: IEditorService,
-		@IQueryModelService protected readonly queryModelService: IQueryModelService,
-		@IQueryManagementService private readonly queryManagementService: IQueryManagementService,
 		@IConnectionManagementService private readonly connectionManagementService: IConnectionManagementService,
 		@IConfigurationService private readonly configurationService: IConfigurationService
 	) {
@@ -264,7 +259,9 @@ export class RunQueryShortcutAction extends Action {
 	 *
 	 * @param shortcutIndex which shortcut should be run?
 	 */
-	public runQueryShortcut(editor: QueryEditor, shortcutIndex: number): Thenable<void> {
+	public runQueryShortcut(editor: QueryEditorInput, shortcutIndex: number): Thenable<void> {
+		const selection = this.editorService.activeTextEditorControl.getSelection();
+		const codeEditor = getCodeEditor(this.editorService.activeTextEditorControl);
 		if (!editor) {
 			throw new Error(nls.localize('queryShortcutNoEditor', "Editor parameter is required for a shortcut to be executed"));
 		}
@@ -278,10 +275,10 @@ export class RunQueryShortcutAction extends Action {
 
 			// if the selection isn't empty then execute the selection
 			// otherwise, either run the statement or the script depending on parameter
-			let parameterText: string = editor.getSelectionText();
+			let parameterText: string = codeEditor.getModel().getValueInRange(selection);
 			return this.escapeStringParamIfNeeded(editor, shortcutText, parameterText).then((escapedParam) => {
 				let queryString = `${shortcutText} ${escapedParam}`;
-				editor.input.runQueryString(queryString);
+				editor.query.execute(queryString);
 			}).then(success => null, err => {
 				// swallow errors for now
 				return null;
@@ -298,12 +295,12 @@ export class RunQueryShortcutAction extends Action {
 		return shortcutText;
 	}
 
-	private escapeStringParamIfNeeded(editor: QueryEditor, shortcutText: string, parameterText: string): Thenable<string> {
+	private escapeStringParamIfNeeded(editor: QueryEditorInput, shortcutText: string, parameterText: string): Thenable<string> {
 		if (parameterText && parameterText.length > 0) {
 			if (this.canQueryProcMetadata(editor)) {
 				let dbName = this.getDatabaseName(editor);
 				let query = `exec dbo.sp_sproc_columns @procedure_name = N'${escapeSqlString(shortcutText, singleQuote)}', @procedure_owner = null, @procedure_qualifier = N'${escapeSqlString(dbName, singleQuote)}'`;
-				return this.queryManagementService.runQueryAndReturn(editor.input.uri, query)
+				return this.queryManagementService.runQueryAndReturn(editor.uri, query)
 					.then(result => {
 						switch (this.isProcWithSingleArgument(result)) {
 							case 1:
@@ -372,13 +369,13 @@ export class RunQueryShortcutAction extends Action {
 		return columnInfo ? firstIndex(columnInfo, c => c.columnName === columnName) : undefined;
 	}
 
-	private canQueryProcMetadata(editor: QueryEditor): boolean {
-		let info = this.connectionManagementService.getConnectionInfo(editor.input.uri);
+	private canQueryProcMetadata(editor: QueryEditorInput): boolean {
+		let info = this.connectionManagementService.getConnectionInfo(editor.uri);
 		return (info && info.providerId === ConnectionConstants.mssqlProviderName);
 	}
 
-	private getDatabaseName(editor: QueryEditor): string {
-		let info = this.connectionManagementService.getConnectionInfo(editor.input.uri);
+	private getDatabaseName(editor: QueryEditorInput): string {
+		let info = this.connectionManagementService.getConnectionInfo(editor.uri);
 		return info.connectionProfile.databaseName;
 	}
 }
@@ -395,7 +392,6 @@ export class ParseSyntaxAction extends Action {
 		id: string,
 		label: string,
 		@IConnectionManagementService private readonly connectionManagementService: IConnectionManagementService,
-		@IQueryManagementService private readonly queryManagementService: IQueryManagementService,
 		@IEditorService private readonly editorService: IEditorService,
 		@INotificationService private readonly notificationService: INotificationService
 	) {
@@ -404,15 +400,17 @@ export class ParseSyntaxAction extends Action {
 	}
 
 	public run(): Promise<void> {
-		const editor = this.editorService.activeEditorPane;
-		if (editor instanceof QueryEditor) {
-			if (!editor.isSelectionEmpty()) {
+		const editor = this.editorService.activeEditor;
+		const selection = this.editorService.activeTextEditorControl.getSelection();
+		const codeEditor = getCodeEditor(this.editorService.activeTextEditorControl);
+		if (editor instanceof QueryEditorInput) {
+			if (selection) {
 				if (this.isConnected(editor)) {
-					let text = editor.getSelectionText();
+					let text = codeEditor.getModel().getValueInRange(selection);
 					if (text === '') {
-						text = editor.getAllText();
+						text = codeEditor.getValue();
 					}
-					this.queryManagementService.parseSyntax(editor.input.uri, text).then(result => {
+					this.queryManagementService.parseSyntax(editor.uri, text).then(result => {
 						if (result && result.parseable) {
 							this.notificationService.notify({
 								severity: Severity.Info,
@@ -441,10 +439,10 @@ export class ParseSyntaxAction extends Action {
 	 * Returns the URI of the given editor if it is not undefined and is connected.
 	 * Public for testing only.
 	 */
-	private isConnected(editor: QueryEditor): boolean {
-		if (!editor || !editor.input) {
+	private isConnected(editor: QueryEditorInput): boolean {
+		if (!editor) {
 			return false;
 		}
-		return this.connectionManagementService.isConnected(editor.input.uri);
+		return this.connectionManagementService.isConnected(editor.uri);
 	}
 }

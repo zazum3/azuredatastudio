@@ -5,7 +5,6 @@
 
 import { IQueryHistoryService } from 'sql/workbench/services/queryHistory/common/queryHistoryService';
 
-import { IQueryModelService, IQueryEvent } from 'sql/workbench/services/query/common/queryModel';
 import { IModelService } from 'vs/editor/common/services/modelService';
 import { URI } from 'vs/base/common/uri';
 import { Range } from 'vs/editor/common/core/range';
@@ -15,6 +14,7 @@ import { Event, Emitter } from 'vs/base/common/event';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { IConfigurationService, IConfigurationChangeEvent } from 'vs/platform/configuration/common/configuration';
 import { find } from 'vs/base/common/arrays';
+import { IQueryService } from 'sql/platform/query/common/queryService';
 
 /**
  * Service that collects the results of executed queries
@@ -32,7 +32,7 @@ export class QueryHistoryService extends Disposable implements IQueryHistoryServ
 	public get onQueryHistoryCaptureChanged(): Event<boolean> { return this._onQueryHistoryCaptureChanged.event; }
 	// CONSTRUCTOR /////////////////////////////////////////////////////////
 	constructor(
-		@IQueryModelService _queryModelService: IQueryModelService,
+		@IQueryService queryService: IQueryService,
 		@IModelService _modelService: IModelService,
 		@IConnectionManagementService _connectionManagementService: IConnectionManagementService,
 		@IConfigurationService private _configurationService: IConfigurationService
@@ -47,7 +47,7 @@ export class QueryHistoryService extends Disposable implements IQueryHistoryServ
 			}
 		}));
 
-		this._register(_queryModelService.onQueryEvent((e: IQueryEvent) => {
+		this._register(queryService.onQueryEvent((e: IQueryEvent) => {
 			if (this._captureEnabled && e.type === 'queryStop') {
 				const uri: URI = URI.parse(e.uri);
 				// VS Range is 1 based so offset values by 1. The endLine we get back from SqlToolsService is incremented

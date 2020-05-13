@@ -25,7 +25,7 @@ import {
 import { EditorViewColumn } from 'vs/workbench/api/common/shared/editor';
 import { IUndoStopOptions } from 'vs/workbench/api/common/extHost.protocol';
 import { IExtensionDescription } from 'vs/platform/extensions/common/extensions';
-import { IQueryEvent } from 'sql/workbench/services/query/common/queryModel';
+import { IRange } from 'vs/editor/common/core/range';
 
 export abstract class ExtHostAccountManagementShape {
 	$autoOAuthCancelled(handle: number): Thenable<void> { throw ni(); }
@@ -37,6 +37,117 @@ export abstract class ExtHostAccountManagementShape {
 	$accountsChanged(handle: number, accounts: azdata.Account[]): Thenable<void> { throw ni(); }
 	$clearTokenCache(): Thenable<void> { throw ni(); }
 }
+
+//#region query
+export interface IQueryProviderEvent {
+	readonly connectionId: string;
+}
+
+export interface IBatchStartEvent extends IQueryProviderEvent {
+	readonly index: number;
+	readonly executionStart: number;
+}
+
+export interface IBatchCompleteEvent extends IQueryProviderEvent {
+	readonly index: number;
+	readonly executionEnd: number;
+}
+
+export interface IColumn {
+	readonly title: string;
+	readonly type: ColumnType;
+}
+
+export enum ColumnType {
+	XML,
+	JSON,
+	UNKNOWN
+}
+
+export interface IResultSetEvent extends IQueryProviderEvent {
+	readonly resultIndex: number;
+	readonly batchIndex: number;
+	readonly rowCount: number;
+	readonly columns: ReadonlyArray<IColumn>;
+	readonly completed: boolean;
+}
+
+export interface IQueryMessage {
+	readonly isError?: boolean;
+	readonly message: string;
+}
+
+export interface IGetQueryRowsParams extends IQueryProviderEvent {
+	readonly batchIndex: number;
+	readonly resultIndex: number;
+	readonly startIndex: number;
+	readonly rowCount: number;
+}
+
+export interface IGetQueryRowsResponse {
+	readonly rowCount: number;
+	readonly rows: ReadonlyArray<ReadonlyArray<string>>;
+}
+
+export interface IRunOptions {
+
+}
+
+export interface IParseResult {
+	readonly success: boolean;
+	readonly errors?: ReadonlyArray<string>;
+}
+
+export interface MainThreadQueryShape extends IDisposable {
+	$registerProvider(providerId: string, handle: number): Promise<void>;
+	$unregisterProvider(handle: number): Promise<void>;
+	$onQueryComplete(handle: number, event: IQueryProviderEvent): void;
+	$onBatchStart(handle: number, event: IBatchStartEvent): void;
+	$onBatchComplete(handle: number, event: IBatchCompleteEvent): void;
+	$onResultSetAvailable(handle: number, event: IResultSetEvent): void;
+	$onResultSetUpdated(handle: number, event: IResultSetEvent): void;
+	$onQueryMessage(message: [number, [string, IQueryMessage[]][]][]): void;
+	$onEditSessionReady(handle: number, ownerUri: string, success: boolean, message: string): void;
+}
+
+export interface ExtHostQueryShape {
+
+	/**
+	 * Cancels the currently running query for a URI
+	 */
+	$cancel(handle: number, ownerUri: string): Promise<string>;
+
+	/**
+	 * Runs a query for a text selection inside a document
+	 */
+	$run(handle: number, ownerUri: string, range?: IRange, options?: IRunOptions): Promise<void>;
+	/**
+	 * Runs the current SQL statement query for a text document
+	 */
+	$runStatement(handle: number, ownerUri: string, line: number, column: number): Promise<void>;
+	/**
+	 * Runs a query for a provided query
+	 */
+	$runString(handle: number, ownerUri: string, queryString: string): Promise<void>;
+	/**
+	 * Parses a T-SQL string without actually executing it
+	 */
+	$parseSyntax(handle: number, ownerUri: string, query: string): Promise<IParseResult>;
+	/**
+	 * Gets a subset of rows in a result set in order to display in the UI
+	 */
+	$getRows(handle: number, params: IGetQueryRowsParams): Promise<IGetQueryRowsResponse>;
+	/**
+	 * Sets the query execution options for a query editor document
+	 */
+	$setExecutionOptions(handle: number, ownerUri: string, options: { [key: string]: number | boolean | string }): Promise<void>;
+	/**
+	 * Disposes the cached information regarding a query
+	 */
+	$disposeQuery(handle: number, ownerUri: string): Promise<void>;
+}
+
+//#endregion
 
 export abstract class ExtHostConnectionManagementShape {
 	$onConnectionEvent(handle: number, type: azdata.connection.ConnectionEventType, ownerUri: string, profile: azdata.IConnectionProfile): void { throw ni(); }
@@ -539,7 +650,6 @@ export interface MainThreadDataProtocolShape extends IDisposable {
 	$registerBackupProvider(providerId: string, handle: number): Promise<any>;
 	$registerRestoreProvider(providerId: string, handle: number): Promise<any>;
 	$registerScriptingProvider(providerId: string, handle: number): Promise<any>;
-	$registerQueryProvider(providerId: string, handle: number): Promise<any>;
 	$registerProfilerProvider(providerId: string, handle: number): Promise<any>;
 	$registerObjectExplorerProvider(providerId: string, handle: number): Promise<any>;
 	$registerObjectExplorerNodeProvider(providerId: string, supportedProviderId: string, group: string, handle: number): Promise<any>;
@@ -555,12 +665,6 @@ export interface MainThreadDataProtocolShape extends IDisposable {
 	$onConnectionComplete(handle: number, connectionInfoSummary: azdata.ConnectionInfoSummary): void;
 	$onIntelliSenseCacheComplete(handle: number, connectionUri: string): void;
 	$onConnectionChangeNotification(handle: number, changedConnInfo: azdata.ChangedConnectionInfo): void;
-	$onQueryComplete(handle: number, result: azdata.QueryExecuteCompleteNotificationResult): void;
-	$onBatchStart(handle: number, batchInfo: azdata.QueryExecuteBatchNotificationParams): void;
-	$onBatchComplete(handle: number, batchInfo: azdata.QueryExecuteBatchNotificationParams): void;
-	$onResultSetAvailable(handle: number, resultSetInfo: azdata.QueryExecuteResultSetNotificationParams): void;
-	$onResultSetUpdated(handle: number, resultSetInfo: azdata.QueryExecuteResultSetNotificationParams): void;
-	$onQueryMessage(message: [string, azdata.QueryExecuteMessageParams[]][]): void;
 	$onObjectExplorerSessionCreated(handle: number, message: azdata.ObjectExplorerSession): void;
 	$onObjectExplorerSessionDisconnected(handle: number, message: azdata.ObjectExplorerSession): void;
 	$onObjectExplorerNodeExpanded(providerId: string, message: azdata.ObjectExplorerExpandInfo): void;
@@ -574,11 +678,6 @@ export interface MainThreadDataProtocolShape extends IDisposable {
 	$onSessionStopped(handle: number, response: azdata.ProfilerSessionStoppedParams): void;
 	$onProfilerSessionCreated(handle: number, response: azdata.ProfilerSessionCreatedParams): void;
 	$onJobDataUpdated(handle: Number): void;
-
-	/**
-	 * Callback when a session has completed initialization
-	 */
-	$onEditSessionReady(handle: number, ownerUri: string, success: boolean, message: string);
 }
 
 export interface MainThreadConnectionManagementShape extends IDisposable {
@@ -624,7 +723,8 @@ export const SqlMainContext = {
 	MainThreadQueryEditor: createMainId<MainThreadQueryEditorShape>('MainThreadQueryEditor'),
 	MainThreadNotebook: createMainId<MainThreadNotebookShape>('MainThreadNotebook'),
 	MainThreadNotebookDocumentsAndEditors: createMainId<MainThreadNotebookDocumentsAndEditorsShape>('MainThreadNotebookDocumentsAndEditors'),
-	MainThreadExtensionManagement: createMainId<MainThreadExtensionManagementShape>('MainThreadExtensionManagement')
+	MainThreadExtensionManagement: createMainId<MainThreadExtensionManagementShape>('MainThreadExtensionManagement'),
+	MainThreadQuery: createMainId<MainThreadQueryShape>('MainThreadQuery')
 };
 
 export const SqlExtHostContext = {
@@ -645,7 +745,8 @@ export const SqlExtHostContext = {
 	ExtHostQueryEditor: createExtId<ExtHostQueryEditorShape>('ExtHostQueryEditor'),
 	ExtHostNotebook: createExtId<ExtHostNotebookShape>('ExtHostNotebook'),
 	ExtHostNotebookDocumentsAndEditors: createExtId<ExtHostNotebookDocumentsAndEditorsShape>('ExtHostNotebookDocumentsAndEditors'),
-	ExtHostExtensionManagement: createExtId<ExtHostExtensionManagementShape>('ExtHostExtensionManagement')
+	ExtHostExtensionManagement: createExtId<ExtHostExtensionManagementShape>('ExtHostExtensionManagement'),
+	ExtHostQuery: createExtId<ExtHostQueryShape>('ExtHostQuery')
 };
 
 export interface MainThreadDashboardShape extends IDisposable {

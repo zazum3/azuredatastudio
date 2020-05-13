@@ -64,16 +64,24 @@ export class ReverseLookUpMap<K, V> {
 }
 
 /**
- * ASSUMES THAT THE VALUES ARE ALREADY SERIALIZABLE
+ * ASSUMES THAT THE VALUES AND KEYS ARE ALREADY SERIALIZABLE
  */
-export function mapToSerializable<T>(map: Map<string, T>): [string, T][] {
-	const serializable: [string, T][] = [];
-
-	map.forEach((value, key) => {
-		serializable.push([key, value]);
-	});
-
-	return serializable;
+export function mapToSerializable<K, T, V>(map: Map<K, T>, serializeValue: (value: T) => V): [K, V][];
+export function mapToSerializable<K, T>(map: Map<K, T>): [K, T][];
+export function mapToSerializable<K, T, V = T>(map: Map<K, T>, serializeValue?: (value: T) => V): [K, V][] | [K, T][] {
+	if (serializeValue) {
+		const serializable: [K, V][] = [];
+		map.forEach((value, key) => {
+			serializable.push([key, serializeValue(value)]);
+		});
+		return serializable;
+	} else {
+		const serializable: [K, T][] = [];
+		map.forEach((value, key) => {
+			serializable.push([key, value]);
+		});
+		return serializable;
+	}
 }
 
 export function serializableToMap<T>(serializable: [string, T][]): Map<string, T> {

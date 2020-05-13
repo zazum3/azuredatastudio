@@ -5,7 +5,7 @@
 
 import { RawContextKey, IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { IConnectionProfile } from 'azdata';
-import { IQueryManagementService } from 'sql/workbench/services/query/common/queryManagement';
+import { IQueryService } from 'sql/platform/query/common/queryService';
 
 export class ConnectionContextKey implements IContextKey<IConnectionProfile> {
 
@@ -23,7 +23,7 @@ export class ConnectionContextKey implements IContextKey<IConnectionProfile> {
 
 	constructor(
 		@IContextKeyService contextKeyService: IContextKeyService,
-		@IQueryManagementService private queryManagementService: IQueryManagementService
+		@IQueryService private readonly queryService: IQueryService
 	) {
 		this._providerKey = ConnectionContextKey.Provider.bindTo(contextKeyService);
 		this._serverKey = ConnectionContextKey.Server.bindTo(contextKeyService);
@@ -33,12 +33,11 @@ export class ConnectionContextKey implements IContextKey<IConnectionProfile> {
 	}
 
 	set(value: IConnectionProfile) {
-		let queryProviders = this.queryManagementService.getRegisteredProviders();
 		this._connectionKey.set(value);
 		this._providerKey.set(value && value.providerName);
 		this._serverKey.set(value && value.serverName);
 		this._databaseKey.set(value && value.databaseName);
-		this._isQueryProviderKey.set(value && value.providerName && queryProviders.indexOf(value.providerName) !== -1);
+		this._isQueryProviderKey.set(value && value.providerName && this.queryService.providers.indexOf(value.providerName) !== -1);
 	}
 
 	reset(): void {

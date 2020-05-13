@@ -142,8 +142,8 @@ export class QueryResultsEditor extends BaseEditor {
 		super.clearInput();
 	}
 
-	public chart(dataId: { batchId: number, resultId: number }) {
-		this.resultsView.chartData(dataId);
+	public chart(id: string) {
+		this.resultsView.chartData(id);
 	}
 
 	public showQueryPlan(xml: string) {

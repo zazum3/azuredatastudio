@@ -4,16 +4,16 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
-import { IQueryModelService } from 'sql/workbench/services/query/common/queryModel';
 import { IntervalTimer } from 'vs/base/common/async';
-import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';
+import { Disposable, DisposableStore, IDisposable } from 'vs/base/common/lifecycle';
 import { IWorkbenchContribution } from 'vs/workbench/common/contributions';
 import { localize } from 'vs/nls';
-import QueryRunner from 'sql/workbench/services/query/common/queryRunner';
 import { parseNumAsTimeString } from 'sql/platform/connection/common/utils';
 import { Event } from 'vs/base/common/event';
 import { QueryEditorInput } from 'sql/workbench/common/editor/query/queryEditorInput';
 import { IStatusbarService, IStatusbarEntryAccessor, StatusbarAlignment } from 'vs/workbench/services/statusbar/common/statusbar';
+import { IQuery, QueryState } from 'sql/platform/query/common/queryService';
+import { isNumber } from 'vs/base/common/types';
 
 export class TimeElapsedStatusBarContributions extends Disposable implements IWorkbenchContribution {
 
@@ -26,8 +26,7 @@ export class TimeElapsedStatusBarContributions extends Disposable implements IWo
 
 	constructor(
 		@IStatusbarService private readonly statusbarService: IStatusbarService,
-		@IEditorService private readonly editorService: IEditorService,
-		@IQueryModelService private readonly queryModelService: IQueryModelService
+		@IEditorService private readonly editorService: IEditorService
 	) {
 		super();
 		this.statusItem = this._register(
@@ -58,61 +57,36 @@ export class TimeElapsedStatusBarContributions extends Disposable implements IWo
 		this.hide();
 		const activeInput = this.editorService.activeEditor;
 		if (activeInput && activeInput instanceof QueryEditorInput && activeInput.uri) {
-			const uri = activeInput.uri;
-			const runner = this.queryModelService.getQueryRunner(uri);
-			if (runner) {
-				if (runner.hasCompleted || runner.isExecuting) {
-					this._displayValue(runner);
-				}
-				this.disposable.add(runner.onQueryStart(e => {
-					this._displayValue(runner);
-				}));
-				this.disposable.add(runner.onQueryEnd(e => {
-					this._displayValue(runner);
-				}));
-			} else {
-				this.disposable.add(this.queryModelService.onRunQueryStart(e => {
-					if (e === uri) {
-						this._displayValue(this.queryModelService.getQueryRunner(uri));
-					}
-				}));
-				this.disposable.add(this.queryModelService.onRunQueryComplete(e => {
-					if (e === uri) {
-						this._displayValue(this.queryModelService.getQueryRunner(uri));
-					}
-				}));
-			}
+			const query = activeInput.query;
+			this.disposable.add(query.onDidStateChange(e => {
+				this._displayValue(query);
+			}));
+			this._displayValue(query);
 		}
 	}
 
-	private _displayValue(runner: QueryRunner) {
+	private _displayValue(query: IQuery) {
 		this.intervalTimer.cancel();
-		if (runner.isExecuting) {
-			this.intervalTimer.cancelAndSet(() => {
-				const value = runner.queryStartTime ? Date.now() - runner.queryStartTime.getTime() : 0;
-				const timeString = parseNumAsTimeString(value, false);
+		if (query.state === QueryState.EXECUTING) {
+			const update = () => {
+				const timeString = parseNumAsTimeString(Date.now() - query.startTime, false);
 				this.statusItem.update({
 					text: timeString,
 					ariaLabel: timeString
 				});
-			}, 1000);
+			};
 
-			const value = runner.queryStartTime ? Date.now() - runner.queryStartTime.getTime() : 0;
-			const timeString = parseNumAsTimeString(value, false);
+			this.intervalTimer.cancelAndSet(() => update(), 1000);
+			update();
+			this.show();
+		} else if (isNumber(query.startTime) && isNumber(query.endTime)) {
+			const timeString = parseNumAsTimeString(query.endTime - query.startTime, false);
 			this.statusItem.update({
 				text: timeString,
 				ariaLabel: timeString
 			});
-		} else {
-			const value = runner.queryStartTime && runner.queryEndTime
-				? runner.queryEndTime.getTime() - runner.queryStartTime.getTime() : 0;
-			const timeString = parseNumAsTimeString(value, false);
-			this.statusItem.update({
-				text: timeString,
-				ariaLabel: timeString
-			});
+			this.show();
 		}
-		this.show();
 	}
 }
 
@@ -126,8 +100,7 @@ export class RowCountStatusBarContributions extends Disposable implements IWorkb
 
 	constructor(
 		@IStatusbarService private readonly statusbarService: IStatusbarService,
-		@IEditorService private readonly editorService: IEditorService,
-		@IQueryModelService private readonly queryModelService: IQueryModelService
+		@IEditorService private readonly editorService: IEditorService
 	) {
 		super();
 		this.statusItem = this._register(
@@ -157,47 +130,16 @@ export class RowCountStatusBarContributions extends Disposable implements IWorkb
 		this.hide();
 		const activeInput = this.editorService.activeEditor;
 		if (activeInput && activeInput instanceof QueryEditorInput && activeInput.uri) {
-			const uri = activeInput.uri;
-			const runner = this.queryModelService.getQueryRunner(uri);
-			if (runner) {
-				if (runner.hasCompleted || runner.isExecuting) {
-					this._displayValue(runner);
-				}
-				this.disposable.add(runner.onQueryStart(e => {
-					this._displayValue(runner);
-				}));
-				this.disposable.add(runner.onResultSetUpdate(e => {
-					this._displayValue(runner);
-				}));
-				this.disposable.add(runner.onQueryEnd(e => {
-					this._displayValue(runner);
-				}));
-			} else {
-				this.disposable.add(this.queryModelService.onRunQueryStart(e => {
-					if (e === uri) {
-						this._displayValue(this.queryModelService.getQueryRunner(uri));
-					}
-				}));
-				this.disposable.add(this.queryModelService.onRunQueryUpdate(e => {
-					if (e === uri) {
-						this._displayValue(this.queryModelService.getQueryRunner(uri));
-					}
-				}));
-				this.disposable.add(this.queryModelService.onRunQueryComplete(e => {
-					if (e === uri) {
-						this._displayValue(this.queryModelService.getQueryRunner(uri));
-					}
-				}));
-			}
+			const query = activeInput.query;
+			this.disposable.add(Event.any(query.onDidStateChange, query.onResultSetAvailable, query.onResultSetUpdated)(() => {
+				this._displayValue(query);
+			}));
+			this._displayValue(query);
 		}
 	}
 
-	private _displayValue(runner: QueryRunner) {
-		const rowCount = runner.batchSets.reduce((p, c) => {
-			return p + c.resultSetSummaries.reduce((rp, rc) => {
-				return rp + rc.rowCount;
-			}, 0);
-		}, 0);
+	private _displayValue(query: IQuery) {
+		const rowCount = query.resultSets.reduce((p, c) => p + c.rowCount, 0);
 		const text = localize('rowCount', "{0} rows", rowCount.toLocaleString());
 		this.statusItem.update({ text, ariaLabel: text });
 		this.show();
@@ -208,12 +150,11 @@ export class QueryStatusStatusBarContributions extends Disposable implements IWo
 
 	private static readonly ID = 'status.query.status';
 
-	private visisbleUri: string | undefined;
+	private disposable?: IDisposable;
 
 	constructor(
 		@IStatusbarService private readonly statusbarService: IStatusbarService,
-		@IEditorService private readonly editorService: IEditorService,
-		@IQueryModelService private readonly queryModelService: IQueryModelService
+		@IEditorService private readonly editorService: IEditorService
 	) {
 		super();
 		this._register(
@@ -226,22 +167,27 @@ export class QueryStatusStatusBarContributions extends Disposable implements IWo
 				StatusbarAlignment.RIGHT, 100)
 		);
 
-		this._register(Event.filter(this.queryModelService.onRunQueryStart, uri => uri === this.visisbleUri)(this.update, this));
-		this._register(Event.filter(this.queryModelService.onRunQueryComplete, uri => uri === this.visisbleUri)(this.update, this));
-		this._register(this.editorService.onDidActiveEditorChange(this.update, this));
-		this.update();
+		this._register(this.editorService.onDidActiveEditorChange(this.onEditorChange, this));
+		this.onEditorChange();
 	}
 
-	private update() {
-		this.hide();
-		this.visisbleUri = undefined;
+	private onEditorChange() {
+		if (this.disposable) {
+			this.disposable.dispose();
+			this.disposable = undefined;
+		}
 		const activeInput = this.editorService.activeEditor;
-		if (activeInput && activeInput instanceof QueryEditorInput && activeInput.uri) {
-			this.visisbleUri = activeInput.uri;
-			const runner = this.queryModelService.getQueryRunner(this.visisbleUri);
-			if (runner && runner.isExecuting) {
-				this.show();
-			}
+		if (activeInput instanceof QueryEditorInput) {
+			const query = activeInput.query;
+			query.onDidStateChange(e => this.update(e));
+			this.update(query.state);
+		}
+	}
+
+	private update(state: QueryState) {
+		this.hide();
+		if (state === QueryState.EXECUTING) {
+			this.show();
 		}
 	}
 

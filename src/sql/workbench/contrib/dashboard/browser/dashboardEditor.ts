@@ -23,7 +23,7 @@ import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { IStorageService } from 'vs/platform/storage/common/storage';
-import { IQueryManagementService } from 'sql/workbench/services/query/common/queryManagement';
+import { IQueryService } from 'sql/platform/query/common/queryService';
 
 export class DashboardEditor extends BaseEditor {
 
@@ -34,12 +34,12 @@ export class DashboardEditor extends BaseEditor {
 	constructor(
 		@ITelemetryService telemetryService: ITelemetryService,
 		@IWorkbenchThemeService themeService: IWorkbenchThemeService,
-		@IInstantiationService private instantiationService: IInstantiationService,
-		@IContextKeyService private _contextKeyService: IContextKeyService,
-		@IDashboardService private _dashboardService: IDashboardService,
-		@IConnectionManagementService private _connMan: IConnectionManagementService,
+		@IInstantiationService private readonly instantiationService: IInstantiationService,
+		@IContextKeyService private readonly contextKeyService: IContextKeyService,
+		@IDashboardService private readonly dashboardService: IDashboardService,
+		@IConnectionManagementService private readonly connMan: IConnectionManagementService,
 		@IStorageService storageService: IStorageService,
-		@IQueryManagementService private queryManagementService: IQueryManagementService
+		@IQueryService private readonly queryService: IQueryService
 	) {
 		super(DashboardEditor.ID, telemetryService, themeService, storageService);
 	}
@@ -65,8 +65,8 @@ export class DashboardEditor extends BaseEditor {
 		} else {
 			profile = this.input.connectionProfile;
 		}
-		const serverInfo = this._connMan.getConnectionInfo(this.input.uri).serverInfo;
-		this._dashboardService.changeToDashboard({ profile, serverInfo });
+		const serverInfo = this.connMan.getConnectionInfo(this.input.uri).serverInfo;
+		this.dashboardService.changeToDashboard({ profile, serverInfo });
 	}
 
 	/**
@@ -74,7 +74,7 @@ export class DashboardEditor extends BaseEditor {
 	 * To be called when the container of this editor changes size.
 	 */
 	public layout(dimension: DOM.Dimension): void {
-		this._dashboardService.layout(dimension);
+		this.dashboardService.layout(dimension);
 	}
 
 	public async setInput(input: DashboardInput, options: EditorOptions): Promise<void> {
@@ -111,10 +111,10 @@ export class DashboardEditor extends BaseEditor {
 		} else {
 			profile = this.input.connectionProfile;
 		}
-		const serverInfo = this._connMan.getConnectionInfo(this.input.uri).serverInfo;
-		this._dashboardService.changeToDashboard({ profile, serverInfo });
-		const scopedContextService = this._contextKeyService.createScoped(input.container);
-		const connectionContextKey = new ConnectionContextKey(scopedContextService, this.queryManagementService);
+		const serverInfo = this.connMan.getConnectionInfo(this.input.uri).serverInfo;
+		this.dashboardService.changeToDashboard({ profile, serverInfo });
+		const scopedContextService = this.contextKeyService.createScoped(input.container);
+		const connectionContextKey = new ConnectionContextKey(scopedContextService, this.queryService);
 		connectionContextKey.set(input.connectionProfile);
 
 		const params: IDashboardComponentParams = {

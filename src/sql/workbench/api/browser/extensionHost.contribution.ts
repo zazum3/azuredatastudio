@@ -17,6 +17,7 @@ import './mainThreadModelViewDialog';
 import './mainThreadNotebook';
 import './mainThreadNotebookDocumentsAndEditors';
 import './mainThreadObjectExplorer';
+import './mainThreadQuery';
 import './mainThreadQueryEditor';
 import './mainThreadResourceProvider';
 import './mainThreadTasks';

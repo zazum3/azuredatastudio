@@ -13,8 +13,6 @@ import { DataProviderType } from 'sql/workbench/api/common/sqlExtHostTypes';
 import { IURITransformer } from 'vs/base/common/uriIpc';
 import { URI } from 'vs/base/common/uri';
 import { find } from 'vs/base/common/arrays';
-import { RunOnceScheduler } from 'vs/base/common/async';
-import { mapToSerializable } from 'sql/base/common/map';
 
 export class ExtHostDataProtocol extends ExtHostDataProtocolShape {
 
@@ -27,9 +25,6 @@ export class ExtHostDataProtocol extends ExtHostDataProtocolShape {
 	private static _handlePool: number = 0;
 	private _adapter = new Map<number, azdata.DataProvider>();
 	private _providersByType = new Map<azdata.DataProviderType, azdata.DataProvider[]>();
-
-	private readonly messageRunner = new RunOnceScheduler(() => this.sendMessages(), 1000);
-	private readonly queuedMessages = new Map<string, azdata.QueryExecuteMessageParams[]>();
 
 	constructor(
 		mainContext: IMainContext,
@@ -106,12 +101,6 @@ export class ExtHostDataProtocol extends ExtHostDataProtocolShape {
 	$registerScriptingProvider(provider: azdata.ScriptingProvider): vscode.Disposable {
 		let rt = this.registerProvider(provider, DataProviderType.ScriptingProvider);
 		this._proxy.$registerScriptingProvider(provider.providerId, provider.handle);
-		return rt;
-	}
-
-	$registerQueryProvider(provider: azdata.QueryProvider): vscode.Disposable {
-		let rt = this.registerProvider(provider, DataProviderType.QueryProvider);
-		this._proxy.$registerQueryProvider(provider.providerId, provider.handle);
 		return rt;
 	}
 
@@ -303,60 +292,6 @@ export class ExtHostDataProtocol extends ExtHostDataProtocolShape {
 		return this._resolveProvider<azdata.QueryProvider>(handle).disposeQuery(ownerUri);
 	}
 
-	$onQueryComplete(handle: number, result: azdata.QueryExecuteCompleteNotificationResult): void {
-		if (this.uriTransformer) {
-			result.ownerUri = URI.from(this.uriTransformer.transformOutgoing(URI.parse(result.ownerUri))).toString(true);
-		}
-		// clear messages to maintain the order of things
-		if (this.messageRunner.isScheduled()) {
-			this.messageRunner.cancel();
-			this.sendMessages();
-		}
-		this._proxy.$onQueryComplete(handle, result);
-	}
-	$onBatchStart(handle: number, batchInfo: azdata.QueryExecuteBatchNotificationParams): void {
-		if (this.uriTransformer) {
-			batchInfo.ownerUri = URI.from(this.uriTransformer.transformOutgoing(URI.parse(batchInfo.ownerUri))).toString(true);
-		}
-		this._proxy.$onBatchStart(handle, batchInfo);
-	}
-	$onBatchComplete(handle: number, batchInfo: azdata.QueryExecuteBatchNotificationParams): void {
-		if (this.uriTransformer) {
-			batchInfo.ownerUri = URI.from(this.uriTransformer.transformOutgoing(URI.parse(batchInfo.ownerUri))).toString(true);
-		}
-		this._proxy.$onBatchComplete(handle, batchInfo);
-	}
-	$onResultSetAvailable(handle: number, resultSetInfo: azdata.QueryExecuteResultSetNotificationParams): void {
-		if (this.uriTransformer) {
-			resultSetInfo.ownerUri = URI.from(this.uriTransformer.transformOutgoing(URI.parse(resultSetInfo.ownerUri))).toString(true);
-		}
-		this._proxy.$onResultSetAvailable(handle, resultSetInfo);
-	}
-	$onResultSetUpdated(handle: number, resultSetInfo: azdata.QueryExecuteResultSetNotificationParams): void {
-		if (this.uriTransformer) {
-			resultSetInfo.ownerUri = URI.from(this.uriTransformer.transformOutgoing(URI.parse(resultSetInfo.ownerUri))).toString(true);
-		}
-		this._proxy.$onResultSetUpdated(handle, resultSetInfo);
-	}
-	$onQueryMessage(message: azdata.QueryExecuteMessageParams): void {
-		if (this.uriTransformer) {
-			message.ownerUri = URI.from(this.uriTransformer.transformOutgoing(URI.parse(message.ownerUri))).toString(true);
-		}
-		if (!this.queuedMessages.has(message.ownerUri)) {
-			this.queuedMessages.set(message.ownerUri, []);
-		}
-		this.queuedMessages.get(message.ownerUri).push(message);
-		if (!this.messageRunner.isScheduled()) {
-			this.messageRunner.schedule();
-		}
-	}
-
-	private sendMessages() {
-		const messages = mapToSerializable(this.queuedMessages);
-		this.queuedMessages.clear();
-		this._proxy.$onQueryMessage(messages);
-	}
-
 	$saveResults(handle: number, requestParams: azdata.SaveResultsRequestParams): Thenable<azdata.SaveResultRequestResult> {
 		return this._resolveProvider<azdata.QueryProvider>(handle).saveResults(requestParams);
 	}
@@ -396,10 +331,6 @@ export class ExtHostDataProtocol extends ExtHostDataProtocolShape {
 
 	$getEditRows(handle: number, rowData: azdata.EditSubsetParams): Thenable<azdata.EditSubsetResult> {
 		return this._resolveProvider<azdata.QueryProvider>(handle).getEditRows(rowData);
-	}
-
-	$onEditSessionReady(handle: number, ownerUri: string, success: boolean, message: string): void {
-		this._proxy.$onEditSessionReady(handle, ownerUri, success, message);
 	}
 
 	public $getConnectionIconId(handle: number, connection: azdata.IConnectionProfile, serverInfo: azdata.ServerInfo): Thenable<string> {

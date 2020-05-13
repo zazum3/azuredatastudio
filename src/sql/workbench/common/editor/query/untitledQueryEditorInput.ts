@@ -6,13 +6,13 @@
 import { QueryEditorInput } from 'sql/workbench/common/editor/query/queryEditorInput';
 import { QueryResultsInput } from 'sql/workbench/common/editor/query/queryResultsInput';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
-import { IQueryModelService } from 'sql/workbench/services/query/common/queryModel';
 
 import { IEncodingSupport, EncodingMode } from 'vs/workbench/common/editor';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { IResolvedTextEditorModel } from 'vs/editor/common/services/resolverService';
 import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
 import { IUntitledTextEditorModel } from 'vs/workbench/services/untitled/common/untitledTextEditorModel';
+import { IQueryService } from 'sql/platform/query/common/queryService';
 
 export class UntitledQueryEditorInput extends QueryEditorInput implements IEncodingSupport {
 
@@ -23,10 +23,10 @@ export class UntitledQueryEditorInput extends QueryEditorInput implements IEncod
 		text: UntitledTextEditorInput,
 		results: QueryResultsInput,
 		@IConnectionManagementService connectionManagementService: IConnectionManagementService,
-		@IQueryModelService queryModelService: IQueryModelService,
+		@IQueryService queryService: IQueryService,
 		@IConfigurationService configurationService: IConfigurationService
 	) {
-		super(description, text, results, connectionManagementService, queryModelService, configurationService);
+		super(description, text, results, connectionManagementService, queryService, configurationService);
 	}
 
 	public resolve(): Promise<IUntitledTextEditorModel & IResolvedTextEditorModel> {

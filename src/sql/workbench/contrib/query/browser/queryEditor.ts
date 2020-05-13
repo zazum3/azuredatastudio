@@ -17,7 +17,6 @@ import { TextFileEditor } from 'vs/workbench/contrib/files/browser/editors/textF
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { IContextKey, IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { CancellationToken } from 'vs/base/common/cancellation';
-import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
 import { IStorageService } from 'vs/platform/storage/common/storage';
 import { IEditorGroup, IEditorGroupsService } from 'vs/workbench/services/editor/common/editorGroupsService';
 import { SplitView, Sizing } from 'vs/base/browser/ui/splitview/splitview';
@@ -35,7 +34,6 @@ import { QueryResultsEditor } from 'sql/workbench/contrib/query/browser/queryRes
 import * as queryContext from 'sql/workbench/contrib/query/common/queryContext';
 import { Taskbar, ITaskbarContent } from 'sql/base/browser/ui/taskbar/taskbar';
 import * as actions from 'sql/workbench/contrib/query/browser/queryActions';
-import { IRange } from 'vs/editor/common/core/range';
 
 const QUERY_EDITOR_VIEW_STATE_PREFERENCE_KEY = 'queryEditorViewState';
 
@@ -175,14 +173,14 @@ export class QueryEditor extends BaseEditor {
 		}));
 
 		// Create Actions for the toolbar
-		this._runQueryAction = this.instantiationService.createInstance(actions.RunQueryAction, this);
-		this._cancelQueryAction = this.instantiationService.createInstance(actions.CancelQueryAction, this);
-		this._toggleConnectDatabaseAction = this.instantiationService.createInstance(actions.ToggleConnectDatabaseAction, this, false);
-		this._changeConnectionAction = this.instantiationService.createInstance(actions.ConnectDatabaseAction, this, true);
-		this._listDatabasesAction = this.instantiationService.createInstance(actions.ListDatabasesAction, this);
-		this._estimatedQueryPlanAction = this.instantiationService.createInstance(actions.EstimatedQueryPlanAction, this);
-		this._actualQueryPlanAction = this.instantiationService.createInstance(actions.ActualQueryPlanAction, this);
-		this._toggleSqlcmdMode = this.instantiationService.createInstance(actions.ToggleSqlCmdModeAction, this, false);
+		this._runQueryAction = this.instantiationService.createInstance(actions.RunQueryAction);
+		this._cancelQueryAction = this.instantiationService.createInstance(actions.CancelQueryAction);
+		this._toggleConnectDatabaseAction = this.instantiationService.createInstance(actions.ToggleConnectDatabaseAction, false);
+		this._changeConnectionAction = this.instantiationService.createInstance(actions.ConnectDatabaseAction, true);
+		this._listDatabasesAction = this.instantiationService.createInstance(actions.ListDatabasesAction);
+		this._estimatedQueryPlanAction = this.instantiationService.createInstance(actions.EstimatedQueryPlanAction);
+		this._actualQueryPlanAction = this.instantiationService.createInstance(actions.ActualQueryPlanAction);
+		this._toggleSqlcmdMode = this.instantiationService.createInstance(actions.ToggleSqlCmdModeAction, false);
 
 		this.setTaskbarContent();
 
@@ -246,7 +244,7 @@ export class QueryEditor extends BaseEditor {
 
 	private get listDatabasesActionItem(): actions.ListDatabasesActionItem {
 		if (!this._listDatabasesActionItem) {
-			this._listDatabasesActionItem = this.instantiationService.createInstance(actions.ListDatabasesActionItem, this);
+			this._listDatabasesActionItem = this.instantiationService.createInstance(actions.ListDatabasesActionItem);
 			this._register(this._listDatabasesActionItem.attachStyler(this.themeService));
 		}
 		return this._listDatabasesActionItem;
@@ -478,96 +476,6 @@ export class QueryEditor extends BaseEditor {
 		}
 	}
 
-	// helper functions
-
-	public isSelectionEmpty(): boolean {
-		if (this.currentTextEditor && this.currentTextEditor.getControl()) {
-			let control = this.currentTextEditor.getControl();
-			let codeEditor: ICodeEditor = <ICodeEditor>control;
-
-			if (codeEditor) {
-				let value = codeEditor.getValue();
-				if (value !== undefined && value.length > 0) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Returns the underlying SQL editor's text selection in a 0-indexed format. Returns undefined if there
-	 * is no selected text.
-	 */
-	public getSelection(checkIfRange: boolean = true): IRange {
-		if (this.currentTextEditor && this.currentTextEditor.getControl()) {
-			let vscodeSelection = this.currentTextEditor.getControl().getSelection();
-
-			// If the selection is a range of characters rather than just a cursor position, return the range
-			let isRange: boolean =
-				!(vscodeSelection.getStartPosition().lineNumber === vscodeSelection.getEndPosition().lineNumber &&
-					vscodeSelection.getStartPosition().column === vscodeSelection.getEndPosition().column);
-			if (!checkIfRange || isRange) {
-				return vscodeSelection;
-			}
-		}
-
-		// Otherwise return undefined because there is no selected text
-		return undefined;
-	}
-
-	public getAllSelection(): IRange {
-		if (this.currentTextEditor && this.currentTextEditor.getControl()) {
-			let control = this.currentTextEditor.getControl();
-			let codeEditor: ICodeEditor = <ICodeEditor>control;
-			if (codeEditor) {
-				let model = codeEditor.getModel();
-				let totalLines = model.getLineCount();
-				let endColumn = model.getLineMaxColumn(totalLines);
-				return {
-					startLineNumber: 1,
-					startColumn: 1,
-					endLineNumber: totalLines,
-					endColumn: endColumn,
-				};
-			}
-		}
-		return undefined;
-	}
-
-	public getAllText(): string {
-		if (this.currentTextEditor && this.currentTextEditor.getControl()) {
-			let control = this.currentTextEditor.getControl();
-			let codeEditor: ICodeEditor = <ICodeEditor>control;
-			if (codeEditor) {
-				let value = codeEditor.getValue();
-				if (value !== undefined && value.length > 0) {
-					return value;
-				} else {
-					return '';
-				}
-			}
-		}
-		return undefined;
-	}
-
-	public getSelectionText(): string {
-		if (this.currentTextEditor && this.currentTextEditor.getControl()) {
-			let control = this.currentTextEditor.getControl();
-			let codeEditor: ICodeEditor = <ICodeEditor>control;
-			let vscodeSelection = control.getSelection();
-
-			if (codeEditor && vscodeSelection) {
-				let model = codeEditor.getModel();
-				let value = model.getValueInRange(vscodeSelection);
-				if (value !== undefined && value.length > 0) {
-					return value;
-				}
-			}
-		}
-		return '';
-	}
-
 	/**
 	 * Calls the runCurrent method of this editor's RunQueryAction
 	 */
@@ -600,7 +508,7 @@ export class QueryEditor extends BaseEditor {
 		this.resultsEditor.registerQueryModelViewTab(title, componentId);
 	}
 
-	public chart(dataId: { batchId: number, resultId: number }): void {
-		this.resultsEditor.chart(dataId);
+	public chart(id: string): void {
+		this.resultsEditor.chart(id);
 	}
 }

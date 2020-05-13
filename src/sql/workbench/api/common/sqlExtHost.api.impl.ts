@@ -33,6 +33,8 @@ import { IURITransformerService } from 'vs/workbench/api/common/extHostUriTransf
 import { IExtHostRpcService } from 'vs/workbench/api/common/extHostRpcService';
 import { ILogService } from 'vs/platform/log/common/log';
 import { IExtensionApiFactory as vsIApiFactory, createApiFactoryAndRegisterActors as vsApiFactory } from 'vs/workbench/api/common/extHost.api.impl';
+import { IExtHostApiDeprecationService } from 'vs/workbench/api/common/extHostApiDeprecationService';
+import { ExtHostQuery } from 'sql/workbench/api/common/extHostQuery';
 
 export interface IAzdataExtensionApiFactory {
 	(extension: IExtensionDescription): typeof azdata;
@@ -71,6 +73,7 @@ export function createAdsApiFactory(accessor: ServicesAccessor): IAdsExtensionAp
 	const rpcProtocol = accessor.get(IExtHostRpcService);
 	const extHostLogService = accessor.get(ILogService);
 	const logService = accessor.get(ILogService);
+	const extHostApiDeprecation = accessor.get(IExtHostApiDeprecationService);
 
 	// Addressable instances
 	const extHostAccountManagement = rpcProtocol.set(SqlExtHostContext.ExtHostAccountManagement, new ExtHostAccountManagement(rpcProtocol));
@@ -91,6 +94,7 @@ export function createAdsApiFactory(accessor: ServicesAccessor): IAdsExtensionAp
 	const extHostNotebook = rpcProtocol.set(SqlExtHostContext.ExtHostNotebook, new ExtHostNotebook(rpcProtocol));
 	const extHostNotebookDocumentsAndEditors = rpcProtocol.set(SqlExtHostContext.ExtHostNotebookDocumentsAndEditors, new ExtHostNotebookDocumentsAndEditors(rpcProtocol));
 	const extHostExtensionManagement = rpcProtocol.set(SqlExtHostContext.ExtHostExtensionManagement, new ExtHostExtensionManagement(rpcProtocol));
+	const extHostQuery = rpcProtocol.set(SqlExtHostContext.ExtHostQuery, new ExtHostQuery(rpcProtocol, uriTransformer));
 
 	return {
 		azdata: function (extension: IExtensionDescription): typeof azdata {
@@ -216,38 +220,6 @@ export function createAdsApiFactory(accessor: ServicesAccessor): IAdsExtensionAp
 				});
 
 				return extHostDataProvider.$registerConnectionProvider(provider);
-			};
-
-			let registerQueryProvider = (provider: azdata.QueryProvider): vscode.Disposable => {
-				provider.registerOnQueryComplete((result: azdata.QueryExecuteCompleteNotificationResult) => {
-					extHostDataProvider.$onQueryComplete(provider.handle, result);
-				});
-
-				provider.registerOnBatchStart((batchInfo: azdata.QueryExecuteBatchNotificationParams) => {
-					extHostDataProvider.$onBatchStart(provider.handle, batchInfo);
-				});
-
-				provider.registerOnBatchComplete((batchInfo: azdata.QueryExecuteBatchNotificationParams) => {
-					extHostDataProvider.$onBatchComplete(provider.handle, batchInfo);
-				});
-
-				provider.registerOnResultSetAvailable((resultSetInfo: azdata.QueryExecuteResultSetNotificationParams) => {
-					extHostDataProvider.$onResultSetAvailable(provider.handle, resultSetInfo);
-				});
-
-				provider.registerOnResultSetUpdated((resultSetInfo: azdata.QueryExecuteResultSetNotificationParams) => {
-					extHostDataProvider.$onResultSetUpdated(provider.handle, resultSetInfo);
-				});
-
-				provider.registerOnMessage((message: azdata.QueryExecuteMessageParams) => {
-					extHostDataProvider.$onQueryMessage(message);
-				});
-
-				provider.registerOnEditSessionReady((ownerUri: string, success: boolean, message: string) => {
-					extHostDataProvider.$onEditSessionReady(provider.handle, ownerUri, success, message);
-				});
-
-				return extHostDataProvider.$registerQueryProvider(provider);
 			};
 
 			let registerObjectExplorerProvider = (provider: azdata.ObjectExplorerProvider): vscode.Disposable => {
@@ -377,7 +349,11 @@ export function createAdsApiFactory(accessor: ServicesAccessor): IAdsExtensionAp
 				registerRestoreProvider,
 				registerScriptingProvider,
 				registerTaskServicesProvider,
-				registerQueryProvider,
+				registerQueryProvider: (provider: azdata.QueryProvider) => {
+					extHostApiDeprecation.report('azdata.dataprotocol.registerQueryProvider', extension,
+					`use 'azdata.query.registerProvider' instead.`);
+					return extHostQuery.registerProvider(provider);
+				},
 				registerAdminServicesProvider,
 				registerAgentServicesProvider,
 				registerCapabilitiesServiceProvider,
@@ -510,6 +486,15 @@ export function createAdsApiFactory(accessor: ServicesAccessor): IAdsExtensionAp
 				NotebookChangeKind: sqlExtHostTypes.NotebookChangeKind
 			};
 
+			const query = {
+				registerProvider: provider => {
+					return extHostQuery.registerProvider(provider);
+				},
+				registerProvider2: provider => {
+					return extHostQuery.registerProvider2(provider);
+				}
+			};
+
 			return {
 				accounts,
 				connection,
@@ -539,13 +524,13 @@ export function createAdsApiFactory(accessor: ServicesAccessor): IAdsExtensionAp
 				dashboard,
 				workspace,
 				queryeditor: queryEditor,
-				ui: ui,
+				ui,
 				StatusIndicator: sqlExtHostTypes.StatusIndicator,
 				CardType: sqlExtHostTypes.CardType,
 				Orientation: sqlExtHostTypes.Orientation,
 				SqlThemeIcon: sqlExtHostTypes.SqlThemeIcon,
 				TreeComponentItem: sqlExtHostTypes.TreeComponentItem,
-				nb: nb,
+				nb,
 				AzureResource: sqlExtHostTypes.AzureResource,
 				TreeItem: sqlExtHostTypes.TreeItem,
 				extensions: extensions,
@@ -556,7 +541,8 @@ export function createAdsApiFactory(accessor: ServicesAccessor): IAdsExtensionAp
 				ExtensionNodeType: sqlExtHostTypes.ExtensionNodeType,
 				ColumnSizingMode: sqlExtHostTypes.ColumnSizingMode,
 				DatabaseEngineEdition: sqlExtHostTypes.DatabaseEngineEdition,
-				TabOrientation: sqlExtHostTypes.TabOrientation
+				TabOrientation: sqlExtHostTypes.TabOrientation,
+				query
 			};
 		}
 	};

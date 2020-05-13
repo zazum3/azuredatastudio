@@ -4,8 +4,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as types from 'vs/base/common/types';
-import { SaveFormat } from 'sql/workbench/services/query/common/resultSerializer';
-import { ResultSetSubset } from 'sql/workbench/services/query/common/query';
+import { ITextResourcePropertiesService } from 'vs/editor/common/services/textResourceConfigurationService';
+import { URI } from 'vs/base/common/uri';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
+import { getErrorMessage } from 'vs/base/common/errors';
+import { IClipboardService } from 'vs/platform/clipboard/common/clipboardService';
+import { INotificationService } from 'vs/platform/notification/common/notification';
+import { IResultSet, IFetchResponse } from 'sql/platform/query/common/queryService';
+import { localize } from 'vs/nls';
 
 export interface IGridDataProvider {
 
@@ -14,7 +20,7 @@ export interface IGridDataProvider {
 	 * @param rowStart 0-indexed start row to retrieve data from
 	 * @param numberOfRows total number of rows of data to retrieve
 	 */
-	getRowData(rowStart: number, numberOfRows: number): Thenable<ResultSetSubset>;
+	getRowData(rowStart: number, numberOfRows: number): Promise<IFetchResponse>;
 
 	/**
 	 * Sends a copy request to copy data to the clipboard
@@ -37,9 +43,6 @@ export interface IGridDataProvider {
 	getColumnHeaders(range: Slick.Range): string[] | undefined;
 
 	readonly canSerialize: boolean;
-
-	serializeResults(format: SaveFormat, selection: Slick.Range[]): Thenable<void>;
-
 }
 
 export async function getResultsString(provider: IGridDataProvider, selection: Slick.Range[], includeHeaders?: boolean): Promise<string> {
@@ -70,8 +73,8 @@ export async function getResultsString(provider: IGridDataProvider, selection: S
 				let cellObjects = row.slice(range.fromCell, (range.toCell + 1));
 				// Remove newlines if requested
 				let cells = provider.shouldRemoveNewLines()
-					? cellObjects.map(x => removeNewLines(x.displayValue))
-					: cellObjects.map(x => x.displayValue);
+					? cellObjects.map(x => removeNewLines(x))
+					: cellObjects.map(x => x);
 
 				let idx = 0;
 				for (let cell of cells) {
@@ -138,4 +141,80 @@ function removeNewLines(inputString: string): string {
 
 	let outputString: string = inputString.replace(/(\r\n|\n|\r)/gm, '');
 	return outputString;
+}
+
+export class QueryGridDataProvider implements IGridDataProvider {
+
+	constructor(
+		private readonly resultSet: IResultSet,
+		@INotificationService private _notificationService: INotificationService,
+		@IClipboardService private _clipboardService: IClipboardService,
+		@IConfigurationService private _configurationService: IConfigurationService,
+		@ITextResourcePropertiesService private _textResourcePropertiesService: ITextResourcePropertiesService
+	) {
+	}
+
+	getRowData(rowStart: number, numberOfRows: number): Promise<IFetchResponse> {
+		return this.resultSet.fetch(rowStart, numberOfRows);
+	}
+
+	copyResults(selection: Slick.Range[], includeHeaders?: boolean): Promise<void> {
+		return this.copyResultsAsync(selection, includeHeaders);
+	}
+
+	private async copyResultsAsync(selection: Slick.Range[], includeHeaders?: boolean): Promise<void> {
+		try {
+			let results = await getResultsString(this, selection, includeHeaders);
+			await this._clipboardService.writeText(results);
+		} catch (error) {
+			this._notificationService.error(localize('copyFailed', "Copy failed with error {0}", getErrorMessage(error)));
+		}
+	}
+
+	getEolString(): string {
+		return getEolString(this._textResourcePropertiesService, 'query:grid');
+	}
+
+	shouldIncludeHeaders(includeHeaders: boolean): boolean {
+		return shouldIncludeHeaders(includeHeaders, this._configurationService);
+	}
+
+	shouldRemoveNewLines(): boolean {
+		return shouldRemoveNewLines(this._configurationService);
+	}
+
+	getColumnHeaders(range?: Slick.Range): string[] | undefined {
+		if (range) {
+			const mincell = Math.min(range.fromCell, range.toCell);
+			const maxCell = Math.max(range.fromCell, range.toCell);
+			return this.resultSet.columns.slice(mincell, maxCell + 1).map(c => c.title);
+		} else {
+			return this.resultSet.columns.map(c => c.title);
+		}
+	}
+
+	get canSerialize(): boolean {
+		return true;
+	}
+}
+
+
+export function getEolString(textResourcePropertiesService: ITextResourcePropertiesService, uri: string): string {
+	return textResourcePropertiesService.getEOL(URI.parse(uri), 'sql');
+}
+
+export function shouldIncludeHeaders(includeHeaders: boolean, configurationService: IConfigurationService): boolean {
+	if (includeHeaders !== undefined) {
+		// Respect the value explicity passed into the method
+		return includeHeaders;
+	}
+	// else get config option from vscode config
+	includeHeaders = configurationService.getValue<boolean>('sql.copyIncludeHeaders');
+	return !!includeHeaders;
+}
+
+export function shouldRemoveNewLines(configurationService: IConfigurationService): boolean {
+	// get config copyRemoveNewLine option from vscode config
+	let removeNewLines = configurationService.getValue<boolean>('sql.copyRemoveNewLine');
+	return !!removeNewLines;
 }

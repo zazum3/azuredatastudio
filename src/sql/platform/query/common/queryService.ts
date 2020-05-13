@@ -4,21 +4,29 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
-import { IConnection, ConnectionState, IConnectionService } from 'sql/platform/connection/common/connectionService';
 import { registerSingleton } from 'vs/platform/instantiation/common/extensions';
 import { IDisposable, combinedDisposable, toDisposable, Disposable } from 'vs/base/common/lifecycle';
 import { URI } from 'vs/base/common/uri';
 import { Event, Emitter } from 'vs/base/common/event';
 import { isArray } from 'vs/base/common/types';
+import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
+import { Iterable } from 'vs/base/common/iterator';
 
 export const IQueryService = createDecorator<IQueryService>('queryService');
+
+export interface IFetchSubsetParams {
+	readonly resultIndex: number;
+	readonly batchIndex: number;
+	readonly startIndex: number;
+	readonly rowCount: number;
+}
 
 export interface IQueryProvider {
 	readonly id: string;
 	readonly onMessage: Event<IQueryProviderEvent & { messages: IResultMessage | ReadonlyArray<IResultMessage> }>;
 	readonly onResultSetAvailable: Event<IQueryProviderEvent & IResultSetSummary>;
 	readonly onResultSetUpdated: Event<IQueryProviderEvent & IResultSetSummary>;
-	readonly onBatchStart: Event<IQueryProviderEvent & { executionStart: number, id: number }>;
+	readonly onBatchStart: Event<IQueryProviderEvent & { executionStart: number, index: number }>;
 	readonly onBatchComplete: Event<IQueryProviderEvent & { executionEnd: number }>;
 	readonly onQueryComplete: Event<IQueryProviderEvent>;
 	/**
@@ -26,7 +34,7 @@ export interface IQueryProvider {
 	 * @param connectionId connection to use for running the query
 	 * @param file file to use for running the query
 	 */
-	runQuery(connectionId: string, file: URI): Promise<void>;
+	runQuery(connectionId: string): Promise<void>;
 	/**
 	 * Cancel an actively running query
 	 * @param connectionId
@@ -41,11 +49,18 @@ export interface IQueryProvider {
 	 * @param offset index into the result set to start returning
 	 * @param count number of rows to return
 	 */
-	fetchSubset(connectionId: string, resultSetId: number, batchId: number, offset: number, count: number): Promise<IFetchResponse>;
+	fetchSubset(connectionId: string, params: IFetchSubsetParams): Promise<IFetchResponse>;
+	/**
+	 * Set the execution options for a query
+	 * @param connectionId connection for the results
+	 * @param options a key value map of the options to be set
+	 */
+	setExecutionOptions(connectionId: string, options: { [key: string]: number | string | boolean }): Promise<void>;
 }
 
 export interface IQueryService {
 	_serviceBrand: undefined;
+	readonly providers: ReadonlyArray<string>;
 	registerProvider(provider: IQueryProvider): IDisposable;
 	/**
 	 * Create a new query or return on if it already exists given the uri
@@ -54,7 +69,7 @@ export interface IQueryService {
 	 * @param forceNew force create a new query even if one already exists for the given connection
 	 * This should only be done if it is known that the connection supports multiple queries on the same connection (unlikely)
 	 */
-	createOrGetQuery(connection: IConnection, associatedURI?: URI, forceNew?: boolean): IQuery | undefined;
+	createOrGetQuery(associatedURI: URI, forceNew?: boolean): IQuery | undefined;
 }
 
 export interface IResultMessage {
@@ -63,8 +78,8 @@ export interface IResultMessage {
 }
 
 export interface IResultSetSummary {
-	readonly id: number;
-	readonly batchId: number;
+	readonly resultIndex: number;
+	readonly batchIndex: number;
 	readonly rowCount: number;
 	readonly columns: ReadonlyArray<IColumn>;
 	readonly completed: boolean;
@@ -108,10 +123,6 @@ export enum QueryState {
 
 export interface IQuery {
 	/**
-	 * Connection associated with this query
-	 */
-	readonly connection: IConnection;
-	/**
 	 * File associated with this query
 	 */
 	readonly associatedFile: URI;
@@ -130,6 +141,11 @@ export interface IQuery {
 	 * Cancel the query if currently executing, otherwise it will throw
 	 */
 	cancel(): Promise<void>;
+
+	/**
+	 * Set execution options
+	 */
+	setExecutionOptions(options: { [key: string]: string | number | boolean }): Promise<void>;
 
 	/**
 	 * Messages returned from the query
@@ -212,7 +228,6 @@ class Query extends Disposable implements IQuery {
 
 	constructor(
 		private readonly queryService: QueryService,
-		public readonly connection: IConnection,
 		public readonly associatedFile: URI
 	) {
 		super();
@@ -233,20 +248,24 @@ class Query extends Disposable implements IQuery {
 			this._messages = [];
 			this._startTime = undefined;
 			this._endTime = undefined;
-			await this.queryService.executeQuery(this.connection, this.associatedFile);
+			await this.queryService.executeQuery(this.associatedFile);
 			this._startTime = Date.now(); // create a bogus start time and we will do our best to update when we get a time from the provider
 			this.setState(QueryState.EXECUTING);
 		}
 	}
 
 	async cancel(): Promise<void> {
-		const message = await this.queryService.cancelQuery(this.connection);
+		const message = await this.queryService.cancelQuery(this.associatedFile);
 		this.handleMessage({ message }); // should we be doing this?
 		this.setState(QueryState.NOT_EXECUTING); // no sure if this is needed or if querycomplete gets called, but this is just being safe
 	}
 
-	private fetch(resultSetId: number, batchId: number, offset: number, count: number): Promise<IFetchResponse> {
-		return this.queryService.fetchData(this.connection, resultSetId, batchId, offset, count);
+	async setExecutionOptions(options: { [key: string]: boolean | number | string }): Promise<void> {
+
+	}
+
+	private fetch(params: IFetchSubsetParams): Promise<IFetchResponse> {
+		return this.queryService.fetchData(this.associatedFile, params);
 	}
 
 	public handleMessage(e: IResultMessage | ReadonlyArray<IResultMessage>): void {
@@ -273,11 +292,11 @@ class Query extends Disposable implements IQuery {
 	public handleResultSetAvailable(e: IResultSetSummary): void {
 		const resultSet: IResultSet = {
 			columns: e.columns.slice(),
-			id: this.encodeId(e.id, e.batchId),
+			id: this.encodeId(e.resultIndex, e.batchIndex),
 			rowCount: e.rowCount,
 			completed: e.completed,
 			fetch: (offset, count): Promise<IFetchResponse> => {
-				return this.fetch(e.id, e.batchId, offset, count);
+				return this.fetch({ resultIndex: e.resultIndex, batchIndex: e.batchIndex, startIndex: offset, rowCount: count });
 			}
 		};
 		this._resultSets.push(resultSet);
@@ -285,7 +304,7 @@ class Query extends Disposable implements IQuery {
 	}
 
 	public handleResultSetUpdated(e: IResultSetSummary): void {
-		const id = this.encodeId(e.id, e.batchId);
+		const id = this.encodeId(e.resultIndex, e.batchIndex);
 		const resultSet = this._resultSets.find(e => e.id === id);
 		(resultSet as IResultSetInternal).rowCount = e.rowCount;
 		(resultSet as IResultSetInternal).completed = e.completed;
@@ -297,8 +316,8 @@ class Query extends Disposable implements IQuery {
 		this._onQueryComplete.fire();
 	}
 
-	public handleBatchStart(e: { id: number, executionStart: number }): void {
-		if (e.id === 0) { // only accept the first one
+	public handleBatchStart(e: { index: number, executionStart: number }): void {
+		if (e.index === 0) { // only accept the first one
 			this._startTime = e.executionStart;
 		}
 	}
@@ -316,22 +335,26 @@ export class QueryService extends Disposable implements IQueryService {
 	_serviceBrand: undefined;
 
 	private readonly queryProviders = new Map<string, { provider: IQueryProvider, disposable: IDisposable }>(); // providers that have been registered
-	private readonly queries = new Map<IConnection, Query>();
+	private readonly queries = new Map<string, Query>();
+
+	public get providers(): ReadonlyArray<string> {
+		return Iterable.consume(this.queryProviders.keys())[0];
+	}
 
 	constructor(
-		@IConnectionService private readonly connectionService: IConnectionService
+		@IConnectionManagementService private readonly connectionManagementService: IConnectionManagementService
 	) {
 		super();
 	}
 
-	createOrGetQuery(connection: IConnection, associatedURI: URI, forceNew: boolean = false): IQuery | undefined {
-		const existing = this.queries.get(connection);
-		if (existing && !forceNew) {
+	createOrGetQuery(associatedURI: URI): IQuery | undefined {
+		const existing = this.queries.get(associatedURI.toString());
+		if (existing) {
 			return existing;
 		}
-		const query = connection.state === ConnectionState.CONNECTED ? new Query(this, connection, associatedURI) : undefined;
+		const query = new Query(this, associatedURI);
 		if (query) {
-			this.queries.set(connection, query);
+			this.queries.set(associatedURI.toString(), query);
 		}
 		return query;
 	}
@@ -355,12 +378,11 @@ export class QueryService extends Disposable implements IQueryService {
 	}
 
 	private findQuery(connectionId: string): Query {
-		for (const connection of this.queries.keys()) {
-			if (this.connectionService.getIdForConnection(connection) === connectionId) {
-				return this.queries.get(connection)!;
-			}
+		const query = this.queries.get(connectionId);
+		if (query) {
+			return query;
 		}
-		throw new Error(`Count not find query with connection ${connectionId}`);
+		throw new Error(`Could not find query with connection ${connectionId}`);
 	}
 
 	private onMessage(e: IQueryProviderEvent & { messages: IResultMessage | ReadonlyArray<IResultMessage> }): void {
@@ -375,7 +397,7 @@ export class QueryService extends Disposable implements IQueryService {
 		this.findQuery(e.connectionId).handleResultSetUpdated(e);
 	}
 
-	private onBatchStart(e: IQueryProviderEvent & { executionStart: number, id: number }): void {
+	private onBatchStart(e: IQueryProviderEvent & { executionStart: number, index: number }): void {
 		this.findQuery(e.connectionId).handleBatchStart(e);
 	}
 
@@ -388,26 +410,29 @@ export class QueryService extends Disposable implements IQueryService {
 	}
 
 	//#region @type{Query} helpers
-	executeQuery(connection: IConnection, file: URI): Promise<void> {
-		const provider = this.withProvider(connection.provider);
-		const connectionId = this.connectionService.getIdForConnection(connection);
-		return provider.runQuery(connectionId, file);
+	executeQuery(file: URI): Promise<void> {
+		const provider = this.withProvider(file);
+		return provider.runQuery(file.toString());
 	}
 
-	cancelQuery(connection: IConnection): Promise<string> {
-		const provider = this.withProvider(connection.provider);
-		const connectionId = this.connectionService.getIdForConnection(connection);
-		return provider.cancelQuery(connectionId);
+	cancelQuery(file: URI): Promise<string> {
+		const provider = this.withProvider(file);
+		return provider.cancelQuery(file.toString());
 	}
 
-	fetchData(connection: IConnection, resultSetId: number, batchId: number, offset: number, count: number): Promise<IFetchResponse> {
-		const provider = this.withProvider(connection.provider);
-		const connectionId = this.connectionService.getIdForConnection(connection);
-		return provider.fetchSubset(connectionId, resultSetId, batchId, offset, count);
+	fetchData(file: URI, params: IFetchSubsetParams): Promise<IFetchResponse> {
+		const provider = this.withProvider(file);
+		return provider.fetchSubset(file.toString(), params);
+	}
+
+	setExecutionOptions(file: URI, options: { [key: string]: number | boolean | string }): Promise<void> {
+		const provider = this.withProvider(file);
+		return provider.setExecutionOptions(file.toString(), options);
 	}
 	//#endregion
 
-	private withProvider(provider: string): IQueryProvider {
+	private withProvider(file: URI): IQueryProvider {
+		const provider = this.connectionManagementService.getProviderIdFromUri(file.toString());
 		const providerStub = this.queryProviders.get(provider);
 		if (!providerStub) {
 			throw new Error(`Query provider could not be found: ${provider}`);
