@@ -7,7 +7,7 @@ import { localize } from 'vs/nls';
 import { Action } from 'vs/base/common/actions';
 import { ITaskService } from 'sql/workbench/services/tasks/common/tasksService';
 import { TaskNode } from 'sql/workbench/services/tasks/common/tasksNode';
-import { IQueryEditorService } from 'sql/workbench/services/queryEditor/common/queryEditorService';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 import Severity from 'vs/base/common/severity';
 import { IErrorMessageService } from 'sql/platform/errorMessage/common/errorMessageService';
 
@@ -52,7 +52,7 @@ export class ScriptAction extends Action {
 	constructor(
 		id: string,
 		label: string,
-		@IQueryEditorService private _queryEditorService: IQueryEditorService
+		@IADSEditorService private _queryEditorService: IADSEditorService
 	) {
 		super(id, label);
 	}

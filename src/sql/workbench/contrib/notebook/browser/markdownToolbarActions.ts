@@ -186,7 +186,7 @@ export class MarkdownTextTransformer {
 
 	private getEditorControl(): CodeEditorWidget | undefined {
 		if (!this._notebookEditor) {
-			this._notebookEditor = this._notebookService.findNotebookEditor(this._cellModel?.notebookModel?.notebookUri);
+			this._notebookEditor = this._notebookService.findNotebookEditor(this._cellModel?.notebookModel?.resource);
 		}
 		if (this._notebookEditor?.cellEditors?.length > 0) {
 			// Find cell editor provider via cell guid

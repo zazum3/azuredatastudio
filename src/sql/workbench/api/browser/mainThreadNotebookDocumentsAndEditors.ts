@@ -20,7 +20,7 @@ import {
 	SqlMainContext, MainThreadNotebookDocumentsAndEditorsShape, SqlExtHostContext, ExtHostNotebookDocumentsAndEditorsShape,
 	INotebookDocumentsAndEditorsDelta, INotebookEditorAddData, INotebookShowOptions, INotebookModelAddedData, INotebookModelChangedData
 } from 'sql/workbench/api/common/sqlExtHost.protocol';
-import { NotebookInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
+import { NotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
 import { INotebookService, INotebookEditor } from 'sql/workbench/services/notebook/browser/notebookService';
 import { ISingleNotebookEditOperation, NotebookChangeKind } from 'sql/workbench/api/common/sqlExtHostTypes';
 import { disposed } from 'vs/base/common/errors';
@@ -31,14 +31,12 @@ import { IEditorGroupsService } from 'vs/workbench/services/editor/common/editor
 import { viewColumnToEditorGroup } from 'vs/workbench/api/common/shared/editor';
 import { localize } from 'vs/nls';
 import { IFileService } from 'vs/platform/files/common/files';
-import { UntitledNotebookInput } from 'sql/workbench/contrib/notebook/browser/models/untitledNotebookInput';
-import { FileNotebookInput } from 'sql/workbench/contrib/notebook/browser/models/fileNotebookInput';
+import { UntitledNotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/untitledNotebookInput';
 import { find } from 'vs/base/common/arrays';
-import { IUntitledTextEditorService } from 'vs/workbench/services/untitled/common/untitledTextEditorService';
-import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
-import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
 import { ITextFileService } from 'vs/workbench/services/textfile/common/textfiles';
 import { UntitledTextEditorModel } from 'vs/workbench/services/untitled/common/untitledTextEditorModel';
+import { isEqual } from 'vs/base/common/resources';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 
 class MainThreadNotebookEditor extends Disposable {
 	private _contentChangedEmitter = new Emitter<NotebookContentChange>();
@@ -68,7 +66,7 @@ class MainThreadNotebookEditor extends Disposable {
 	}
 
 	public get uri(): URI {
-		return this.editor.notebookParams.notebookUri;
+		return this.editor.notebookParams.resource;
 	}
 
 	public get id(): string {
@@ -99,11 +97,11 @@ class MainThreadNotebookEditor extends Disposable {
 		return this.textFileService.save(this.uri).then(uri => !!uri);
 	}
 
-	public matches(input: NotebookInput): boolean {
+	public matches(input: NotebookEditorInput): boolean {
 		if (!input) {
 			return false;
 		}
-		return input.notebookUri.toString() === this.editor.notebookParams.input.notebookUri.toString();
+		return isEqual(input.resource, this.editor.notebookParams.input.resource);
 	}
 
 	public applyEdits(versionIdCheck: number, edits: ISingleNotebookEditOperation[], opts: IUndoStopOptions): boolean {
@@ -329,14 +327,14 @@ export class MainThreadNotebookDocumentsAndEditors extends Disposable implements
 	private _modelToDisposeMap = new Map<string, DisposableStore>();
 	constructor(
 		extHostContext: IExtHostContext,
-		@IUntitledTextEditorService private _untitledEditorService: IUntitledTextEditorService,
 		@IInstantiationService private _instantiationService: IInstantiationService,
 		@IEditorService private _editorService: IEditorService,
 		@IEditorGroupsService private _editorGroupService: IEditorGroupsService,
 		@ICapabilitiesService private _capabilitiesService: ICapabilitiesService,
 		@INotebookService private readonly _notebookService: INotebookService,
 		@IFileService private readonly _fileService: IFileService,
-		@ITextFileService private readonly _textFileService: ITextFileService
+		@ITextFileService private readonly _textFileService: ITextFileService,
+		@IADSEditorService private readonly adsEditorService: IADSEditorService
 	) {
 		super();
 		if (extHostContext) {
@@ -464,28 +462,22 @@ export class MainThreadNotebookDocumentsAndEditors extends Disposable implements
 		};
 		let isUntitled: boolean = uri.scheme === Schemas.untitled;
 
-		let fileInput: UntitledTextEditorInput | FileEditorInput;
-		if (isUntitled && path.isAbsolute(uri.fsPath)) {
-			const model = this._untitledEditorService.create({ associatedResource: uri, mode: 'notebook', initialValue: options.initialContent });
-			fileInput = this._instantiationService.createInstance(UntitledTextEditorInput, model);
-		} else {
-			if (isUntitled) {
-				const model = this._untitledEditorService.create({ untitledResource: uri, mode: 'notebook', initialValue: options.initialContent });
-				fileInput = this._instantiationService.createInstance(UntitledTextEditorInput, model);
-			} else {
-				fileInput = this._editorService.createEditorInput({ forceFile: true, resource: uri, mode: 'notebook' }) as FileEditorInput;
-			}
-		}
-		let input: NotebookInput;
+		let input: NotebookEditorInput;
 		if (isUntitled) {
-			input = this._instantiationService.createInstance(UntitledNotebookInput, path.basename(uri.fsPath), uri, fileInput as UntitledTextEditorInput);
+			if (path.isAbsolute(uri.fsPath)) {
+				input = this.adsEditorService.createNotebookEditorInput({ resource: uri, mode: 'notebook', contents: options.initialContent }) as NotebookEditorInput;
+			} else {
+				input = this.adsEditorService.createNotebookEditorInput({ resource: uri, mode: 'notebook', contents: options.initialContent }) as NotebookEditorInput;
+			}
+
 		} else {
-			input = this._instantiationService.createInstance(FileNotebookInput, path.basename(uri.fsPath), uri, fileInput as FileEditorInput);
+			input = this.adsEditorService.createNotebookEditorInput({ forceFile: true, resource: uri, mode: 'notebook' }) as NotebookEditorInput;
 		}
+
 		input.defaultKernel = options.defaultKernel;
 		input.connectionProfile = new ConnectionProfile(this._capabilitiesService, options.connectionProfile);
 		if (isUntitled) {
-			let untitledModel = await (input as UntitledNotebookInput).textInput.resolve();
+			let untitledModel = await (input as UntitledNotebookEditorInput).textInput.resolve();
 			await untitledModel.load();
 			input.untitledEditorModel = untitledModel;
 			if (options.initialDirtyState === false) {
@@ -499,7 +491,7 @@ export class MainThreadNotebookDocumentsAndEditors extends Disposable implements
 		return this.waitOnEditor(input);
 	}
 
-	private async waitOnEditor(input: NotebookInput): Promise<string> {
+	private async waitOnEditor(input: NotebookEditorInput): Promise<string> {
 		let id: string = undefined;
 		let attemptsLeft = 10;
 		let timeoutMs = 20;
@@ -512,7 +504,7 @@ export class MainThreadNotebookDocumentsAndEditors extends Disposable implements
 		return id;
 	}
 
-	findNotebookEditorIdFor(input: NotebookInput): string {
+	findNotebookEditorIdFor(input: NotebookEditorInput): string {
 		let foundId: string = undefined;
 		this._notebookEditors.forEach(e => {
 			if (e.matches(input)) {

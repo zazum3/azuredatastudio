@@ -382,7 +382,7 @@
   </file>
   <file original="extensions/notebook/dist/jupyter/jupyterNotebookProvider" source-language="en" datatype="plaintext" target-language="ko">
     <body>
-      <trans-unit id="errNotebookUriMissing">
+      <trans-unit id="errResourceMissing">
         <source xml:lang="en">A notebook path is required</source>
         <target state="translated">Notebook 경로는 필수입니다.</target>
       </trans-unit>
@@ -516,7 +516,7 @@
       </trans-unit>
     </body>
   </file>
-  <file original="extensions/notebook/dist/protocol/notebookUriHandler" source-language="en" datatype="plaintext" target-language="ko">
+  <file original="extensions/notebook/dist/protocol/resourceHandler" source-language="en" datatype="plaintext" target-language="ko">
     <body>
       <trans-unit id="notebook.unsupportedAction">
         <source xml:lang="en">Action {0} is not supported for this handler</source>

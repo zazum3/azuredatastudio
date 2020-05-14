@@ -28,8 +28,8 @@ export class ExtHostNotebook implements ExtHostNotebookShape {
 	}
 
 	//#region APIs called by main thread
-	async $getNotebookManager(providerHandle: number, notebookUri: UriComponents): Promise<INotebookManagerDetails> {
-		let uri = URI.revive(notebookUri);
+	async $getNotebookManager(providerHandle: number, resource: UriComponents): Promise<INotebookManagerDetails> {
+		let uri = URI.revive(resource);
 		let uriString = uri.toString();
 		let adapter = this.findManagerForUri(uriString);
 		if (!adapter) {
@@ -44,8 +44,8 @@ export class ExtHostNotebook implements ExtHostNotebookShape {
 			hasServerManager: !!adapter.serverManager
 		};
 	}
-	$handleNotebookClosed(notebookUri: UriComponents): void {
-		let uri = URI.revive(notebookUri);
+	$handleNotebookClosed(resource: UriComponents): void {
+		let uri = URI.revive(resource);
 		let uriString = uri.toString();
 		let manager = this.findManagerForUri(uriString);
 		if (manager) {
@@ -62,12 +62,12 @@ export class ExtHostNotebook implements ExtHostNotebookShape {
 		return this._withServerManager(managerHandle, (serverManager) => serverManager.stopServer());
 	}
 
-	$getNotebookContents(managerHandle: number, notebookUri: UriComponents): Thenable<azdata.nb.INotebookContents> {
-		return this._withContentManager(managerHandle, (contentManager) => contentManager.getNotebookContents(URI.revive(notebookUri)));
+	$getNotebookContents(managerHandle: number, resource: UriComponents): Thenable<azdata.nb.INotebookContents> {
+		return this._withContentManager(managerHandle, (contentManager) => contentManager.getNotebookContents(URI.revive(resource)));
 	}
 
-	$save(managerHandle: number, notebookUri: UriComponents, notebook: azdata.nb.INotebookContents): Thenable<azdata.nb.INotebookContents> {
-		return this._withContentManager(managerHandle, (contentManager) => contentManager.save(URI.revive(notebookUri), notebook));
+	$save(managerHandle: number, resource: UriComponents, notebook: azdata.nb.INotebookContents): Thenable<azdata.nb.INotebookContents> {
+		return this._withContentManager(managerHandle, (contentManager) => contentManager.save(URI.revive(resource), notebook));
 	}
 
 	$refreshSpecs(managerHandle: number): Thenable<azdata.nb.IAllKernels> {
@@ -242,9 +242,9 @@ export class ExtHostNotebook implements ExtHostNotebookShape {
 		return undefined;
 	}
 
-	private async getOrCreateManager(provider: azdata.nb.NotebookProvider, notebookUri: URI): Promise<NotebookManagerAdapter> {
-		let manager = await provider.getNotebookManager(notebookUri);
-		let uriString = notebookUri.toString();
+	private async getOrCreateManager(provider: azdata.nb.NotebookProvider, resource: URI): Promise<NotebookManagerAdapter> {
+		let manager = await provider.getNotebookManager(resource);
+		let uriString = resource.toString();
 		let adapter = new NotebookManagerAdapter(provider, manager, uriString);
 		adapter.handle = this._addNewAdapter(adapter);
 		return adapter;

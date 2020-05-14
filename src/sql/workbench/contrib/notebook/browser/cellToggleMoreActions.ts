@@ -192,7 +192,7 @@ export class RunCellsAction extends CellActionBase {
 		try {
 			let cell = context.cell || context.model.activeCell;
 			if (cell) {
-				let editor = this.notebookService.findNotebookEditor(cell.notebookModel.notebookUri);
+				let editor = this.notebookService.findNotebookEditor(cell.notebookModel.resource);
 				if (editor) {
 					if (this.isAfter) {
 						await editor.runAllCells(cell, undefined);

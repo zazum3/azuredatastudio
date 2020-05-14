@@ -19,7 +19,7 @@ const knownSchemes = new Set(['http', 'https', 'file', 'mailto', 'data', 'azured
 export class LinkHandlerDirective {
 	private workbenchFilePath: URI;
 	@Input() isTrusted: boolean;
-	@Input() notebookUri: URI;
+	@Input() resource: URI;
 
 	constructor(
 		@Inject(IOpenerService) private readonly openerService: IOpenerService,
@@ -63,13 +63,13 @@ export class LinkHandlerDirective {
 		}
 		if (uri && this.openerService && this.isSupportedLink(uri)) {
 			if (uri.fragment && uri.fragment.length > 0 && uri.fsPath === this.workbenchFilePath.fsPath) {
-				this.notebookService.navigateTo(this.notebookUri, uri.fragment);
+				this.notebookService.navigateTo(this.resource, uri.fragment);
 			} else {
 				if (uri.scheme === 'file') {
 					let exists = await this.fileService.exists(uri);
 					if (!exists) {
 						let relPath = relative(this.workbenchFilePath.fsPath, uri.fsPath);
-						let path = resolve(this.notebookUri.fsPath, relPath);
+						let path = resolve(this.resource.fsPath, relPath);
 						try {
 							uri = URI.file(path);
 						} catch (error) {

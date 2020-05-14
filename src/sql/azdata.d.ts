@@ -4547,8 +4547,8 @@ declare module 'azdata' {
 		export interface NotebookProvider {
 			readonly providerId: string;
 			readonly standardKernels: IStandardKernel[];
-			getNotebookManager(notebookUri: vscode.Uri): Thenable<NotebookManager>;
-			handleNotebookClosed(notebookUri: vscode.Uri): void;
+			getNotebookManager(resource: vscode.Uri): Thenable<NotebookManager>;
+			handleNotebookClosed(resource: vscode.Uri): void;
 		}
 
 		export interface NotebookManager {
@@ -4606,19 +4606,19 @@ declare module 'azdata' {
 			/* Reads contents from a Uri representing a local or remote notebook and returns a
 			 * JSON object containing the cells and metadata about the notebook
 			 */
-			getNotebookContents(notebookUri: vscode.Uri): Thenable<INotebookContents>;
+			getNotebookContents(resource: vscode.Uri): Thenable<INotebookContents>;
 
 			/**
 			 * Save a file.
 			 *
-			 * @param notebookUri - The desired file path.
+			 * @param resource - The desired file path.
 			 *
 			 * @param notebook - notebook to be saved.
 			 *
 			 * @returns A thenable which resolves with the file content model when the
 			 *   file is saved.
 			 */
-			save(notebookUri: vscode.Uri, notebook: INotebookContents): Thenable<INotebookContents>;
+			save(resource: vscode.Uri, notebook: INotebookContents): Thenable<INotebookContents>;
 		}
 
 		/**
@@ -5235,7 +5235,7 @@ declare module 'azdata' {
 
 		export interface NavigationProvider {
 			readonly providerId: string;
-			getNavigation(notebookUri: vscode.Uri): Thenable<NavigationResult>;
+			getNavigation(resource: vscode.Uri): Thenable<NavigationResult>;
 		}
 
 		export interface NavigationResult {

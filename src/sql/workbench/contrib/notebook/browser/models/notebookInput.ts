@@ -29,10 +29,10 @@ import { ResourceEditorModel } from 'vs/workbench/common/editor/resourceEditorMo
 import { UntitledTextEditorModel, IUntitledTextEditorModel } from 'vs/workbench/services/untitled/common/untitledTextEditorModel';
 import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
 import { ResourceEditorInput } from 'vs/workbench/common/editor/resourceEditorInput';
-import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
 import { BinaryEditorModel } from 'vs/workbench/common/editor/binaryEditorModel';
 import { NotebookFindModel } from 'sql/workbench/contrib/notebook/browser/find/notebookFindModel';
 import { onUnexpectedError } from 'vs/base/common/errors';
+import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
 
 export type ModeViewSaveHandler = (handle: number) => Thenable<boolean>;
 
@@ -42,7 +42,8 @@ export class NotebookEditorModel extends EditorModel {
 	private _notebookTextFileModel: NotebookTextFileModel;
 	private readonly _onDidChangeDirty: Emitter<void> = this._register(new Emitter<void>());
 	private _lastEditFullReplacement: boolean;
-	constructor(public readonly notebookUri: URI,
+	constructor(
+		public readonly resource: URI,
 		private textEditorModel: ITextFileEditorModel | IUntitledTextEditorModel | ResourceEditorModel,
 		@INotebookService private notebookService: INotebookService,
 		@ITextResourcePropertiesService private textResourcePropertiesService: ITextResourcePropertiesService
@@ -51,7 +52,7 @@ export class NotebookEditorModel extends EditorModel {
 		let _eol = this.textResourcePropertiesService.getEOL(URI.from({ scheme: Schemas.untitled }));
 		this._notebookTextFileModel = new NotebookTextFileModel(_eol);
 		this._register(this.notebookService.onNotebookEditorAdd(notebook => {
-			if (notebook.id === this.notebookUri.toString()) {
+			if (notebook.id === this.resource.toString()) {
 				// Hook to content change events
 				notebook.modelReady.then((model) => {
 					if (!this._changeEventsHookedUp) {
@@ -161,7 +162,7 @@ export class NotebookEditorModel extends EditorModel {
 	private sendNotebookSerializationStateChange(): void {
 		let notebookModel = this.getNotebookModel();
 		if (notebookModel) {
-			this.notebookService.serializeNotebookStateChange(this.notebookUri, NotebookChangeType.Saved)
+			this.notebookService.serializeNotebookStateChange(this.resource, NotebookChangeType.Saved)
 				.catch(e => onUnexpectedError(e));
 		}
 	}
@@ -171,7 +172,7 @@ export class NotebookEditorModel extends EditorModel {
 	}
 
 	public getNotebookModel(): INotebookModel {
-		let editor = this.notebookService.findNotebookEditor(this.notebookUri);
+		let editor = this.notebookService.findNotebookEditor(this.resource);
 		if (editor) {
 			return editor.model;
 		}
@@ -189,7 +190,7 @@ export class NotebookEditorModel extends EditorModel {
 
 type TextInput = ResourceEditorInput | UntitledTextEditorInput | FileEditorInput;
 
-export abstract class NotebookInput extends EditorInput {
+export abstract class NotebookEditorInput extends EditorInput {
 	private _providerId: string;
 	private _providers: string[];
 	private _standardKernels: IStandardKernelWithProvider[];
@@ -210,9 +211,10 @@ export abstract class NotebookInput extends EditorInput {
 
 	private _notebookFindModel: NotebookFindModel;
 
-	constructor(private _title: string,
-		private _resource: URI,
-		private _textInput: TextInput,
+	private _title?: string;
+
+	constructor(
+		private readonly _textInput: TextInput,
 		@ITextModelService private textModelService: ITextModelService,
 		@IInstantiationService private instantiationService: IInstantiationService,
 		@INotebookService private notebookService: INotebookService,
@@ -222,9 +224,7 @@ export abstract class NotebookInput extends EditorInput {
 		this._standardKernels = [];
 		this._providersLoaded = this.assignProviders();
 		this._notebookEditorOpenedTimestamp = Date.now();
-		if (this._textInput) {
-			this.hookDirtyListener(this._textInput.onDidChangeDirty, () => this._onDidChangeDirty.fire());
-		}
+		this.hookDirtyListener(this._textInput.onDidChangeDirty, () => this._onDidChangeDirty.fire());
 	}
 
 	public get textInput(): TextInput {
@@ -233,10 +233,6 @@ export abstract class NotebookInput extends EditorInput {
 
 	public revert(group: GroupIdentifier, options?: IRevertOptions): Promise<void> {
 		return this._textInput.revert(group, options);
-	}
-
-	public get notebookUri(): URI {
-		return this.resource;
 	}
 
 	public get notebookFindModel(): NotebookFindModel {
@@ -339,7 +335,7 @@ export abstract class NotebookInput extends EditorInput {
 	public abstract getTypeId(): string;
 
 	get resource(): URI {
-		return this._resource;
+		return this._textInput.resource;
 	}
 
 	public get untitledEditorModel(): IUntitledTextEditorModel {
@@ -470,7 +466,7 @@ export abstract class NotebookInput extends EditorInput {
 	}
 
 	public matches(otherInput: any): boolean {
-		if (otherInput instanceof NotebookInput) {
+		if (otherInput instanceof NotebookEditorInput) {
 			return this.textInput.matches(otherInput.textInput);
 		} else {
 			return this.textInput.matches(otherInput);
@@ -480,7 +476,7 @@ export abstract class NotebookInput extends EditorInput {
 
 export class NotebookEditorContentManager implements IContentManager {
 	constructor(
-		private notebookInput: NotebookInput,
+		private notebookInput: NotebookEditorInput,
 		@IInstantiationService private readonly instantiationService: IInstantiationService) {
 	}
 

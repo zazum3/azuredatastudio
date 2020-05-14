@@ -32,7 +32,7 @@ import { Dropdown } from 'sql/base/parts/editableDropdown/browser/dropdown';
 import { Task } from 'sql/workbench/services/tasks/browser/tasksRegistry';
 import { IObjectExplorerService } from 'sql/workbench/services/objectExplorer/browser/objectExplorerService';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
-import { IQueryEditorService } from 'sql/workbench/services/queryEditor/common/queryEditorService';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
 import { getCurrentGlobalConnection } from 'sql/workbench/browser/taskUtilities';
 import { ServicesAccessor, IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
@@ -115,7 +115,7 @@ export abstract class QueryTaskbarAction extends Action {
 
 export function openNewQuery(accessor: ServicesAccessor, profile?: IConnectionProfile, initalContent?: string, onConnection?: RunQueryOnConnectionMode): Promise<void> {
 	const editorService = accessor.get(IEditorService);
-	const queryEditorService = accessor.get(IQueryEditorService);
+	const queryEditorService = accessor.get(IADSEditorService);
 	const objectExplorerService = accessor.get(IObjectExplorerService);
 	const connectionManagementService = accessor.get(IConnectionManagementService);
 	if (!profile) {
@@ -171,7 +171,7 @@ CommandsRegistry.registerCommand({
 	id: DE_NEW_QUERY_COMMAND_ID,
 	handler: async (accessor, args: TreeViewItemHandleArg) => {
 		if (args.$treeItem) {
-			const queryEditorService = accessor.get(IQueryEditorService);
+			const queryEditorService = accessor.get(IADSEditorService);
 			const connectionService = accessor.get(IConnectionManagementService);
 			const capabilitiesService = accessor.get(ICapabilitiesService);
 			const owner = await queryEditorService.newSqlEditor();

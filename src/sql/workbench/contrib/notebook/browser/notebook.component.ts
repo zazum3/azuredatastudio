@@ -52,7 +52,7 @@ import { getErrorMessage, onUnexpectedError } from 'vs/base/common/errors';
 import { find, firstIndex } from 'vs/base/common/arrays';
 import { CodeCellComponent } from 'sql/workbench/contrib/notebook/browser/cellViews/codeCell.component';
 import { TextCellComponent } from 'sql/workbench/contrib/notebook/browser/cellViews/textCell.component';
-import { NotebookInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
+import { NotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
 import { IColorTheme } from 'vs/platform/theme/common/themeService';
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import { IAdsTelemetryService } from 'sql/platform/telemetry/common/telemetry';
@@ -245,12 +245,12 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 		} catch (error) {
 			if (error) {
 				// Offer to create a file from the error if we have a file not found and the name is valid
-				if ((<FileOperationError>error).fileOperationResult === FileOperationResult.FILE_NOT_FOUND && isValidBasename(basename(this.notebookParams.notebookUri))) {
+				if ((<FileOperationError>error).fileOperationResult === FileOperationResult.FILE_NOT_FOUND && isValidBasename(basename(this.notebookParams.resource))) {
 					let errorWithAction = createErrorWithActions(toErrorMessage(error), {
 						actions: [
 							new Action('workbench.files.action.createMissingFile', localize('createFile', "Create File"), undefined, true, () => {
-								return this.textFileService.create(this.notebookParams.notebookUri).then(() => this.editorService.openEditor({
-									resource: this.notebookParams.notebookUri,
+								return this.textFileService.create(this.notebookParams.resource).then(() => this.editorService.openEditor({
+									resource: this.notebookParams.resource,
 									options: {
 										pinned: true // new file gets pinned by default
 									}
@@ -262,8 +262,8 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 
 					let editors = this.editorService.visibleEditorPanes;
 					for (let editor of editors) {
-						if (editor && editor.input.resource === this._notebookParams.input.notebookUri) {
-							await editor.group.closeEditor(this._notebookParams.input as NotebookInput, { preserveFocus: true }); // sketchy
+						if (editor && editor.input.resource === this._notebookParams.input.resource) {
+							await editor.group.closeEditor(this._notebookParams.input as NotebookEditorInput, { preserveFocus: true }); // sketchy
 							break;
 						}
 					}
@@ -297,7 +297,7 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 	private async createModelAndLoadContents(): Promise<void> {
 		let model = new NotebookModel({
 			factory: this.modelFactory,
-			notebookUri: this._notebookParams.notebookUri,
+			resource: this._notebookParams.resource,
 			connectionService: this.connectionManagementService,
 			notificationService: this.notificationService,
 			notebookManagers: this.notebookManagers,
@@ -309,7 +309,7 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 			capabilitiesService: this.capabilitiesService,
 			editorLoadedTimestamp: this._notebookParams.input.editorOpenedTimestamp
 		}, this.profile, this.logService, this.notificationService, this.adstelemetryService);
-		let trusted = await this.notebookService.isNotebookTrustCached(this._notebookParams.notebookUri, this.isDirty());
+		let trusted = await this.notebookService.isNotebookTrustCached(this._notebookParams.resource, this.isDirty());
 		this._register(model.onError((errInfo: INotification) => this.handleModelError(errInfo)));
 		this._register(model.contentChanged((change) => this.handleContentChanged(change)));
 		this._register(model.onProviderIdChange((provider) => this.handleProviderIdChanged(provider)));
@@ -324,7 +324,7 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 	private async setNotebookManager(): Promise<void> {
 		let providerInfo = await this._notebookParams.providerInfo;
 		for (let providerId of providerInfo.providers) {
-			let notebookManager = await this.notebookService.getOrCreateNotebookManager(providerId, this._notebookParams.notebookUri);
+			let notebookManager = await this.notebookService.getOrCreateNotebookManager(providerId, this._notebookParams.resource);
 			this.notebookManagers.push(notebookManager);
 		}
 	}
@@ -337,7 +337,7 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 		let providerInfo = await this._notebookParams.providerInfo;
 
 		if (DEFAULT_NOTEBOOK_PROVIDER === providerInfo.providerId) {
-			let providers = notebookUtils.getProvidersForFileName(this._notebookParams.notebookUri.fsPath, this.notebookService);
+			let providers = notebookUtils.getProvidersForFileName(this._notebookParams.resource.fsPath, this.notebookService);
 			let tsqlProvider = find(providers, provider => provider === SQL_NOTEBOOK_PROVIDER);
 			providerInfo.providerId = tsqlProvider ? SQL_NOTEBOOK_PROVIDER : providers[0];
 		}
@@ -436,12 +436,12 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 	}
 
 	protected initNavSection(): void {
-		this._navProvider = this.notebookService.getNavigationProvider(this._notebookParams.notebookUri);
+		this._navProvider = this.notebookService.getNavigationProvider(this._notebookParams.resource);
 
 		if (this.contextKeyService.getContextKeyValue('bookOpened') && this._navProvider) {
 			// If there's a book opened but the current notebook isn't part of the book, this is a no-op
-			this.commandService.executeCommand('notebook.command.revealInBooksViewlet', this._notebookParams.notebookUri, false);
-			this._navProvider.getNavigation(this._notebookParams.notebookUri).then(result => {
+			this.commandService.executeCommand('notebook.command.revealInBooksViewlet', this._notebookParams.resource, false);
+			this._navProvider.getNavigation(this._notebookParams.resource).then(result => {
 				this.navigationResult = result;
 				this.addButton(localize('previousButtonLabel', "< Previous"),
 					() => this.previousPage(), this.navigationResult.previous ? true : false);
@@ -528,7 +528,7 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 	}
 
 	public get id(): string {
-		return this._notebookParams.notebookUri.toString();
+		return this._notebookParams.resource.toString();
 	}
 
 	public get modelReady(): Promise<INotebookModel> {
@@ -628,7 +628,7 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 	public async nextPage(): Promise<void> {
 		try {
 			if (this._navProvider) {
-				this._navProvider.onNext(this.model.notebookUri);
+				this._navProvider.onNext(this.model.resource);
 			}
 		} catch (error) {
 			this.notificationService.error(getErrorMessage(error));
@@ -638,7 +638,7 @@ export class NotebookComponent extends AngularDisposable implements OnInit, OnDe
 	public previousPage() {
 		try {
 			if (this._navProvider) {
-				this._navProvider.onPrevious(this.model.notebookUri);
+				this._navProvider.onPrevious(this.model.resource);
 			}
 		} catch (error) {
 			this.notificationService.error(getErrorMessage(error));

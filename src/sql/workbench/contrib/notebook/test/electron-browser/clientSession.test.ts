@@ -34,7 +34,7 @@ suite('Client Session', function (): void {
 
 		session = new ClientSession({
 			notebookManager: notebookManager,
-			notebookUri: path,
+			resource: path,
 			notificationService: notificationService.object,
 			kernelSpec: { name: 'python', display_name: 'Python 3', language: 'python' }
 		});
@@ -44,7 +44,7 @@ suite('Client Session', function (): void {
 	});
 
 	test('Should set path, isReady and ready on construction', function (): void {
-		assert.equal(session.notebookUri, path);
+		assert.equal(session.resource, path);
 		assert(!isUndefinedOrNull(session.ready));
 		assert(!session.isReady);
 		assert.equal(session.status, 'starting');
@@ -170,7 +170,7 @@ suite('Client Session', function (): void {
 		let remoteSession = new ClientSession({
 			kernelSpec: { name: 'python', display_name: 'Python 3', language: 'python' },
 			notebookManager: newNotebookManager,
-			notebookUri: path,
+			resource: path,
 			notificationService: notificationService.object
 		});
 		await remoteSession.initialize();

@@ -47,12 +47,12 @@ export class LocalContentManager implements nb.ContentManager {
 
 	}
 
-	public async getNotebookContents(notebookUri: URI): Promise<nb.INotebookContents> {
-		if (!notebookUri) {
+	public async getNotebookContents(resource: URI): Promise<nb.INotebookContents> {
+		if (!resource) {
 			return undefined;
 		}
 		// Note: intentionally letting caller handle exceptions
-		let notebookFileBuffer = await this.fileService.readFile(notebookUri);
+		let notebookFileBuffer = await this.fileService.readFile(resource);
 		let stringContents = notebookFileBuffer.value.toString();
 		let contents: JSONObject;
 		if (stringContents === '' || stringContents === undefined) {
@@ -78,10 +78,10 @@ export class LocalContentManager implements nb.ContentManager {
 
 	}
 
-	public async save(notebookUri: URI, notebook: nb.INotebookContents): Promise<nb.INotebookContents> {
+	public async save(resource: URI, notebook: nb.INotebookContents): Promise<nb.INotebookContents> {
 		// Convert to JSON with pretty-print functionality
 		let contents = JSON.stringify(notebook, undefined, '    ');
-		await this.fileService.writeFile(notebookUri, VSBuffer.fromString(contents));
+		await this.fileService.writeFile(resource, VSBuffer.fromString(contents));
 		return notebook;
 	}
 

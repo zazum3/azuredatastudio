@@ -29,7 +29,7 @@ export class ClientSession implements IClientSession {
 	private _iopubMessageEmitter = new Emitter<nb.IMessage>();
 	private _unhandledMessageEmitter = new Emitter<nb.IMessage>();
 	private _propertyChangedEmitter = new Emitter<'path' | 'name' | 'type'>();
-	private _notebookUri: URI;
+	private _resource: URI;
 	private _type: string;
 	private _name: string;
 	private _isReady: boolean;
@@ -50,7 +50,7 @@ export class ClientSession implements IClientSession {
 	private _kernelConfigActions: ((kernelName: string) => Promise<any>)[] = [];
 
 	constructor(private options: IClientSessionOptions) {
-		this._notebookUri = options.notebookUri;
+		this._resource = options.resource;
 		this.notebookManager = options.notebookManager;
 		this._isReady = false;
 		this._ready = new Deferred<void>();
@@ -105,7 +105,7 @@ export class ClientSession implements IClientSession {
 		try {
 			// TODO #3164 should use URI instead of path for startNew
 			session = await this.notebookManager.sessionManager.startNew({
-				path: this.notebookUri.fsPath,
+				path: this.resource.fsPath,
 				kernelName: kernelName
 				// TODO add kernel name if saved in the document
 			});
@@ -115,7 +115,7 @@ export class ClientSession implements IClientSession {
 			if (err && err.response && err.response.status === 501) {
 				this.options.notificationService.warn(localize('kernelRequiresConnection', "Kernel {0} was not found. The default kernel will be used instead.", kernelName));
 				session = await this.notebookManager.sessionManager.startNew({
-					path: this.notebookUri.fsPath,
+					path: this.resource.fsPath,
 					kernelName: undefined
 				});
 				session.defaultKernelLoaded = false;
@@ -175,8 +175,8 @@ export class ClientSession implements IClientSession {
 	public get kernel(): nb.IKernel | null {
 		return this._session ? this._session.kernel : undefined;
 	}
-	public get notebookUri(): URI {
-		return this._notebookUri;
+	public get resource(): URI {
+		return this._resource;
 	}
 	public get name(): string {
 		return this._name;

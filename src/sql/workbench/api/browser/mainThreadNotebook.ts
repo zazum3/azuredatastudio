@@ -87,7 +87,7 @@ interface Proxies {
 }
 
 class NotebookProviderWrapper extends Disposable implements INotebookProvider {
-	private _notebookUriToManagerMap = new Map<string, NotebookManagerWrapper>();
+	private _resourceToManagerMap = new Map<string, NotebookManagerWrapper>();
 
 	constructor(
 		private _proxy: Proxies,
@@ -98,25 +98,25 @@ class NotebookProviderWrapper extends Disposable implements INotebookProvider {
 		super();
 	}
 
-	getNotebookManager(notebookUri: URI): Thenable<INotebookManager> {
+	getNotebookManager(resource: URI): Thenable<INotebookManager> {
 		// TODO must call through to setup in the extension host
-		return this.doGetNotebookManager(notebookUri);
+		return this.doGetNotebookManager(resource);
 	}
 
-	private async doGetNotebookManager(notebookUri: URI): Promise<INotebookManager> {
-		let uriString = notebookUri.toString();
-		let manager = this._notebookUriToManagerMap.get(uriString);
+	private async doGetNotebookManager(resource: URI): Promise<INotebookManager> {
+		let uriString = resource.toString();
+		let manager = this._resourceToManagerMap.get(uriString);
 		if (!manager) {
-			manager = this.instantiationService.createInstance(NotebookManagerWrapper, this._proxy, this.providerId, notebookUri);
+			manager = this.instantiationService.createInstance(NotebookManagerWrapper, this._proxy, this.providerId, resource);
 			await manager.initialize(this.providerHandle);
-			this._notebookUriToManagerMap.set(uriString, manager);
+			this._resourceToManagerMap.set(uriString, manager);
 		}
 		return manager;
 	}
 
-	handleNotebookClosed(notebookUri: URI): void {
-		this._notebookUriToManagerMap.delete(notebookUri.toString());
-		this._proxy.ext.$handleNotebookClosed(notebookUri);
+	handleNotebookClosed(resource: URI): void {
+		this._resourceToManagerMap.delete(resource.toString());
+		this._proxy.ext.$handleNotebookClosed(resource);
 	}
 }
 
@@ -128,12 +128,12 @@ class NotebookManagerWrapper implements INotebookManager {
 
 	constructor(private _proxy: Proxies,
 		public readonly providerId: string,
-		private notebookUri: URI,
+		private resource: URI,
 		@IInstantiationService private readonly instantiationService: IInstantiationService
 	) { }
 
 	public async initialize(providerHandle: number): Promise<NotebookManagerWrapper> {
-		this.managerDetails = await this._proxy.ext.$getNotebookManager(providerHandle, this.notebookUri);
+		this.managerDetails = await this._proxy.ext.$getNotebookManager(providerHandle, this.resource);
 		let managerHandle = this.managerDetails.handle;
 		this._contentManager = this.managerDetails.hasContentManager ? new ContentManagerWrapper(managerHandle, this._proxy) : this.instantiationService.createInstance(LocalContentManager);
 		this._serverManager = this.managerDetails.hasServerManager ? new ServerManagerWrapper(managerHandle, this._proxy) : undefined;
@@ -160,8 +160,8 @@ class ContentManagerWrapper implements azdata.nb.ContentManager {
 
 	constructor(private handle: number, private _proxy: Proxies) {
 	}
-	getNotebookContents(notebookUri: URI): Thenable<azdata.nb.INotebookContents> {
-		return this._proxy.ext.$getNotebookContents(this.handle, notebookUri);
+	getNotebookContents(resource: URI): Thenable<azdata.nb.INotebookContents> {
+		return this._proxy.ext.$getNotebookContents(this.handle, resource);
 	}
 
 	save(path: URI, notebook: azdata.nb.INotebookContents): Thenable<azdata.nb.INotebookContents> {

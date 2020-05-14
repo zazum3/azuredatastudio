@@ -10,8 +10,8 @@ import { localize } from 'vs/nls';
 import { IEditorInputFactoryRegistry, Extensions as EditorInputFactoryExtensions, ActiveEditorContext } from 'vs/workbench/common/editor';
 
 import { ILanguageAssociationRegistry, Extensions as LanguageAssociationExtensions } from 'sql/workbench/services/languageAssociation/common/languageAssociation';
-import { UntitledNotebookInput } from 'sql/workbench/contrib/notebook/browser/models/untitledNotebookInput';
-import { FileNotebookInput } from 'sql/workbench/contrib/notebook/browser/models/fileNotebookInput';
+import { UntitledNotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/untitledNotebookInput';
+import { FileNotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/fileNotebookInput';
 import { FileNoteBookEditorInputFactory, UntitledNoteBookEditorInputFactory, NotebookEditorInputAssociation } from 'sql/workbench/contrib/notebook/browser/models/nodebookInputFactory';
 import { IWorkbenchActionRegistry, Extensions as WorkbenchActionsExtensions } from 'vs/workbench/common/actions';
 import { SyncActionDescriptor, registerAction2, MenuRegistry, MenuId, Action2 } from 'vs/platform/actions/common/actions';
@@ -48,16 +48,16 @@ import { LifecyclePhase } from 'vs/platform/lifecycle/common/lifecycle';
 import { ToggleTabFocusModeAction } from 'vs/editor/contrib/toggleTabFocusMode/toggleTabFocusMode';
 
 Registry.as<IEditorInputFactoryRegistry>(EditorInputFactoryExtensions.EditorInputFactories)
-	.registerEditorInputFactory(FileNotebookInput.ID, FileNoteBookEditorInputFactory);
+	.registerEditorInputFactory(FileNotebookEditorInput.ID, FileNoteBookEditorInputFactory);
 
 Registry.as<IEditorInputFactoryRegistry>(EditorInputFactoryExtensions.EditorInputFactories)
-	.registerEditorInputFactory(UntitledNotebookInput.ID, UntitledNoteBookEditorInputFactory);
+	.registerEditorInputFactory(UntitledNotebookEditorInput.ID, UntitledNoteBookEditorInputFactory);
 
 Registry.as<ILanguageAssociationRegistry>(LanguageAssociationExtensions.LanguageAssociations)
 	.registerLanguageAssociation(NotebookEditorInputAssociation.languages, NotebookEditorInputAssociation);
 
 Registry.as<IEditorRegistry>(EditorExtensions.Editors)
-	.registerEditor(EditorDescriptor.create(NotebookEditor, NotebookEditor.ID, localize('notebookEditor.name', "Notebook Editor")), [new SyncDescriptor(UntitledNotebookInput), new SyncDescriptor(FileNotebookInput)]);
+	.registerEditor(EditorDescriptor.create(NotebookEditor, NotebookEditor.ID, localize('notebookEditor.name', "Notebook Editor")), [new SyncDescriptor(UntitledNotebookEditorInput), new SyncDescriptor(FileNotebookEditorInput)]);
 
 Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench)
 	.registerWorkbenchContribution(NotebookThemingContribution, LifecyclePhase.Restored);

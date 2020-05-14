@@ -84,7 +84,7 @@ suite('Notebook Find Model', function (): void {
 
 		instantiationService = new InstantiationService(serviceCollection, true);
 		defaultModelOptions = {
-			notebookUri: defaultUri,
+			resource: defaultUri,
 			factory: new ModelFactory(instantiationService),
 			notebookManagers,
 			contentManager: undefined,

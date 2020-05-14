@@ -4,35 +4,32 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { QueryEditorInput } from 'sql/workbench/common/editor/query/queryEditorInput';
-import { QueryResultsInput } from 'sql/workbench/common/editor/query/queryResultsInput';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 import { IQueryModelService } from 'sql/workbench/services/query/common/queryModel';
 
-import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { EncodingMode, IMoveResult, GroupIdentifier } from 'vs/workbench/common/editor';
-import { BinaryEditorModel } from 'vs/workbench/common/editor/binaryEditorModel';
-import { ITextFileEditorModel } from 'vs/workbench/services/textfile/common/textfiles';
 import { URI } from 'vs/base/common/uri';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
+import { IEditorModel } from 'vs/platform/editor/common/editor';
+import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
 
-type PublicPart<T> = { [K in keyof T]: T[K] };
-
-export class FileQueryEditorInput extends QueryEditorInput implements PublicPart<FileEditorInput> {
+export class FileQueryEditorInput extends QueryEditorInput {
 
 	public static readonly ID = 'workbench.editorInput.fileQueryInput';
 
 	constructor(
-		description: string,
-		text: FileEditorInput,
-		results: QueryResultsInput,
+		input: FileEditorInput,
+		description: string | undefined,
 		@IConnectionManagementService connectionManagementService: IConnectionManagementService,
 		@IQueryModelService queryModelService: IQueryModelService,
-		@IConfigurationService configurationService: IConfigurationService
+		@IConfigurationService configurationService: IConfigurationService,
+		@IInstantiationService instantiationService: IInstantiationService
 	) {
-		super(description, text, results, connectionManagementService, queryModelService, configurationService);
+		super(input, description, connectionManagementService, queryModelService, configurationService, instantiationService);
 	}
 
-	public resolve(): Promise<ITextFileEditorModel | BinaryEditorModel> {
+	public resolve(): Promise<IEditorModel> {
 		return this.text.resolve();
 	}
 
@@ -52,16 +49,8 @@ export class FileQueryEditorInput extends QueryEditorInput implements PublicPart
 		this.text.setEncoding(encoding, mode);
 	}
 
-	public getPreferredEncoding(): string {
-		return this.text.getPreferredEncoding();
-	}
-
 	public setPreferredEncoding(encoding: string) {
 		this.text.setPreferredEncoding(encoding);
-	}
-
-	public getPreferredMode(): string {
-		return this.text.getPreferredMode();
 	}
 
 	public setMode(mode: string) {
@@ -70,10 +59,6 @@ export class FileQueryEditorInput extends QueryEditorInput implements PublicPart
 
 	public setPreferredMode(mode: string) {
 		this.text.setPreferredMode(mode);
-	}
-
-	public setForceOpenAsText() {
-		this.text.setForceOpenAsText();
 	}
 
 	public setForceOpenAsBinary() {

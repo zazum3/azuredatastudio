@@ -612,7 +612,7 @@
     </trans-unit>
   </body></file>
   <file original="src/sql/workbench/services/notebook/browser/notebookServiceImpl" source-language="en" datatype="plaintext"><body>
-    <trans-unit id="notebookUriNotDefined">
+    <trans-unit id="resourceNotDefined">
       <source xml:lang="en">No URI was passed when creating a notebook manager</source>
     </trans-unit>
     <trans-unit id="notebookServiceNoProvider">

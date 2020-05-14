@@ -24,7 +24,7 @@ import { IModelContentChangedEvent } from 'vs/editor/common/model/textModelEvent
 import type { FutureInternal } from 'sql/workbench/services/notebook/browser/interfaces';
 
 export interface IClientSessionOptions {
-	notebookUri: URI;
+	resource: URI;
 	notebookManager: INotebookManager;
 	notificationService: INotificationService;
 	kernelSpec: nb.IKernelSpec;
@@ -77,7 +77,7 @@ export interface IClientSession extends IDisposable {
 	/**
 	 * The current path associated with the client session.
 	 */
-	readonly notebookUri: URI;
+	readonly resource: URI;
 
 	/**
 	 * The current name associated with the client session.
@@ -467,7 +467,7 @@ export interface INotebookModelOptions {
 	/**
 	 * Path to the local or remote notebook
 	 */
-	notebookUri: URI;
+	resource: URI;
 
 	/**
 	 * Factory for creating cells and client sessions

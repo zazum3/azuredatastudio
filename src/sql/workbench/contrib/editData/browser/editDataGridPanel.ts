@@ -12,7 +12,7 @@ import { IGridDataSet } from 'sql/workbench/contrib/grid/browser/interfaces';
 import * as Services from 'sql/base/browser/ui/table/formatters';
 import { GridParentComponent } from 'sql/workbench/contrib/editData/browser/gridParentComponent';
 import { EditDataGridActionProvider } from 'sql/workbench/contrib/editData/browser/editDataGridActions';
-import { IQueryEditorService } from 'sql/workbench/services/queryEditor/common/queryEditorService';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 import { RowNumberColumn } from 'sql/base/browser/ui/table/plugins/rowNumberColumn.plugin';
 import { AutoColumnSize } from 'sql/base/browser/ui/table/plugins/autoSizeColumns.plugin';
 import { AdditionalKeyBindings } from 'sql/base/browser/ui/table/plugins/additionalKeyBindings.plugin';
@@ -94,7 +94,7 @@ export class EditDataGridPanel extends GridParentComponent {
 		@IContextKeyService protected contextKeyService: IContextKeyService,
 		@IConfigurationService protected configurationService: IConfigurationService,
 		@IClipboardService protected clipboardService: IClipboardService,
-		@IQueryEditorService protected queryEditorService: IQueryEditorService,
+		@IADSEditorService protected queryEditorService: IADSEditorService,
 		@ILogService protected logService: ILogService
 	) {
 		super(contextMenuService, keybindingService, contextKeyService, configurationService, clipboardService, queryEditorService, logService);

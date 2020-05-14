@@ -33,6 +33,7 @@ import { IURITransformerService } from 'vs/workbench/api/common/extHostUriTransf
 import { IExtHostRpcService } from 'vs/workbench/api/common/extHostRpcService';
 import { ILogService } from 'vs/platform/log/common/log';
 import { IExtensionApiFactory as vsIApiFactory, createApiFactoryAndRegisterActors as vsApiFactory } from 'vs/workbench/api/common/extHost.api.impl';
+import { IExtHostApiDeprecationService } from 'vs/workbench/api/common/extHostApiDeprecationService';
 
 export interface IAzdataExtensionApiFactory {
 	(extension: IExtensionDescription): typeof azdata;
@@ -71,6 +72,7 @@ export function createAdsApiFactory(accessor: ServicesAccessor): IAdsExtensionAp
 	const rpcProtocol = accessor.get(IExtHostRpcService);
 	const extHostLogService = accessor.get(ILogService);
 	const logService = accessor.get(ILogService);
+	const extHostApiDeprecation = accessor.get(IExtHostApiDeprecationService);
 
 	// Addressable instances
 	const extHostAccountManagement = rpcProtocol.set(SqlExtHostContext.ExtHostAccountManagement, new ExtHostAccountManagement(rpcProtocol));
@@ -383,6 +385,7 @@ export function createAdsApiFactory(accessor: ServicesAccessor): IAdsExtensionAp
 				registerCapabilitiesServiceProvider,
 				registerSerializationProvider,
 				onDidChangeLanguageFlavor(listener: (e: azdata.DidChangeLanguageFlavorParams) => any, thisArgs?: any, disposables?: extHostTypes.Disposable[]) {
+					extHostApiDeprecation.report('azdata.dataprotocol.onDidChangeLanguageFlavor', extension, `Use language association in connection contribution instead.`);
 					return extHostDataProvider.onDidChangeLanguageFlavor(listener, thisArgs, disposables);
 				},
 				getProvider<T extends azdata.DataProvider>(providerId: string, providerType: azdata.DataProviderType) {

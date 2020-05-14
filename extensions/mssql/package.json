@@ -20,6 +20,11 @@
     "postinstall": "node ./build/postinstall.js"
   },
   "contributes": {
+		"languages": [{
+			"id": "mssql",
+			"extensions": [ ".sql", ".dsql" ],
+			"aliases": [ "MSSQL" ]
+		}],
     "commands": [
       {
         "command": "mssqlCluster.uploadFiles",
@@ -548,6 +553,7 @@
     "connectionProvider": {
       "providerId": "MSSQL",
       "displayName": "%mssql.provider.displayName%",
+      "languageAssocation": "mssql",
       "iconPath": [
         {
           "id": "mssql:cloud",
@@ -1094,7 +1100,7 @@
     "ads-kerberos": "^1.1.3",
     "buffer-stream-reader": "^0.1.1",
     "bytes": "^3.1.0",
-    "dataprotocol-client": "github:Microsoft/sqlops-dataprotocolclient#1.1.0",
+    "dataprotocol-client": "github:microsoft/sqlops-dataprotocolclient#1.1.0",
     "error-ex": "^1.3.2",
     "figures": "^2.0.0",
     "find-remove": "1.2.1",

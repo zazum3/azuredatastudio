@@ -9,7 +9,6 @@ import { TestEditorService } from 'vs/workbench/test/browser/workbenchTestServic
 import { URI } from 'vs/base/common/uri';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { IEditorInput } from 'vs/workbench/common/editor';
-import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
 import { workbenchInstantiationService } from 'sql/workbench/test/workbenchTestServices';
 import { QueryEditorLanguageAssociation } from 'sql/workbench/contrib/query/browser/queryInputFactory';
 import { IObjectExplorerService } from 'sql/workbench/services/objectExplorer/browser/objectExplorerService';
@@ -20,11 +19,9 @@ import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
 import { IConnectionManagementService, IConnectionCompletionOptions, IConnectionCallbacks, IConnectionResult } from 'sql/platform/connection/common/connectionManagement';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { UntitledQueryEditorInput } from 'sql/workbench/common/editor/query/untitledQueryEditorInput';
-import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
 import { IUntitledTextEditorService } from 'vs/workbench/services/untitled/common/untitledTextEditorService';
 import { isThenable } from 'vs/base/common/async';
-import { IQueryEditorService } from 'sql/workbench/services/queryEditor/common/queryEditorService';
-import { QueryResultsInput } from 'sql/workbench/common/editor/query/queryResultsInput';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 
 suite('Query Input Factory', () => {
 
@@ -36,8 +33,7 @@ suite('Query Input Factory', () => {
 		instantiationService.stub(IConnectionManagementService, connectionManagementService);
 		instantiationService.stub(IEditorService, editorService);
 		const queryEditorLanguageAssociation = instantiationService.createInstance(QueryEditorLanguageAssociation);
-		const input = instantiationService.createInstance(FileEditorInput, URI.file('/test/file.sql'), undefined, undefined);
-		queryEditorLanguageAssociation.convertInput(input);
+		queryEditorLanguageAssociation.create(URI.file('/test/file.sql'));
 		assert(connectionManagementService.numberConnects === 1, 'Convert input should have called connect when active OE connection exists');
 	});
 
@@ -49,8 +45,7 @@ suite('Query Input Factory', () => {
 		instantiationService.stub(IConnectionManagementService, connectionManagementService);
 		instantiationService.stub(IEditorService, editorService);
 		const queryEditorLanguageAssociation = instantiationService.createInstance(QueryEditorLanguageAssociation);
-		const input = instantiationService.createInstance(FileEditorInput, URI.file('/test/file.sql'), undefined, undefined);
-		const response = queryEditorLanguageAssociation.convertInput(input);
+		const response = queryEditorLanguageAssociation.create(URI.file('/test/file.sql'));
 		assert(isThenable(response));
 		await response;
 		assert(connectionManagementService.numberConnects === 1, 'Convert input should have called connect when active OE connection exists');
@@ -64,8 +59,7 @@ suite('Query Input Factory', () => {
 		instantiationService.stub(IConnectionManagementService, connectionManagementService);
 		instantiationService.stub(IEditorService, editorService);
 		const queryEditorLanguageAssociation = instantiationService.createInstance(QueryEditorLanguageAssociation);
-		const input = instantiationService.createInstance(FileEditorInput, URI.file('/test/file.sql'), undefined, undefined);
-		queryEditorLanguageAssociation.convertInput(input);
+		queryEditorLanguageAssociation.create(URI.file('/test/file.sql'));
 		assert(connectionManagementService.numberConnects === 1, 'Convert input should have called connect when active editor connection exists');
 	});
 
@@ -77,8 +71,7 @@ suite('Query Input Factory', () => {
 		instantiationService.stub(IConnectionManagementService, connectionManagementService);
 		instantiationService.stub(IEditorService, editorService);
 		const queryEditorLanguageAssociation = instantiationService.createInstance(QueryEditorLanguageAssociation);
-		const input = instantiationService.createInstance(FileEditorInput, URI.file('/test/file.sql'), undefined, undefined);
-		const response = queryEditorLanguageAssociation.convertInput(input);
+		const response = queryEditorLanguageAssociation.create(URI.file('/test/file.sql'));
 		assert(isThenable(response));
 		await response;
 		assert(connectionManagementService.numberConnects === 1, 'Convert input should have called connect when active editor connection exists');
@@ -93,15 +86,12 @@ suite('Query Input Factory', () => {
 		instantiationService.stub(IEditorService, editorService);
 		const queryEditorLanguageAssociation = instantiationService.createInstance(QueryEditorLanguageAssociation);
 		const untitledService = instantiationService.invokeFunction(accessor => accessor.get(IUntitledTextEditorService));
-		const queryeditorservice = instantiationService.invokeFunction(accessor => accessor.get(IQueryEditorService));
+		const queryeditorservice = instantiationService.invokeFunction(accessor => accessor.get(IADSEditorService));
 		const newsqlEditorStub = sinon.stub(queryeditorservice, 'newSqlEditor', () => {
-			const untitledInput = instantiationService.createInstance(UntitledTextEditorInput, untitledService.create());
-			const queryResultsInput: QueryResultsInput = instantiationService.createInstance(QueryResultsInput, untitledInput.resource.toString());
-			let queryInput = instantiationService.createInstance(UntitledQueryEditorInput, '', untitledInput, queryResultsInput);
+			let queryInput = instantiationService.createInstance(UntitledQueryEditorInput, untitledService.create().resource, undefined);
 			return queryInput;
 		});
-		const input = instantiationService.createInstance(UntitledTextEditorInput, untitledService.create());
-		const response = queryEditorLanguageAssociation.convertInput(input);
+		const response = queryEditorLanguageAssociation.create(untitledService.create().resource);
 		assert(isThenable(response));
 		await response;
 		assert(newsqlEditorStub.calledWithExactly({ open: false, initalContent: '' }));
@@ -115,8 +105,7 @@ suite('Query Input Factory', () => {
 		instantiationService.stub(IConnectionManagementService, connectionManagementService);
 		instantiationService.stub(IEditorService, editorService);
 		const queryEditorLanguageAssociation = instantiationService.createInstance(QueryEditorLanguageAssociation);
-		const input = instantiationService.createInstance(FileEditorInput, URI.file('/test/file.sql'), undefined, undefined);
-		queryEditorLanguageAssociation.syncConvertinput(input);
+		queryEditorLanguageAssociation.syncCreate(URI.file('/test/file.sql'));
 		assert(connectionManagementService.numberConnects === 0, 'Convert input should not have been called connect when no global connections exist');
 	});
 
@@ -127,8 +116,7 @@ suite('Query Input Factory', () => {
 		instantiationService.stub(IConnectionManagementService, connectionManagementService);
 		instantiationService.stub(IEditorService, editorService);
 		const queryEditorLanguageAssociation = instantiationService.createInstance(QueryEditorLanguageAssociation);
-		const input = instantiationService.createInstance(FileEditorInput, URI.file('/test/file.sql'), undefined, undefined);
-		const response = queryEditorLanguageAssociation.convertInput(input);
+		const response = queryEditorLanguageAssociation.syncCreate(URI.file('/test/file.sql'));
 		assert(isThenable(response));
 		await response;
 		assert(connectionManagementService.numberConnects === 0, 'Convert input should not have been called connect when no global connections exist');
@@ -136,23 +124,13 @@ suite('Query Input Factory', () => {
 
 });
 
-class ServiceAccessor {
-	constructor(
-		@IUntitledTextEditorService public readonly untitledTextEditorService: IUntitledTextEditorService
-	) { }
-}
-
 class MockEditorService extends TestEditorService {
 	public readonly activeEditor: IEditorInput | undefined = undefined;
 
 	constructor(instantiationService?: IInstantiationService) {
 		super();
 		if (instantiationService) {
-			const workbenchinstantiationService = workbenchInstantiationService();
-			const accessor = workbenchinstantiationService.createInstance(ServiceAccessor);
-			const service = accessor.untitledTextEditorService;
-			const untitledInput = instantiationService.createInstance(UntitledTextEditorInput, service.create({ associatedResource: URI.file('/test/file') }));
-			this.activeEditor = instantiationService.createInstance(UntitledQueryEditorInput, '', untitledInput, undefined);
+			this.activeEditor = instantiationService.createInstance(UntitledQueryEditorInput, URI.file('/test/file'), undefined);
 		}
 	}
 }

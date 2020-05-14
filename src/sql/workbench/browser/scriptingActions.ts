@@ -5,7 +5,7 @@
 
 import { Action } from 'vs/base/common/actions';
 import * as nls from 'vs/nls';
-import { IQueryEditorService } from 'sql/workbench/services/queryEditor/common/queryEditorService';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 import { IScriptingService, ScriptOperation } from 'sql/platform/scripting/common/scriptingService';
 import { BaseActionContext } from 'sql/workbench/browser/actions';
@@ -18,7 +18,7 @@ export class ScriptSelectAction extends Action {
 
 	constructor(
 		id: string, label: string,
-		@IQueryEditorService protected _queryEditorService: IQueryEditorService,
+		@IADSEditorService protected _queryEditorService: IADSEditorService,
 		@IConnectionManagementService protected _connectionManagementService: IConnectionManagementService,
 		@IScriptingService protected _scriptingService: IScriptingService
 	) {
@@ -42,7 +42,7 @@ export class ScriptExecuteAction extends Action {
 
 	constructor(
 		id: string, label: string,
-		@IQueryEditorService protected _queryEditorService: IQueryEditorService,
+		@IADSEditorService protected _queryEditorService: IADSEditorService,
 		@IConnectionManagementService protected _connectionManagementService: IConnectionManagementService,
 		@IScriptingService protected _scriptingService: IScriptingService,
 		@IErrorMessageService protected _errorMessageService: IErrorMessageService
@@ -69,7 +69,7 @@ export class ScriptAlterAction extends Action {
 
 	constructor(
 		id: string, label: string,
-		@IQueryEditorService protected _queryEditorService: IQueryEditorService,
+		@IADSEditorService protected _queryEditorService: IADSEditorService,
 		@IConnectionManagementService protected _connectionManagementService: IConnectionManagementService,
 		@IScriptingService protected _scriptingService: IScriptingService,
 		@IErrorMessageService protected _errorMessageService: IErrorMessageService
@@ -96,7 +96,7 @@ export class EditDataAction extends Action {
 
 	constructor(
 		id: string, label: string,
-		@IQueryEditorService protected _queryEditorService: IQueryEditorService,
+		@IADSEditorService protected _queryEditorService: IADSEditorService,
 		@IConnectionManagementService protected _connectionManagementService: IConnectionManagementService,
 		@IScriptingService protected _scriptingService: IScriptingService
 	) {
@@ -120,7 +120,7 @@ export class ScriptCreateAction extends Action {
 
 	constructor(
 		id: string, label: string,
-		@IQueryEditorService protected _queryEditorService: IQueryEditorService,
+		@IADSEditorService protected _queryEditorService: IADSEditorService,
 		@IConnectionManagementService protected _connectionManagementService: IConnectionManagementService,
 		@IScriptingService protected _scriptingService: IScriptingService,
 		@IErrorMessageService protected _errorMessageService: IErrorMessageService
@@ -147,7 +147,7 @@ export class ScriptDeleteAction extends Action {
 
 	constructor(
 		id: string, label: string,
-		@IQueryEditorService protected _queryEditorService: IQueryEditorService,
+		@IADSEditorService protected _queryEditorService: IADSEditorService,
 		@IConnectionManagementService protected _connectionManagementService: IConnectionManagementService,
 		@IScriptingService protected _scriptingService: IScriptingService,
 		@IErrorMessageService protected _errorMessageService: IErrorMessageService

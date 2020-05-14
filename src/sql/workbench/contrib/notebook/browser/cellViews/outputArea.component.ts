@@ -50,8 +50,8 @@ export class OutputAreaComponent extends AngularDisposable implements OnInit {
 		return this.cellModel.trustedMode;
 	}
 
-	public get notebookUri(): URI {
-		return this.cellModel.notebookModel.notebookUri;
+	public get resource(): URI {
+		return this.cellModel.notebookModel.resource;
 	}
 
 	private setFocusAndScroll(node: HTMLElement): void {

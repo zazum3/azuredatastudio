@@ -3,7 +3,7 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { EditorInput, EditorModel, IEditorInput } from 'vs/workbench/common/editor';
+import { EditorInput, EditorModel } from 'vs/workbench/common/editor';
 import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
 import { IFileService } from 'vs/platform/files/common/files';
 import { URI } from 'vs/base/common/uri';
@@ -16,12 +16,8 @@ export class QueryPlanConverter implements ILanguageAssociation {
 
 	constructor(@IInstantiationService private instantiationService: IInstantiationService) { }
 
-	convertInput(activeEditor: IEditorInput): QueryPlanInput {
-		return this.instantiationService.createInstance(QueryPlanInput, activeEditor.resource);
-	}
-
-	createBase(activeEditor: QueryPlanInput): IEditorInput {
-		return undefined;
+	create(resource: URI): QueryPlanInput {
+		return this.instantiationService.createInstance(QueryPlanInput, resource);
 	}
 }
 

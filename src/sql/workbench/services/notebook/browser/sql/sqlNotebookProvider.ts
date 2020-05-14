@@ -20,11 +20,11 @@ export class SqlNotebookProvider implements INotebookProvider {
 		return SQL_NOTEBOOK_PROVIDER;
 	}
 
-	getNotebookManager(notebookUri: URI): Thenable<INotebookManager> {
+	getNotebookManager(resource: URI): Thenable<INotebookManager> {
 		return Promise.resolve(this.manager);
 	}
 
-	handleNotebookClosed(notebookUri: URI): void {
+	handleNotebookClosed(resource: URI): void {
 		// No-op
 	}
 }

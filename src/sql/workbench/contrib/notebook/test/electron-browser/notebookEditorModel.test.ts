@@ -141,7 +141,7 @@ suite('Notebook Editor Model', function (): void {
 		accessor = instantiationService.createInstance(ServiceAccessor);
 
 		defaultModelOptions = {
-			notebookUri: defaultUri,
+			resource: defaultUri,
 			factory: new ModelFactory(instantiationService),
 			notebookManagers,
 			contentManager: undefined,

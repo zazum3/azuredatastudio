@@ -23,13 +23,13 @@ import { ILanguageAssociationRegistry, Extensions as LanguageAssociationExtensio
 import { QueryEditorLanguageAssociation } from 'sql/workbench/contrib/query/browser/queryInputFactory';
 import { workbenchInstantiationService } from 'sql/workbench/test/workbenchTestServices';
 import { NotebookEditorInputAssociation } from 'sql/workbench/contrib/notebook/browser/models/nodebookInputFactory';
-import { NotebookInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
+import { NotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
 import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
 import { UntitledQueryEditorInput } from 'sql/workbench/common/editor/query/untitledQueryEditorInput';
 import { INotebookService } from 'sql/workbench/services/notebook/browser/notebookService';
 import { NotebookServiceStub } from 'sql/workbench/contrib/notebook/test/stubs';
 import { IUntitledTextEditorService } from 'vs/workbench/services/untitled/common/untitledTextEditorService';
-import { IQueryEditorService } from 'sql/workbench/services/queryEditor/common/queryEditorService';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 import { TestQueryEditorService } from 'sql/workbench/services/queryEditor/test/common/testQueryEditorService';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
@@ -46,7 +46,7 @@ suite('Editor Replacer Contribution', () => {
 		instantiationService.stub(INotebookService, new NotebookServiceStub());
 		const editorService = new MockEditorService(instantiationService);
 		instantiationService.stub(IEditorService, editorService);
-		instantiationService.stub(IQueryEditorService, instantiationService.createInstance(TestQueryEditorService));
+		instantiationService.stub(IADSEditorService, instantiationService.createInstance(TestQueryEditorService));
 		instantiationService.invokeFunction(accessor => {
 			languageAssociations.start(accessor);
 		});
@@ -106,7 +106,7 @@ suite('Editor Replacer Contribution', () => {
 		assert(response?.override);
 		const newinput = <any>(await response.override) as EditorInput; // our test service returns this so we are fine to cast this
 
-		assert(newinput instanceof NotebookInput);
+		assert(newinput instanceof NotebookEditorInput);
 
 		contrib.dispose();
 	});
@@ -121,7 +121,7 @@ suite('Editor Replacer Contribution', () => {
 		assert(response?.override);
 		const newinput = <any>(await response.override) as EditorInput; // our test service returns this so we are fine to cast this
 
-		assert(newinput instanceof NotebookInput);
+		assert(newinput instanceof NotebookEditorInput);
 
 		contrib.dispose();
 	});

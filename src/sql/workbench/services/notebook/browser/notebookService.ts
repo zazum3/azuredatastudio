@@ -56,7 +56,7 @@ export interface INotebookService {
 
 	registerNavigationProvider(provider: INavigationProvider): void;
 
-	getNavigationProvider(notebookUri: URI): INavigationProvider;
+	getNavigationProvider(resource: URI): INavigationProvider;
 
 	getSupportedFileExtensions(): string[];
 
@@ -79,7 +79,7 @@ export interface INotebookService {
 
 	listNotebookEditors(): INotebookEditor[];
 
-	findNotebookEditor(notebookUri: URI): INotebookEditor | undefined;
+	findNotebookEditor(resource: URI): INotebookEditor | undefined;
 
 	getMimeRegistry(): RenderMimeRegistry;
 
@@ -91,40 +91,40 @@ export interface INotebookService {
 	 * is currently dirty in the app, the previous trusted state will be used even
 	 * if it's altered on disk since the version in our UI is based on previously trusted
 	 * content.
-	 * @param notebookUri the URI identifying a notebook
+	 * @param resource the URI identifying a notebook
 	 * @param isDirty is the notebook marked as dirty in by the text model trackers?
 	 */
-	isNotebookTrustCached(notebookUri: URI, isDirty: boolean): Promise<boolean>;
+	isNotebookTrustCached(resource: URI, isDirty: boolean): Promise<boolean>;
 	/**
 	 * Serializes an impactful Notebook state change. This will result
 	 * in trusted state being serialized if needed, and notifications being
 	 * sent to listeners that can act on the point-in-time notebook state
-	 * @param notebookUri The URI identifying a notebook.
+	 * @param resource The URI identifying a notebook.
 	 * @param changeType The type of notebook state change to serialize.
 	 * @param cell (Optional) The notebook cell associated with the state change.
 	 * @param isTrusted (Optional) A manual override for the notebook's trusted state.
 	 */
-	serializeNotebookStateChange(notebookUri: URI, changeType: NotebookChangeType, cell?: ICellModel, isTrusted?: boolean): Promise<void>;
+	serializeNotebookStateChange(resource: URI, changeType: NotebookChangeType, cell?: ICellModel, isTrusted?: boolean): Promise<void>;
 
 	/**
 	 *
-	 * @param notebookUri URI of the notebook to navigate to
+	 * @param resource URI of the notebook to navigate to
 	 * @param sectionId ID of the section to navigate to
 	 */
-	navigateTo(notebookUri: URI, sectionId: string): void;
+	navigateTo(resource: URI, sectionId: string): void;
 
 	/**
 	 * Sets the trusted mode for the sepcified notebook.
-	 * @param notebookUri URI of the notebook to navigate to
+	 * @param resource URI of the notebook to navigate to
 	 * @param isTrusted True if notebook is to be set to trusted, false otherwise.
 	 */
-	setTrusted(notebookUri: URI, isTrusted: boolean): Promise<boolean>;
+	setTrusted(resource: URI, isTrusted: boolean): Promise<boolean>;
 }
 
 export interface INotebookProvider {
 	readonly providerId: string;
-	getNotebookManager(notebookUri: URI): Thenable<INotebookManager>;
-	handleNotebookClosed(notebookUri: URI): void;
+	getNotebookManager(resource: URI): Thenable<INotebookManager>;
+	handleNotebookClosed(resource: URI): void;
 }
 
 export interface INotebookManager {
@@ -140,7 +140,7 @@ export interface IProviderInfo {
 }
 
 export interface INotebookInput {
-	readonly notebookUri: URI;
+	readonly resource: URI;
 	updateModel(): void;
 	isDirty(): boolean;
 	readonly defaultKernel: azdata.nb.IKernelSpec;
@@ -151,7 +151,7 @@ export interface INotebookInput {
 }
 
 export interface INotebookParams extends IBootstrapParams {
-	notebookUri: URI;
+	resource: URI;
 	input: INotebookInput;
 	providerInfo: Promise<IProviderInfo>;
 	profile?: IConnectionProfile;

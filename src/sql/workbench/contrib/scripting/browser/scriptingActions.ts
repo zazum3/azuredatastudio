@@ -9,7 +9,7 @@ import { CommandsRegistry } from 'vs/platform/commands/common/commands';
 import { TreeViewItemHandleArg } from 'sql/workbench/common/views';
 import { ICapabilitiesService } from 'sql/platform/capabilities/common/capabilitiesService';
 import { IOEShimService } from 'sql/workbench/services/objectExplorer/browser/objectExplorerViewTreeShim';
-import { IQueryEditorService } from 'sql/workbench/services/queryEditor/common/queryEditorService';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 import { IProgressService, ProgressLocation } from 'vs/platform/progress/common/progress';
 import { BaseActionContext } from 'sql/workbench/browser/actions';
@@ -42,7 +42,7 @@ CommandsRegistry.registerCommand({
 	handler: async (accessor, args: TreeViewItemHandleArg) => {
 		const capabilitiesService = accessor.get(ICapabilitiesService);
 		const oeShimService = accessor.get(IOEShimService);
-		const queryEditorService = accessor.get(IQueryEditorService);
+		const queryEditorService = accessor.get(IADSEditorService);
 		const connectionManagementService = accessor.get(IConnectionManagementService);
 		const scriptingService = accessor.get(IScriptingService);
 		const errorMessageService = accessor.get(IErrorMessageService);
@@ -64,7 +64,7 @@ CommandsRegistry.registerCommand({
 	handler: async (accessor, args: TreeViewItemHandleArg) => {
 		const capabilitiesService = accessor.get(ICapabilitiesService);
 		const oeShimService = accessor.get(IOEShimService);
-		const queryEditorService = accessor.get(IQueryEditorService);
+		const queryEditorService = accessor.get(IADSEditorService);
 		const connectionManagementService = accessor.get(IConnectionManagementService);
 		const scriptingService = accessor.get(IScriptingService);
 		const errorMessageService = accessor.get(IErrorMessageService);
@@ -86,7 +86,7 @@ CommandsRegistry.registerCommand({
 	handler: async (accessor, args: TreeViewItemHandleArg) => {
 		const capabilitiesService = accessor.get(ICapabilitiesService);
 		const oeShimService = accessor.get(IOEShimService);
-		const queryEditorService = accessor.get(IQueryEditorService);
+		const queryEditorService = accessor.get(IADSEditorService);
 		const connectionManagementService = accessor.get(IConnectionManagementService);
 		const scriptingService = accessor.get(IScriptingService);
 		const progressService = accessor.get(IProgressService);
@@ -107,7 +107,7 @@ CommandsRegistry.registerCommand({
 	handler: async (accessor, args: TreeViewItemHandleArg) => {
 		const capabilitiesService = accessor.get(ICapabilitiesService);
 		const oeShimService = accessor.get(IOEShimService);
-		const queryEditorService = accessor.get(IQueryEditorService);
+		const queryEditorService = accessor.get(IADSEditorService);
 		const connectionManagementService = accessor.get(IConnectionManagementService);
 		const scriptingService = accessor.get(IScriptingService);
 		const progressService = accessor.get(IProgressService);
@@ -129,7 +129,7 @@ CommandsRegistry.registerCommand({
 	handler: async (accessor, args: TreeViewItemHandleArg) => {
 		const capabilitiesService = accessor.get(ICapabilitiesService);
 		const oeShimService = accessor.get(IOEShimService);
-		const queryEditorService = accessor.get(IQueryEditorService);
+		const queryEditorService = accessor.get(IADSEditorService);
 		const connectionManagementService = accessor.get(IConnectionManagementService);
 		const scriptingService = accessor.get(IScriptingService);
 		const progressService = accessor.get(IProgressService);
@@ -151,7 +151,7 @@ CommandsRegistry.registerCommand({
 	handler: async (accessor, args: TreeViewItemHandleArg) => {
 		const capabilitiesService = accessor.get(ICapabilitiesService);
 		const oeShimService = accessor.get(IOEShimService);
-		const queryEditorService = accessor.get(IQueryEditorService);
+		const queryEditorService = accessor.get(IADSEditorService);
 		const connectionManagementService = accessor.get(IConnectionManagementService);
 		const scriptingService = accessor.get(IScriptingService);
 		const progressService = accessor.get(IProgressService);
@@ -336,7 +336,7 @@ export async function handleOeRefreshCommand(accessor: ServicesAccessor, args: O
 export class ExplorerScriptSelectAction extends ScriptSelectAction {
 	constructor(
 		id: string, label: string,
-		@IQueryEditorService queryEditorService: IQueryEditorService,
+		@IADSEditorService queryEditorService: IADSEditorService,
 		@IConnectionManagementService connectionManagementService: IConnectionManagementService,
 		@IScriptingService scriptingService: IScriptingService,
 		@IProgressService private readonly progressService: IProgressService
@@ -352,7 +352,7 @@ export class ExplorerScriptSelectAction extends ScriptSelectAction {
 export class ExplorerScriptCreateAction extends ScriptCreateAction {
 	constructor(
 		id: string, label: string,
-		@IQueryEditorService queryEditorService: IQueryEditorService,
+		@IADSEditorService queryEditorService: IADSEditorService,
 		@IConnectionManagementService connectionManagementService: IConnectionManagementService,
 		@IScriptingService scriptingService: IScriptingService,
 		@IErrorMessageService errorMessageService: IErrorMessageService,
@@ -369,7 +369,7 @@ export class ExplorerScriptCreateAction extends ScriptCreateAction {
 export class ExplorerScriptAlterAction extends ScriptAlterAction {
 	constructor(
 		id: string, label: string,
-		@IQueryEditorService queryEditorService: IQueryEditorService,
+		@IADSEditorService queryEditorService: IADSEditorService,
 		@IConnectionManagementService connectionManagementService: IConnectionManagementService,
 		@IScriptingService scriptingService: IScriptingService,
 		@IErrorMessageService errorMessageService: IErrorMessageService,
@@ -386,7 +386,7 @@ export class ExplorerScriptAlterAction extends ScriptAlterAction {
 export class ExplorerScriptExecuteAction extends ScriptExecuteAction {
 	constructor(
 		id: string, label: string,
-		@IQueryEditorService queryEditorService: IQueryEditorService,
+		@IADSEditorService queryEditorService: IADSEditorService,
 		@IConnectionManagementService connectionManagementService: IConnectionManagementService,
 		@IScriptingService scriptingService: IScriptingService,
 		@IErrorMessageService errorMessageService: IErrorMessageService,

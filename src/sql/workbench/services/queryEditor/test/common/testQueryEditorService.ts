@@ -3,7 +3,7 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IQueryEditorService, INewSqlEditorOptions } from 'sql/workbench/services/queryEditor/common/queryEditorService';
+import { IADSEditorService, INewSqlEditorOptions } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 import { IConnectableInput } from 'sql/platform/connection/common/connectionManagement';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { UntitledQueryEditorInput } from 'sql/workbench/common/editor/query/untitledQueryEditorInput';
@@ -11,7 +11,7 @@ import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/u
 import { QueryResultsInput } from 'sql/workbench/common/editor/query/queryResultsInput';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 
-export class TestQueryEditorService implements IQueryEditorService {
+export class TestQueryEditorService implements IADSEditorService {
 	_serviceBrand: undefined;
 
 	constructor(

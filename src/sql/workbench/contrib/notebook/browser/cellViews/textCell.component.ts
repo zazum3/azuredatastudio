@@ -174,8 +174,8 @@ export class TextCellComponent extends CellView implements OnInit, OnChanges {
 		return this.model.trustedMode;
 	}
 
-	public get notebookUri(): URI {
-		return this.model.notebookUri;
+	public get resource(): URI {
+		return this.model.resource;
 	}
 
 	/**
@@ -196,7 +196,7 @@ export class TextCellComponent extends CellView implements OnInit, OnChanges {
 				this._content = this.cellModel.source;
 			}
 
-			this.markdownRenderer.setNotebookURI(this.cellModel.notebookModel.notebookUri);
+			this.markdownRenderer.setNotebookURI(this.cellModel.notebookModel.resource);
 			this.markdownResult = this.markdownRenderer.render({
 				isTrusted: true,
 				value: Array.isArray(this._content) ? this._content.join('') : this._content

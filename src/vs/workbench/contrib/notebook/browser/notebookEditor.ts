@@ -1108,9 +1108,9 @@ export class NotebookEditor extends BaseEditor implements INotebookEditor {
 			const provider = this.notebookService.getContributedNotebookProviders(this.viewModel!.uri)[0];
 			if (provider) {
 				const viewType = provider.id;
-				const notebookUri = CellUri.parse(cell.uri)?.notebook;
-				if (notebookUri) {
-					return await this.notebookService.executeNotebookCell(viewType, notebookUri, cell.handle, tokenSource.token);
+				const resource = CellUri.parse(cell.uri)?.notebook;
+				if (resource) {
+					return await this.notebookService.executeNotebookCell(viewType, resource, cell.handle, tokenSource.token);
 				}
 			}
 		} finally {

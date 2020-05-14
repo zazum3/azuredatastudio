@@ -64,7 +64,7 @@ export class EditorReplacementContribution implements IWorkbenchContribution {
 			const defaultInputCreator = languageAssociationRegistry.defaultAssociation;
 			if (defaultInputCreator) {
 				editor.setMode(defaultInputCreator[0]);
-				const newInput = defaultInputCreator[1].convertInput(editor);
+				const newInput = defaultInputCreator[1].create(editor.resource);
 				if (newInput) {
 					return { override: isThenable(newInput) ? newInput.then(input => this.editorService.openEditor(input, options, group)) : this.editorService.openEditor(newInput, options, group) };
 				}
@@ -72,7 +72,7 @@ export class EditorReplacementContribution implements IWorkbenchContribution {
 		} else {
 			const inputCreator = languageAssociationRegistry.getAssociationForLanguage(language);
 			if (inputCreator) {
-				const newInput = inputCreator.convertInput(editor);
+				const newInput = inputCreator.create(editor.resource);
 				if (newInput) {
 					return { override: isThenable(newInput) ? newInput.then(input => this.editorService.openEditor(input, options, group)) : this.editorService.openEditor(newInput, options, group) };
 				}

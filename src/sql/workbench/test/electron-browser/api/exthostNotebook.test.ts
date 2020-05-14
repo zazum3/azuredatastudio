@@ -20,7 +20,7 @@ suite('ExtHostNotebook Tests', () => {
 
 	let extHostNotebook: ExtHostNotebook;
 	let mockProxy: TypeMoq.Mock<MainThreadNotebookShape>;
-	let notebookUri: URI;
+	let resource: URI;
 	let notebookProviderMock: TypeMoq.Mock<NotebookProviderStub>;
 	setup(() => {
 		mockProxy = TypeMoq.Mock.ofInstance(<MainThreadNotebookShape>{
@@ -32,7 +32,7 @@ suite('ExtHostNotebook Tests', () => {
 			getProxy: proxyType => mockProxy.object
 		};
 		extHostNotebook = new ExtHostNotebook(mainContext);
-		notebookUri = URI.parse('file:/user/default/my.ipynb');
+		resource = URI.parse('file:/user/default/my.ipynb');
 		notebookProviderMock = TypeMoq.Mock.ofType(NotebookProviderStub, TypeMoq.MockBehavior.Loose);
 		notebookProviderMock.callBase = true;
 	});
@@ -40,7 +40,7 @@ suite('ExtHostNotebook Tests', () => {
 	suite('getNotebookManager', () => {
 		test('Should throw if no matching provider is defined', async () => {
 			try {
-				await extHostNotebook.$getNotebookManager(-1, notebookUri);
+				await extHostNotebook.$getNotebookManager(-1, resource);
 				assert.fail('expected to throw');
 			} catch (e) { }
 		});
@@ -65,7 +65,7 @@ suite('ExtHostNotebook Tests', () => {
 				notebookProviderMock.setup(p => p.getNotebookManager(TypeMoq.It.isAny())).returns(() => Promise.resolve(expectedManager));
 
 				// When I call through using the handle provided during registration
-				let managerDetails: INotebookManagerDetails = await extHostNotebook.$getNotebookManager(providerHandle, notebookUri);
+				let managerDetails: INotebookManagerDetails = await extHostNotebook.$getNotebookManager(providerHandle, resource);
 
 				// Then I expect the same manager to be returned
 				assert.ok(managerDetails.hasContentManager === false, 'Expect no content manager defined');
@@ -79,9 +79,9 @@ suite('ExtHostNotebook Tests', () => {
 				notebookProviderMock.setup(p => p.getNotebookManager(TypeMoq.It.isAny())).returns(() => Promise.resolve(expectedManager));
 
 				// When I call through using the handle provided during registration
-				let originalManagerDetails = await extHostNotebook.$getNotebookManager(providerHandle, notebookUri);
+				let originalManagerDetails = await extHostNotebook.$getNotebookManager(providerHandle, resource);
 				let differentDetails = await extHostNotebook.$getNotebookManager(providerHandle, URI.parse('file://other/file.ipynb'));
-				let sameDetails = await extHostNotebook.$getNotebookManager(providerHandle, notebookUri);
+				let sameDetails = await extHostNotebook.$getNotebookManager(providerHandle, resource);
 
 				// Then I expect the 2 different handles in the managers returned.
 				// This is because we can't easily track identity of the managers, so just track which one is assigned to
@@ -126,10 +126,10 @@ class NotebookProviderStub implements azdata.nb.NotebookProvider {
 	providerId: string = 'TestProvider';
 	standardKernels: azdata.nb.IStandardKernel[] = [{ name: 'fakeKernel', displayName: 'fakeKernel', connectionProviderIds: [mssqlProviderName] }];
 
-	getNotebookManager(notebookUri: vscode.Uri): Thenable<azdata.nb.NotebookManager> {
+	getNotebookManager(resource: vscode.Uri): Thenable<azdata.nb.NotebookManager> {
 		throw new Error('Method not implemented.');
 	}
-	handleNotebookClosed(notebookUri: vscode.Uri): void {
+	handleNotebookClosed(resource: vscode.Uri): void {
 		throw new Error('Method not implemented.');
 	}
 }

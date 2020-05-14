@@ -877,7 +877,7 @@
   </file>
   <file original="src/sql/workbench/services/notebook/browser/notebookServiceImpl" source-language="en" datatype="plaintext" target-language="ko">
     <body>
-      <trans-unit id="notebookUriNotDefined">
+      <trans-unit id="resourceNotDefined">
         <source xml:lang="en">No URI was passed when creating a notebook manager</source>
         <target state="translated">Notebook 관리자를 만들 때 URI가 전달되지 않았습니다.</target>
       </trans-unit>
@@ -2695,7 +2695,7 @@
       <trans-unit id="insightsDidNotFindResolvedFile">
         <source xml:lang="en">Could not find query file at any of the following paths :
  {0}</source>
-        <target state="translated">다음 경로에서 쿼리 파일을 찾을 수 없습니다. 
+        <target state="translated">다음 경로에서 쿼리 파일을 찾을 수 없습니다.
  {0}</target>
       </trans-unit>
     </body>

@@ -17,6 +17,8 @@ import { IQueryModelService } from 'sql/workbench/services/query/common/queryMod
 import { ExecutionPlanOptions } from 'azdata';
 import { startsWith } from 'vs/base/common/strings';
 import { IRange } from 'vs/editor/common/core/range';
+import { isEqual } from 'vs/base/common/resources';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 const MAX_SIZE = 13;
 
@@ -117,17 +119,20 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 	private _state = this._register(new QueryEditorState());
 	public get state(): QueryEditorState { return this._state; }
 
+	protected _results: QueryResultsInput;
+
 	constructor(
-		private _description: string,
-		protected _text: TextResourceEditorInput,
-		protected _results: QueryResultsInput,
+		protected readonly _text: TextResourceEditorInput,
+		private readonly description: string | undefined,
 		@IConnectionManagementService private readonly connectionManagementService: IConnectionManagementService,
 		@IQueryModelService private readonly queryModelService: IQueryModelService,
-		@IConfigurationService private readonly configurationService: IConfigurationService
+		@IConfigurationService private readonly configurationService: IConfigurationService,
+		@IInstantiationService instantiationService: IInstantiationService
 	) {
 		super();
 
-		this._register(this._text);
+		this._results = instantiationService.createInstance(QueryResultsInput, this.uri);
+
 		this._register(this._results);
 
 		this._text.onDidChangeDirty(() => this._onDidChangeDirty.fire());
@@ -167,11 +172,11 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 	}
 
 	// Getters for private properties
-	public get uri(): string { return this.resource!.toString(true); }
+	public get uri(): string { return this.resource.toString(true); }
 	public get text(): TextResourceEditorInput { return this._text; }
 	public get results(): QueryResultsInput { return this._results; }
 	// Description is shown beside the tab name in the combobox of open editors
-	public getDescription(): string { return this._description; }
+	public getDescription(): string | undefined { return this.description; }
 	public supportsSplitEditor(): boolean { return false; }
 	public revert(group: GroupIdentifier, options?: IRevertOptions): Promise<void> {
 		return this._text.revert(group, options);
@@ -181,13 +186,9 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 		return false;
 	}
 
-	public matches(otherInput: any): boolean {
-		// we want to be able to match against our underlying input as well, bascially we are our underlying input
-		if (otherInput instanceof QueryEditorInput) {
-			return this._text.matches(otherInput._text);
-		} else {
-			return this._text.matches(otherInput);
-		}
+	public matches(other: any): boolean {
+		return this === other || (other instanceof QueryEditorInput
+			&& isEqual(this.resource, other.resource));
 	}
 
 	// Forwarding resource functions to the inline sql file editor
@@ -198,8 +199,8 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 		if (this.configurationService.getValue('sql.showConnectionInfoInTitle')) {
 			let profile = this.connectionManagementService.getConnectionProfile(this.uri);
 			let title = '';
-			if (this._description && this._description !== '') {
-				title = this._description + ' ';
+			if (this.description && this.description !== '') {
+				title = this.description + ' ';
 			}
 			if (profile) {
 				if (profile.userName) {

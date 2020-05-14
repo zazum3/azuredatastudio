@@ -61,8 +61,8 @@ export class MarkdownOutputComponent extends AngularDisposable implements IMimeC
 		return this._bundleOptions && this._bundleOptions.trusted;
 	}
 
-	public get notebookUri(): URI {
-		return this.cellModel.notebookModel.notebookUri;
+	public get resource(): URI {
+		return this.cellModel.notebookModel.resource;
 	}
 
 	ngOnInit() {
@@ -82,7 +82,7 @@ export class MarkdownOutputComponent extends AngularDisposable implements IMimeC
 		if (trustedChanged || !this._initialized) {
 			this._lastTrustedMode = this.isTrusted;
 			let content = this._bundleOptions.data['text/markdown'];
-			this._markdownRenderer.setNotebookURI(this.cellModel.notebookModel.notebookUri);
+			this._markdownRenderer.setNotebookURI(this.cellModel.notebookModel.resource);
 			let markdownResult = this._markdownRenderer.render({
 				isTrusted: this.cellModel.trustedMode,
 				value: content.toString()

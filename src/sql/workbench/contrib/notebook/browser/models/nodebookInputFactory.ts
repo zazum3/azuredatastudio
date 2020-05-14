@@ -3,52 +3,46 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IEditorInputFactory, IEditorInputFactoryRegistry, Extensions as EditorInputExtensions, IEditorInput } from 'vs/workbench/common/editor';
+import { IEditorInputFactory, IEditorInputFactoryRegistry, Extensions as EditorInputExtensions } from 'vs/workbench/common/editor';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 import { FILE_EDITOR_INPUT_ID } from 'vs/workbench/contrib/files/common/files';
-import { FileNotebookInput } from 'sql/workbench/contrib/notebook/browser/models/fileNotebookInput';
-import { UntitledNotebookInput } from 'sql/workbench/contrib/notebook/browser/models/untitledNotebookInput';
+import { FileNotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/fileNotebookInput';
+import { UntitledNotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/untitledNotebookInput';
 import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
 import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
 import { ILanguageAssociation } from 'sql/workbench/services/languageAssociation/common/languageAssociation';
-import { NotebookInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
+import { NotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
+import { URI } from 'vs/base/common/uri';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 
 const editorInputFactoryRegistry = Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories);
 
 export class NotebookEditorInputAssociation implements ILanguageAssociation {
 	static readonly languages = ['notebook', 'ipynb'];
 
-	constructor(@IInstantiationService private readonly instantiationService: IInstantiationService) { }
+	constructor(
+		@IADSEditorService private readonly editorService: IADSEditorService,
+	) { }
 
-	convertInput(activeEditor: IEditorInput): NotebookInput {
-		if (activeEditor instanceof FileEditorInput) {
-			return this.instantiationService.createInstance(FileNotebookInput, activeEditor.getName(), activeEditor.resource, activeEditor);
-		} else if (activeEditor instanceof UntitledTextEditorInput) {
-			return this.instantiationService.createInstance(UntitledNotebookInput, activeEditor.getName(), activeEditor.resource, activeEditor);
-		} else {
-			return undefined;
-		}
-	}
-
-	createBase(activeEditor: NotebookInput): IEditorInput {
-		return activeEditor.textInput;
+	create(resource: URI): NotebookEditorInput {
+		return this.editorService.createNotebookEditorInput({ resource }) as NotebookEditorInput;
 	}
 }
 
 export class FileNoteBookEditorInputFactory implements IEditorInputFactory {
-	serialize(editorInput: FileNotebookInput): string {
+	serialize(editorInput: FileNotebookEditorInput): string {
 		const factory = editorInputFactoryRegistry.getEditorInputFactory(FILE_EDITOR_INPUT_ID);
 		if (factory) {
-			return factory.serialize(editorInput.textInput); // serialize based on the underlying input
+			return factory.serialize(editorInput.textInput as FileEditorInput); // serialize based on the underlying input
 		}
 		return undefined;
 	}
 
-	deserialize(instantiationService: IInstantiationService, serializedEditorInput: string): FileNotebookInput | undefined {
+	deserialize(instantiationService: IInstantiationService, serializedEditorInput: string): FileNotebookEditorInput | undefined {
 		const factory = editorInputFactoryRegistry.getEditorInputFactory(FILE_EDITOR_INPUT_ID);
 		const fileEditorInput = factory.deserialize(instantiationService, serializedEditorInput) as FileEditorInput;
-		return instantiationService.createInstance(FileNotebookInput, fileEditorInput.getName(), fileEditorInput.resource, fileEditorInput);
+		return instantiationService.createInstance(FileNotebookEditorInput, fileEditorInput);
 	}
 
 	canSerialize(): boolean { // we can always serialize notebooks
@@ -57,7 +51,7 @@ export class FileNoteBookEditorInputFactory implements IEditorInputFactory {
 }
 
 export class UntitledNoteBookEditorInputFactory implements IEditorInputFactory {
-	serialize(editorInput: UntitledNotebookInput): string {
+	serialize(editorInput: UntitledNotebookEditorInput): string {
 		const factory = editorInputFactoryRegistry.getEditorInputFactory(UntitledTextEditorInput.ID);
 		if (factory) {
 			return factory.serialize(editorInput.textInput); // serialize based on the underlying input
@@ -65,10 +59,10 @@ export class UntitledNoteBookEditorInputFactory implements IEditorInputFactory {
 		return undefined;
 	}
 
-	deserialize(instantiationService: IInstantiationService, serializedEditorInput: string): UntitledNotebookInput | undefined {
+	deserialize(instantiationService: IInstantiationService, serializedEditorInput: string): UntitledNotebookEditorInput | undefined {
 		const factory = editorInputFactoryRegistry.getEditorInputFactory(UntitledTextEditorInput.ID);
 		const untitledEditorInput = factory.deserialize(instantiationService, serializedEditorInput) as UntitledTextEditorInput;
-		return instantiationService.createInstance(UntitledNotebookInput, untitledEditorInput.getName(), untitledEditorInput.resource, untitledEditorInput);
+		return instantiationService.createInstance(UntitledNotebookEditorInput, untitledEditorInput);
 	}
 
 	canSerialize(): boolean { // we can always serialize notebooks

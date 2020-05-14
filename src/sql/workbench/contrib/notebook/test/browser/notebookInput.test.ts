@@ -9,8 +9,8 @@ import { nb } from 'azdata';
 import { workbenchInstantiationService } from 'vs/workbench/test/browser/workbenchTestServices';
 import { Schemas } from 'vs/base/common/network';
 import { URI } from 'vs/base/common/uri';
-import { UntitledNotebookInput } from 'sql/workbench/contrib/notebook/browser/models/untitledNotebookInput';
-import { FileNotebookInput } from 'sql/workbench/contrib/notebook/browser/models/fileNotebookInput';
+import { UntitledNotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/untitledNotebookInput';
+import { FileNotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/fileNotebookInput';
 import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
 import { UntitledTextEditorModel } from 'vs/workbench/services/untitled/common/untitledTextEditorModel';
 import { NodeStub, NotebookServiceStub } from 'sql/workbench/contrib/notebook/test/stubs';
@@ -45,31 +45,31 @@ suite('Notebook Input', function (): void {
 	(instantiationService as TestInstantiationService).stub(INotebookService, mockNotebookService.object);
 
 	let untitledTextInput: UntitledTextEditorInput;
-	let untitledNotebookInput: UntitledNotebookInput;
+	let untitledNotebookInput: UntitledNotebookEditorInput;
 
 	setup(() => {
 		const accessor = instantiationService.createInstance(ServiceAccessor);
 		const service = accessor.untitledTextEditorService;
 		untitledTextInput = instantiationService.createInstance(UntitledTextEditorInput, service.create({ associatedResource: untitledUri }));
-		untitledNotebookInput = new UntitledNotebookInput(
+		untitledNotebookInput = new UntitledNotebookEditorInput(
 			testTitle, untitledUri, untitledTextInput,
 			undefined, instantiationService, mockNotebookService.object, mockExtensionService.object);
 	});
 
 	test('File Notebook Input', async function (): Promise<void> {
 		let fileUri = URI.from({ scheme: Schemas.file, path: 'TestPath' });
-		let fileNotebookInput = new FileNotebookInput(
+		let fileNotebookInput = new FileNotebookEditorInput(
 			testTitle, fileUri, undefined,
 			undefined, instantiationService, mockNotebookService.object, mockExtensionService.object);
 
 		let inputId = fileNotebookInput.getTypeId();
-		assert.strictEqual(inputId, FileNotebookInput.ID);
+		assert.strictEqual(inputId, FileNotebookEditorInput.ID);
 		assert.strictEqual(fileNotebookInput.isUntitled(), false, 'File Input should not be untitled');
 	});
 
 	test('Untitled Notebook Input', async function (): Promise<void> {
 		let inputId = untitledNotebookInput.getTypeId();
-		assert.strictEqual(inputId, UntitledNotebookInput.ID);
+		assert.strictEqual(inputId, UntitledNotebookEditorInput.ID);
 		assert.ok(untitledNotebookInput.isUntitled(), 'Untitled Input should be untitled');
 	});
 
@@ -77,14 +77,14 @@ suite('Notebook Input', function (): void {
 		// Input title
 		assert.strictEqual(untitledNotebookInput.getTitle(), testTitle);
 
-		let noTitleInput = instantiationService.createInstance(UntitledNotebookInput, undefined, untitledUri, undefined);
+		let noTitleInput = instantiationService.createInstance(UntitledNotebookEditorInput, untitledUri);
 		assert.strictEqual(noTitleInput.getTitle(), basenameOrAuthority(untitledUri));
 
 		// Text Input
 		assert.strictEqual(untitledNotebookInput.textInput, untitledTextInput);
 
 		// Notebook URI
-		assert.deepStrictEqual(untitledNotebookInput.notebookUri, untitledUri);
+		assert.deepStrictEqual(untitledNotebookInput.resource, untitledUri);
 
 		// Content Manager
 		assert.notStrictEqual(untitledNotebookInput.editorOpenedTimestamp, undefined);
@@ -174,7 +174,7 @@ suite('Notebook Input', function (): void {
 		const accessor = instantiationService.createInstance(ServiceAccessor);
 		const service = accessor.untitledTextEditorService;
 		let otherTextInput = instantiationService.createInstance(UntitledTextEditorInput, service.create({ associatedResource: otherTestUri }));
-		let otherInput = instantiationService.createInstance(UntitledNotebookInput, 'OtherTestInput', otherTestUri, otherTextInput);
+		let otherInput = instantiationService.createInstance(UntitledNotebookEditorInput, 'OtherTestInput', otherTestUri, otherTextInput);
 
 		assert.strictEqual(untitledNotebookInput.matches(otherInput), false, 'Input should not match different input.');
 	});

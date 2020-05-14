@@ -36,11 +36,11 @@ export class SqlNotebookManager implements nb.NotebookProvider {
 		return this._sessionManager;
 	}
 
-	getNotebookManager(notebookUri: vscode.Uri): Thenable<nb.NotebookManager> {
+	getNotebookManager(resource: vscode.Uri): Thenable<nb.NotebookManager> {
 		throw new Error('Method not implemented.');
 	}
 
-	handleNotebookClosed(notebookUri: vscode.Uri): void {
+	handleNotebookClosed(resource: vscode.Uri): void {
 		throw new Error('Method not implemented.');
 	}
 

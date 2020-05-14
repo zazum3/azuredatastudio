@@ -877,7 +877,7 @@
   </file>
   <file original="src/sql/workbench/services/notebook/browser/notebookServiceImpl" source-language="en" datatype="plaintext" target-language="pt-BR">
     <body>
-      <trans-unit id="notebookUriNotDefined">
+      <trans-unit id="resourceNotDefined">
         <source xml:lang="en">No URI was passed when creating a notebook manager</source>
         <target state="translated">Nenhum URI foi passado ao criar um gerenciador de notebooks</target>
       </trans-unit>

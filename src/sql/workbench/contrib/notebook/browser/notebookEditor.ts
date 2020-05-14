@@ -11,7 +11,7 @@ import { bootstrapAngular } from 'sql/workbench/services/bootstrap/browser/boots
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 import { CancellationToken } from 'vs/base/common/cancellation';
-import { NotebookInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
+import { NotebookEditorInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
 import { NotebookModule } from 'sql/workbench/contrib/notebook/browser/notebook.module';
 import { NOTEBOOK_SELECTOR } from 'sql/workbench/contrib/notebook/browser/notebook.component';
 import { INotebookParams, INotebookService, NotebookRange } from 'sql/workbench/services/notebook/browser/notebookService';
@@ -75,8 +75,8 @@ export class NotebookEditor extends BaseEditor implements IFindNotebookControlle
 		this._toDispose.dispose();
 	}
 
-	public get notebookInput(): NotebookInput {
-		return this.input as NotebookInput;
+	public get notebookInput(): NotebookEditorInput {
+		return this.input as NotebookEditorInput;
 	}
 
 	private get _findDecorations(): NotebookFindDecorations {
@@ -91,7 +91,7 @@ export class NotebookEditor extends BaseEditor implements IFindNotebookControlle
 		return this._previousMatch;
 	}
 	public getCellEditor(cellGuid: string): BaseTextEditor | undefined {
-		let editorImpl = this._notebookService.findNotebookEditor(this.notebookInput.notebookUri);
+		let editorImpl = this._notebookService.findNotebookEditor(this.notebookInput.resource);
 		if (editorImpl) {
 			let cellEditorProvider = editorImpl.cellEditors.filter(c => c.cellGuid() === cellGuid)[0];
 			if (cellEditorProvider) {
@@ -104,7 +104,7 @@ export class NotebookEditor extends BaseEditor implements IFindNotebookControlle
 	// updateDecorations is only used for modifying decorations on markdown cells
 	// changeDecorations is the function that handles the decorations w.r.t codeEditor cells.
 	public updateDecorations(newDecorationRange: NotebookRange, oldDecorationRange: NotebookRange): void {
-		let editorImpl = this._notebookService.findNotebookEditor(this.notebookInput.notebookUri);
+		let editorImpl = this._notebookService.findNotebookEditor(this.notebookInput.resource);
 		if (editorImpl) {
 			editorImpl.deltaDecorations(newDecorationRange, oldDecorationRange);
 		}
@@ -185,7 +185,7 @@ export class NotebookEditor extends BaseEditor implements IFindNotebookControlle
 		}
 	}
 
-	public async setInput(input: NotebookInput, options: EditorOptions): Promise<void> {
+	public async setInput(input: NotebookEditorInput, options: EditorOptions): Promise<void> {
 		if (this.input && this.input.matches(input)) {
 			return Promise.resolve(undefined);
 		}
@@ -221,11 +221,11 @@ export class NotebookEditor extends BaseEditor implements IFindNotebookControlle
 	/**
 	 * Load the angular components and record for this input that we have done so
 	 */
-	private bootstrapAngular(input: NotebookInput): void {
+	private bootstrapAngular(input: NotebookEditorInput): void {
 		// Get the bootstrap params and perform the bootstrap
 		input.hasBootstrapped = true;
 		let params: INotebookParams = {
-			notebookUri: input.notebookUri,
+			resource: input.resource,
 			input: input,
 			providerInfo: input.getProviderInfo(),
 			profile: input.connectionProfile

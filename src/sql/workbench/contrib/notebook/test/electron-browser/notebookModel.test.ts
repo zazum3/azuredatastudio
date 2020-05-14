@@ -106,7 +106,7 @@ suite('notebook model', function (): void {
 		let serviceCollection = new ServiceCollection();
 		instantiationService = new InstantiationService(serviceCollection, true);
 		defaultModelOptions = {
-			notebookUri: defaultUri,
+			resource: defaultUri,
 			factory: new ModelFactory(instantiationService),
 			notebookManagers,
 			contentManager: undefined,
@@ -120,7 +120,7 @@ suite('notebook model', function (): void {
 		};
 		clientSessionOptions = {
 			notebookManager: defaultModelOptions.notebookManagers[0],
-			notebookUri: defaultModelOptions.notebookUri,
+			resource: defaultModelOptions.resource,
 			notificationService: notificationService.object,
 			kernelSpec: defaultModelOptions.defaultKernel
 		};
@@ -253,7 +253,7 @@ suite('notebook model', function (): void {
 		// Check other properties to ensure that they're returning as expected
 		// No server manager was passed into the notebook manager stub, so expect hasServerManager to return false
 		assert.equal(model.hasServerManager, false, 'Notebook model should not have a server manager');
-		assert.equal(model.notebookUri, defaultModelOptions.notebookUri, 'Notebook model has incorrect URI');
+		assert.equal(model.resource, defaultModelOptions.resource, 'Notebook model has incorrect URI');
 	});
 
 	test('Should set active cell correctly', async function (): Promise<void> {
@@ -542,4 +542,3 @@ suite('notebook model', function (): void {
 		await model.changeContext(connection.connectionName, connection);
 	}
 });
-

@@ -24,7 +24,7 @@ suite('MainThreadNotebook Tests', () => {
 
 	let mainThreadNotebook: MainThreadNotebook;
 	let mockProxy: TypeMoq.Mock<ExtHostNotebookShape>;
-	let notebookUri: URI;
+	let resource: URI;
 	let mockNotebookService: TypeMoq.Mock<NotebookService>;
 	let providerId = 'TestProvider';
 
@@ -36,7 +36,7 @@ suite('MainThreadNotebook Tests', () => {
 		const instantiationService = new TestInstantiationService();
 		mockNotebookService = TypeMoq.Mock.ofType(NotebookService, undefined, new TestLifecycleService(), undefined, undefined, undefined, instantiationService, new MockContextKeyService(),
 			undefined, undefined, undefined, undefined, undefined, undefined, TestEnvironmentService);
-		notebookUri = URI.parse('file:/user/default/my.ipynb');
+		resource = URI.parse('file:/user/default/my.ipynb');
 		mainThreadNotebook = new MainThreadNotebook(extContext, mockNotebookService.object, instantiationService);
 	});
 
@@ -92,11 +92,11 @@ suite('MainThreadNotebook Tests', () => {
 				hasContentManager: false,
 				hasServerManager: false
 			};
-			mockProxy.setup(p => p.$getNotebookManager(TypeMoq.It.isAnyNumber(), TypeMoq.It.isValue(notebookUri)))
+			mockProxy.setup(p => p.$getNotebookManager(TypeMoq.It.isAnyNumber(), TypeMoq.It.isValue(resource)))
 				.returns(() => Promise.resolve(details));
 
 			// When I get the notebook manager
-			let manager = await provider.getNotebookManager(notebookUri);
+			let manager = await provider.getNotebookManager(resource);
 
 			// Then it should use the built-in content manager
 			assert.ok(manager.contentManager instanceof LocalContentManager);
@@ -106,11 +106,11 @@ suite('MainThreadNotebook Tests', () => {
 
 		test('should return manager with a content & server manager if extension host has these', async () => {
 			// Given the extension provider doesn't have acontent or server manager
-			mockProxy.setup(p => p.$getNotebookManager(TypeMoq.It.isAnyNumber(), TypeMoq.It.isValue(notebookUri)))
+			mockProxy.setup(p => p.$getNotebookManager(TypeMoq.It.isAnyNumber(), TypeMoq.It.isValue(resource)))
 				.returns(() => Promise.resolve(managerWithAllFeatures));
 
 			// When I get the notebook manager
-			let manager = await provider.getNotebookManager(notebookUri);
+			let manager = await provider.getNotebookManager(resource);
 
 			// Then it shouldn't have wrappers for the content or server manager
 			assert.ok(!(manager.contentManager instanceof LocalContentManager));
@@ -121,10 +121,10 @@ suite('MainThreadNotebook Tests', () => {
 });
 
 class ExtHostNotebookStub implements ExtHostNotebookShape {
-	$getNotebookManager(providerHandle: number, notebookUri: UriComponents): Thenable<INotebookManagerDetails> {
+	$getNotebookManager(providerHandle: number, resource: UriComponents): Thenable<INotebookManagerDetails> {
 		throw new Error('Method not implemented.');
 	}
-	$handleNotebookClosed(notebookUri: UriComponents): void {
+	$handleNotebookClosed(resource: UriComponents): void {
 		throw new Error('Method not implemented.');
 	}
 	$doStartServer(managerHandle: number): Thenable<void> {
@@ -133,10 +133,10 @@ class ExtHostNotebookStub implements ExtHostNotebookShape {
 	$doStopServer(managerHandle: number): Thenable<void> {
 		throw new Error('Method not implemented.');
 	}
-	$getNotebookContents(managerHandle: number, notebookUri: UriComponents): Thenable<azdata.nb.INotebookContents> {
+	$getNotebookContents(managerHandle: number, resource: UriComponents): Thenable<azdata.nb.INotebookContents> {
 		throw new Error('Method not implemented.');
 	}
-	$save(managerHandle: number, notebookUri: UriComponents, notebook: azdata.nb.INotebookContents): Thenable<azdata.nb.INotebookContents> {
+	$save(managerHandle: number, resource: UriComponents, notebook: azdata.nb.INotebookContents): Thenable<azdata.nb.INotebookContents> {
 		throw new Error('Method not implemented.');
 	}
 	$refreshSpecs(managerHandle: number): Thenable<azdata.nb.IAllKernels> {

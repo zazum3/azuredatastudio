@@ -28,7 +28,7 @@ suite('NotebookConcatDocument', function () {
 	let extHostDocumentsAndEditors: ExtHostDocumentsAndEditors;
 	let extHostDocuments: ExtHostDocuments;
 	let extHostNotebooks: ExtHostNotebookController;
-	const notebookUri = URI.parse('test:///notebook.file');
+	const resource = URI.parse('test:///notebook.file');
 	const disposables = new DisposableStore();
 
 	setup(async function () {
@@ -51,23 +51,23 @@ suite('NotebookConcatDocument', function () {
 		await extHostNotebooks.$acceptDocumentAndEditorsDelta({
 			addedDocuments: [{
 				handle: 0,
-				uri: notebookUri,
+				uri: resource,
 				viewType: 'test'
 			}]
 		});
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: 0,
 			changes: [[0, 0, [{
 				handle: 0,
-				uri: CellUri.generate(notebookUri, 0),
+				uri: CellUri.generate(resource, 0),
 				source: ['### Heading'],
 				language: 'markdown',
 				cellKind: CellKind.Markdown,
 				outputs: [],
 			}]]]
 		});
-		await extHostNotebooks.$acceptDocumentAndEditorsDelta({ newActiveEditor: notebookUri });
+		await extHostNotebooks.$acceptDocumentAndEditorsDelta({ newActiveEditor: resource });
 
 		notebook = extHostNotebooks.activeNotebookDocument!;
 
@@ -109,7 +109,7 @@ suite('NotebookConcatDocument', function () {
 
 	test('location, position mapping', function () {
 
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: notebook.versionId + 1,
 			changes: [[0, 0, [{
@@ -148,7 +148,7 @@ suite('NotebookConcatDocument', function () {
 		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook, undefined);
 
 		// UPDATE 1
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: notebook.versionId + 1,
 			changes: [[0, 0, [{
@@ -170,7 +170,7 @@ suite('NotebookConcatDocument', function () {
 
 
 		// UPDATE 2
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: notebook.versionId + 1,
 			changes: [[1, 0, [{
@@ -193,7 +193,7 @@ suite('NotebookConcatDocument', function () {
 		assertLocation(doc, new Position(5, 12), new Location(notebook.cells[1].uri, new Position(2, 11)), false); // don't check identity because position will be clamped
 
 		// UPDATE 3 (remove cell #2 again)
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: notebook.versionId + 1,
 			changes: [[1, 1, []]]
@@ -211,7 +211,7 @@ suite('NotebookConcatDocument', function () {
 		let doc = new ExtHostNotebookConcatDocument(extHostNotebooks, extHostDocuments, notebook, undefined);
 
 		// UPDATE 1
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: notebook.versionId + 1,
 			changes: [[0, 0, [{
@@ -274,7 +274,7 @@ suite('NotebookConcatDocument', function () {
 
 	test('selector', function () {
 
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: notebook.versionId + 1,
 			changes: [[0, 0, [{
@@ -302,7 +302,7 @@ suite('NotebookConcatDocument', function () {
 		assertLines(fooLangDoc, 'fooLang-document');
 		assertLines(barLangDoc, 'barLang-document');
 
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: notebook.versionId + 1,
 			changes: [[2, 0, [{
@@ -335,7 +335,7 @@ suite('NotebookConcatDocument', function () {
 
 	test('offsetAt(position) <-> positionAt(offset)', function () {
 
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: notebook.versionId + 1,
 			changes: [[0, 0, [{
@@ -386,7 +386,7 @@ suite('NotebookConcatDocument', function () {
 
 	test('locationAt(position) <-> positionAt(location)', function () {
 
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: notebook.versionId + 1,
 			changes: [[0, 0, [{
@@ -421,7 +421,7 @@ suite('NotebookConcatDocument', function () {
 
 	test('getText(range)', function () {
 
-		extHostNotebooks.$acceptModelChanged(notebookUri, {
+		extHostNotebooks.$acceptModelChanged(resource, {
 			kind: NotebookCellsChangeType.ModelChange,
 			versionId: notebook.versionId + 1,
 			changes: [[0, 0, [{

@@ -5,7 +5,7 @@
 
 import * as azdata from 'azdata';
 import { TaskNode, TaskStatus, TaskExecutionMode } from 'sql/workbench/services/tasks/common/tasksNode';
-import { IQueryEditorService } from 'sql/workbench/services/queryEditor/common/queryEditorService';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
 import { createDecorator } from 'vs/platform/instantiation/common/instantiation';
 import { Event, Emitter } from 'vs/base/common/event';
 import { ILifecycleService } from 'vs/platform/lifecycle/common/lifecycle';
@@ -54,7 +54,7 @@ export class TaskService implements ITaskService {
 	constructor(
 		@ILifecycleService lifecycleService: ILifecycleService,
 		@IDialogService private dialogService: IDialogService,
-		@IQueryEditorService private queryEditorService: IQueryEditorService,
+		@IADSEditorService private queryEditorService: IADSEditorService,
 		@IConnectionManagementService private connectionManagementService: IConnectionManagementService
 	) {
 		this._taskQueue = new TaskNode('Root');

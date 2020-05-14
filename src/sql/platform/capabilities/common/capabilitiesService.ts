@@ -23,6 +23,7 @@ export interface ConnectionProviderProperties {
 	displayName: string;
 	azureResource?: string;
 	connectionOptions: azdata.ConnectionOption[];
+	languageAssociation?: string;
 }
 
 export interface ProviderFeatures {

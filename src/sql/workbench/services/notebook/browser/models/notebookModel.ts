@@ -91,7 +91,7 @@ export class NotebookModel extends Disposable implements INotebookModel {
 		@IAdsTelemetryService private readonly adstelemetryService: IAdsTelemetryService
 	) {
 		super();
-		if (!_notebookOptions || !_notebookOptions.notebookUri || !_notebookOptions.notebookManagers) {
+		if (!_notebookOptions || !_notebookOptions.resource || !_notebookOptions.notebookManagers) {
 			throw new Error('path or notebook service not defined');
 		}
 		this._trustedMode = false;
@@ -132,11 +132,11 @@ export class NotebookModel extends Disposable implements INotebookModel {
 		return this._notebookOptions;
 	}
 
-	public get notebookUri(): URI {
-		return this._notebookOptions.notebookUri;
+	public get resource(): URI {
+		return this._notebookOptions.resource;
 	}
-	public set notebookUri(value: URI) {
-		this._notebookOptions.notebookUri = value;
+	public set resource(value: URI) {
+		this._notebookOptions.resource = value;
 	}
 
 	public get hasServerManager(): boolean {
@@ -470,7 +470,7 @@ export class NotebookModel extends Disposable implements INotebookModel {
 		}
 		if (this._defaultKernel) {
 			let clientSession = this._notebookOptions.factory.createClientSession({
-				notebookUri: this._notebookOptions.notebookUri,
+				resource: this._notebookOptions.resource,
 				notebookManager: manager,
 				notificationService: this._notebookOptions.notificationService,
 				kernelSpec: this._defaultKernel

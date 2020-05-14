@@ -20,8 +20,8 @@ export function doHandleUpgrade(editor?: EditorInput): EditorInput | undefined {
 			editor.getPreferredMode();
 		}
 		const association = languageRegistry.getAssociationForLanguage(language);
-		if (association && association.syncConvertinput) {
-			return association.syncConvertinput(editor);
+		if (association && association.syncCreate) {
+			return association.syncCreate(editor.resource) as EditorInput;
 		}
 	}
 	return editor;

@@ -208,7 +208,7 @@ export class NotebookServiceStub implements INotebookService {
 	get languageMagics(): ILanguageMagic[] {
 		throw new Error('Method not implemented.');
 	}
-	setTrusted(notebookUri: URI, isTrusted: boolean): Promise<boolean> {
+	setTrusted(resource: URI, isTrusted: boolean): Promise<boolean> {
 		throw new Error('Method not implemented.');
 	}
 	registerProvider(providerId: string, provider: INotebookProvider): void {
@@ -220,7 +220,7 @@ export class NotebookServiceStub implements INotebookService {
 	registerNavigationProvider(provider: INavigationProvider): void {
 		throw new Error('Method not implemented.');
 	}
-	getNavigationProvider(notebookUri: URI): INavigationProvider {
+	getNavigationProvider(resource: URI): INavigationProvider {
 		throw new Error('Method not implemented.');
 	}
 	getSupportedFileExtensions(): string[] {
@@ -244,7 +244,7 @@ export class NotebookServiceStub implements INotebookService {
 	listNotebookEditors(): INotebookEditor[] {
 		throw new Error('Method not implemented.');
 	}
-	findNotebookEditor(notebookUri: URI): INotebookEditor {
+	findNotebookEditor(resource: URI): INotebookEditor {
 		throw new Error('Method not implemented.');
 	}
 	getMimeRegistry(): RenderMimeRegistry {
@@ -253,13 +253,13 @@ export class NotebookServiceStub implements INotebookService {
 	renameNotebookEditor(oldUri: URI, newUri: URI, currentEditor: INotebookEditor): void {
 		throw new Error('Method not implemented.');
 	}
-	isNotebookTrustCached(notebookUri: URI, isDirty: boolean): Promise<boolean> {
+	isNotebookTrustCached(resource: URI, isDirty: boolean): Promise<boolean> {
 		throw new Error('Method not implemented.');
 	}
-	serializeNotebookStateChange(notebookUri: URI, changeType: NotebookChangeType, cell?: ICellModel, isTrusted?: boolean): Promise<void> {
+	serializeNotebookStateChange(resource: URI, changeType: NotebookChangeType, cell?: ICellModel, isTrusted?: boolean): Promise<void> {
 		throw new Error('Method not implemented.');
 	}
-	navigateTo(notebookUri: URI, sectionId: string): void {
+	navigateTo(resource: URI, sectionId: string): void {
 		throw new Error('Method not implemented.');
 	}
 }
@@ -322,7 +322,7 @@ export class ClientSessionStub implements IClientSession {
 	get kernel(): nb.IKernel | null {
 		throw new Error('Method not implemented.');
 	}
-	get notebookUri(): URI {
+	get resource(): URI {
 		throw new Error('Method not implemented.');
 	}
 	get name(): string {

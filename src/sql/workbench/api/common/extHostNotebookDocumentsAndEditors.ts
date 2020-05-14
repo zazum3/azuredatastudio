@@ -174,10 +174,10 @@ export class ExtHostNotebookDocumentsAndEditors implements ExtHostNotebookDocume
 		return adapter;
 	}
 
-	$getNavigation(handle: number, notebookUri: UriComponents): Thenable<azdata.nb.NavigationResult> {
+	$getNavigation(handle: number, resource: UriComponents): Thenable<azdata.nb.NavigationResult> {
 		let navProvider = this._getAdapter<azdata.nb.NavigationProvider>(handle);
 		if (navProvider) {
-			let uri = URI.revive(notebookUri);
+			let uri = URI.revive(resource);
 			return navProvider.getNavigation(uri);
 		}
 		throw new Error('No navigation provider found for handle ${handle}');

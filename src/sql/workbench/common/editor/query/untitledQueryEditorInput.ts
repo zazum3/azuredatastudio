@@ -4,7 +4,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { QueryEditorInput } from 'sql/workbench/common/editor/query/queryEditorInput';
-import { QueryResultsInput } from 'sql/workbench/common/editor/query/queryResultsInput';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 import { IQueryModelService } from 'sql/workbench/services/query/common/queryModel';
 
@@ -13,20 +12,22 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 import { IResolvedTextEditorModel } from 'vs/editor/common/services/resolverService';
 import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
 import { IUntitledTextEditorModel } from 'vs/workbench/services/untitled/common/untitledTextEditorModel';
+import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
 
 export class UntitledQueryEditorInput extends QueryEditorInput implements IEncodingSupport {
 
 	public static readonly ID = 'workbench.editorInput.untitledQueryInput';
 
 	constructor(
-		description: string,
-		text: UntitledTextEditorInput,
-		results: QueryResultsInput,
+		untitledInput: UntitledTextEditorInput,
+		description: string | undefined,
 		@IConnectionManagementService connectionManagementService: IConnectionManagementService,
 		@IQueryModelService queryModelService: IQueryModelService,
-		@IConfigurationService configurationService: IConfigurationService
+		@IConfigurationService configurationService: IConfigurationService,
+		@IInstantiationService instantiationService: IInstantiationService
+
 	) {
-		super(description, text, results, connectionManagementService, queryModelService, configurationService);
+		super(untitledInput, description, connectionManagementService, queryModelService, configurationService, instantiationService);
 	}
 
 	public resolve(): Promise<IUntitledTextEditorModel & IResolvedTextEditorModel> {

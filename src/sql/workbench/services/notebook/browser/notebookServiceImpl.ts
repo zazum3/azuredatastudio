@@ -290,7 +290,7 @@ export class NotebookService extends Disposable implements INotebookService {
 
 	async getOrCreateNotebookManager(providerId: string, uri: URI): Promise<INotebookManager> {
 		if (!uri) {
-			throw new Error(localize('notebookUriNotDefined', "No URI was passed when creating a notebook manager"));
+			throw new Error(localize('resourceNotDefined', "No URI was passed when creating a notebook manager"));
 		}
 		let uriString = uri.toString();
 		let managers: INotebookManager[] = this._managersMap.get(uriString);
@@ -342,11 +342,11 @@ export class NotebookService extends Disposable implements INotebookService {
 		return editors;
 	}
 
-	findNotebookEditor(notebookUri: URI): INotebookEditor | undefined {
-		if (!notebookUri) {
+	findNotebookEditor(resource: URI): INotebookEditor | undefined {
+		if (!resource) {
 			return undefined;
 		}
-		let uriString = notebookUri.toString();
+		let uriString = resource.toString();
 		let editor = find(this.listNotebookEditors(), n => n.id === uriString);
 		return editor;
 	}
@@ -355,7 +355,7 @@ export class NotebookService extends Disposable implements INotebookService {
 		let oldUriKey = oldUri.toString();
 		if (this._editors.has(oldUriKey)) {
 			this._editors.delete(oldUriKey);
-			currentEditor.notebookParams.notebookUri = newUri;
+			currentEditor.notebookParams.resource = newUri;
 			this._editors.set(newUri.toString(), currentEditor);
 			this._onNotebookEditorRename.fire(currentEditor);
 		}
@@ -368,15 +368,15 @@ export class NotebookService extends Disposable implements INotebookService {
 	// PRIVATE HELPERS /////////////////////////////////////////////////////
 
 	private sendNotebookCloseToProvider(editor: INotebookEditor): void {
-		let notebookUri = editor.notebookParams.notebookUri;
-		let uriString = notebookUri.toString();
+		let resource = editor.notebookParams.resource;
+		let uriString = resource.toString();
 		let manager = this._managersMap.get(uriString);
 		if (manager) {
 			// As we have a manager, we can assume provider is ready
 			this._managersMap.delete(uriString);
 			manager.forEach(m => {
 				let provider = this._providers.get(m.providerId);
-				provider.instance.handleNotebookClosed(notebookUri);
+				provider.instance.handleNotebookClosed(resource);
 			});
 		}
 	}
@@ -485,12 +485,12 @@ export class NotebookService extends Disposable implements INotebookService {
 		}).catch(err => onUnexpectedError(err));
 	}
 
-	async isNotebookTrustCached(notebookUri: URI, isDirty: boolean): Promise<boolean> {
-		if (notebookUri.scheme === Schemas.untitled) {
+	async isNotebookTrustCached(resource: URI, isDirty: boolean): Promise<boolean> {
+		if (resource.scheme === Schemas.untitled) {
 			return true;
 		}
 
-		let cacheInfo = this.trustedNotebooksMemento.trustedNotebooksCache[notebookUri.toString()];
+		let cacheInfo = this.trustedNotebooksMemento.trustedNotebooksCache[resource.toString()];
 		if (!cacheInfo) {
 			// This notebook was never trusted
 			return false;
@@ -499,7 +499,7 @@ export class NotebookService extends Disposable implements INotebookService {
 		// then should verify it's not been modified on disk since that invalidates trust relationship
 		if (!isDirty) {
 			// Check mtime against mtime on disk
-			let actualMtime: number = await this.getModifiedTimeForFile(notebookUri);
+			let actualMtime: number = await this.getModifiedTimeForFile(resource);
 			if (actualMtime > cacheInfo.mtime) {
 				// Modified since last use, so can't guarantee trust.
 				return false;
@@ -508,9 +508,9 @@ export class NotebookService extends Disposable implements INotebookService {
 		return true;
 	}
 
-	private async getModifiedTimeForFile(notebookUri: URI): Promise<number> {
+	private async getModifiedTimeForFile(resource: URI): Promise<number> {
 		try {
-			let fstat: IFileStatWithMetadata = await this._fileService.resolve(notebookUri, {
+			let fstat: IFileStatWithMetadata = await this._fileService.resolve(resource, {
 				resolveMetadata: true
 			});
 			return fstat ? fstat.mtime : 0;
@@ -519,29 +519,29 @@ export class NotebookService extends Disposable implements INotebookService {
 		}
 	}
 
-	async serializeNotebookStateChange(notebookUri: URI, changeType: NotebookChangeType, cell?: ICellModel, isTrusted?: boolean): Promise<void> {
-		if (notebookUri.scheme !== Schemas.untitled) {
+	async serializeNotebookStateChange(resource: URI, changeType: NotebookChangeType, cell?: ICellModel, isTrusted?: boolean): Promise<void> {
+		if (resource.scheme !== Schemas.untitled) {
 			// Conditions for saving:
 			// 1. Not untitled. They're always trusted as we open them
 			// 2. Serialization action was a save, since don't need to update on execution etc.
 			// 3. Not already saving (e.g. isn't in the queue to be cached)
 			// 4. Notebook is trusted. Don't need to save state of untrusted notebooks
-			let notebookUriString = notebookUri.toString();
-			if (changeType === NotebookChangeType.Saved && firstIndex(this._trustedCacheQueue, uri => uri.toString() === notebookUriString) < 0) {
+			let resourceString = resource.toString();
+			if (changeType === NotebookChangeType.Saved && firstIndex(this._trustedCacheQueue, uri => uri.toString() === resourceString) < 0) {
 				if (isTrusted) {
-					this._trustedCacheQueue.push(notebookUri);
+					this._trustedCacheQueue.push(resource);
 					await this.updateTrustedCache();
 				} else if (isTrusted === false) {
-					this._unTrustedCacheQueue.push(notebookUri);
+					this._unTrustedCacheQueue.push(resource);
 					await this.updateTrustedCache();
 				} else {
 					// Only save as trusted if the associated notebook model is trusted
-					let notebook = find(this.listNotebookEditors(), n => n.id === notebookUriString);
+					let notebook = find(this.listNotebookEditors(), n => n.id === resourceString);
 					if (notebook && notebook.model) {
 						if (notebook.model.trustedMode) {
-							this._trustedCacheQueue.push(notebookUri);
+							this._trustedCacheQueue.push(resource);
 						} else {
-							this._unTrustedCacheQueue.push(notebookUri);
+							this._unTrustedCacheQueue.push(resource);
 						}
 						await this.updateTrustedCache();
 					}
@@ -549,7 +549,7 @@ export class NotebookService extends Disposable implements INotebookService {
 			}
 		}
 
-		let editor = this.findNotebookEditor(notebookUri);
+		let editor = this.findNotebookEditor(resource);
 		if (editor && editor.model) {
 			editor.model.serializationStateChanged(changeType, cell);
 			// TODO add history notification if a non-untitled notebook has a state change
@@ -600,8 +600,8 @@ export class NotebookService extends Disposable implements INotebookService {
 		}
 	}
 
-	navigateTo(notebookUri: URI, sectionId: string): void {
-		let editor = this._editors.get(notebookUri.toString());
+	navigateTo(resource: URI, sectionId: string): void {
+		let editor = this._editors.get(resource.toString());
 		if (editor) {
 			editor.navigateToSection(sectionId);
 		}
@@ -609,17 +609,17 @@ export class NotebookService extends Disposable implements INotebookService {
 
 	/**
 	 * Trusts a notebook with the specified URI.
-	 * @param notebookUri The notebook URI to set the trusted mode for.
+	 * @param resource The notebook URI to set the trusted mode for.
 	 * @param isTrusted True if the notebook is to be trusted, false otherwise.
 	 */
-	async setTrusted(notebookUri: URI, isTrusted: boolean): Promise<boolean> {
-		let editor = this.findNotebookEditor(notebookUri);
+	async setTrusted(resource: URI, isTrusted: boolean): Promise<boolean> {
+		let editor = this.findNotebookEditor(resource);
 
 		if (editor && editor.model) {
 			if (isTrusted) {
-				this._trustedCacheQueue.push(notebookUri);
+				this._trustedCacheQueue.push(resource);
 			} else {
-				this._unTrustedCacheQueue.push(notebookUri);
+				this._unTrustedCacheQueue.push(resource);
 			}
 			await this.updateTrustedCache();
 			editor.model.trustedMode = isTrusted;

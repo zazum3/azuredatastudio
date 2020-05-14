@@ -6,7 +6,6 @@
 import { IEditorInputFactory, IEditorInputFactoryRegistry, Extensions as EditorInputExtensions, IEditorInput } from 'vs/workbench/common/editor';
 import { Registry } from 'vs/platform/registry/common/platform';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { QueryResultsInput } from 'sql/workbench/common/editor/query/queryResultsInput';
 import { FILE_EDITOR_INPUT_ID } from 'vs/workbench/contrib/files/common/files';
 import { UntitledQueryEditorInput } from 'sql/workbench/common/editor/query/untitledQueryEditorInput';
 import { FileQueryEditorInput } from 'sql/workbench/contrib/query/common/fileQueryEditorInput';
@@ -21,7 +20,10 @@ import { IEditorService } from 'vs/workbench/services/editor/common/editorServic
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { IFileService } from 'vs/platform/files/common/files';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
-import { IQueryEditorService } from 'sql/workbench/services/queryEditor/common/queryEditorService';
+import { IADSEditorService } from 'sql/workbench/services/queryEditor/common/adsEditorService';
+import { URI } from 'vs/base/common/uri';
+import { Schemas } from 'vs/base/common/network';
+// import { IUntitledTextEditorService } from 'vs/workbench/services/untitled/common/untitledTextEditorService';
 
 const editorInputFactoryRegistry = Registry.as<IEditorInputFactoryRegistry>(EditorInputExtensions.EditorInputFactories);
 
@@ -29,22 +31,25 @@ export class QueryEditorLanguageAssociation implements ILanguageAssociation {
 	static readonly isDefault = true;
 	static readonly languages = ['sql'];
 
-	constructor(@IInstantiationService private readonly instantiationService: IInstantiationService,
+	constructor(
 		@IObjectExplorerService private readonly objectExplorerService: IObjectExplorerService,
 		@IConnectionManagementService private readonly connectionManagementService: IConnectionManagementService,
+		@IADSEditorService private readonly queryEditorService: IADSEditorService,
 		@IEditorService private readonly editorService: IEditorService,
-		@IQueryEditorService private readonly queryEditorService: IQueryEditorService) { }
+		// @IUntitledTextEditorService private readonly untitledTextEditorService: IUntitledTextEditorService
+	) { }
 
-	async convertInput(activeEditor: IEditorInput): Promise<QueryEditorInput | undefined> {
-		const queryResultsInput = this.instantiationService.createInstance(QueryResultsInput, activeEditor.resource.toString(true));
+	async create(resource: URI): Promise<QueryEditorInput | undefined> {
 		let queryEditorInput: QueryEditorInput;
-		if (activeEditor instanceof FileEditorInput) {
-			queryEditorInput = this.instantiationService.createInstance(FileQueryEditorInput, '', activeEditor, queryResultsInput);
-		} else if (activeEditor instanceof UntitledTextEditorInput) {
-			const content = (await activeEditor.resolve()).textEditorModel.getValue();
-			queryEditorInput = await this.queryEditorService.newSqlEditor({ open: false, initalContent: content }) as UntitledQueryEditorInput;
+		if (resource.scheme === Schemas.untitled) {
+			let contents: string | undefined;
+			// const existing = this.untitledTextEditorService.get(resource);
+			// if (existing && existing.isResolved) {
+			// 	contents = existing.textEditorModel.getValue();
+			// }
+			queryEditorInput = this.queryEditorService.createQueryEditorInput({ contents, resource }) as UntitledQueryEditorInput;
 		} else {
-			return undefined;
+			queryEditorInput = this.queryEditorService.createQueryEditorInput({ resource }) as FileQueryEditorInput;
 		}
 
 		const profile = getCurrentGlobalConnection(this.objectExplorerService, this.connectionManagementService, this.editorService);
@@ -62,15 +67,17 @@ export class QueryEditorLanguageAssociation implements ILanguageAssociation {
 		return queryEditorInput;
 	}
 
-	syncConvertinput(activeEditor: IEditorInput): QueryEditorInput | undefined {
-		const queryResultsInput = this.instantiationService.createInstance(QueryResultsInput, activeEditor.resource.toString(true));
+	syncCreate(resource: URI): QueryEditorInput | undefined {
 		let queryEditorInput: QueryEditorInput;
-		if (activeEditor instanceof FileEditorInput) {
-			queryEditorInput = this.instantiationService.createInstance(FileQueryEditorInput, '', activeEditor, queryResultsInput);
-		} else if (activeEditor instanceof UntitledTextEditorInput) {
-			queryEditorInput = this.instantiationService.createInstance(UntitledQueryEditorInput, '', activeEditor, queryResultsInput);
+		if (resource.scheme === Schemas.untitled) {
+			let contents: string | undefined;
+			// const existing = this.untitledTextEditorService.get(resource);
+			// if (existing && existing.isResolved) {
+			// 	contents = existing.textEditorModel.getValue();
+			// }
+			queryEditorInput = this.queryEditorService.createQueryEditorInput({ contents, resource }) as UntitledQueryEditorInput;
 		} else {
-			return undefined;
+			queryEditorInput = this.queryEditorService.createQueryEditorInput({ resource }) as FileQueryEditorInput;
 		}
 
 		const profile = getCurrentGlobalConnection(this.objectExplorerService, this.connectionManagementService, this.editorService);
@@ -111,8 +118,7 @@ export class FileQueryEditorInputFactory implements IEditorInputFactory {
 		const fileEditorInput = factory.deserialize(instantiationService, serializedEditorInput) as FileEditorInput;
 		// only successfully deserilize the file if the resource actually exists
 		if (this.fileService.exists(fileEditorInput.resource)) {
-			const queryResultsInput = instantiationService.createInstance(QueryResultsInput, fileEditorInput.resource.toString());
-			return instantiationService.createInstance(FileQueryEditorInput, '', fileEditorInput, queryResultsInput);
+			return instantiationService.createInstance(FileQueryEditorInput, fileEditorInput, undefined);
 		} else {
 			fileEditorInput.dispose();
 			return undefined;
@@ -139,8 +145,7 @@ export class UntitledQueryEditorInputFactory implements IEditorInputFactory {
 	deserialize(instantiationService: IInstantiationService, serializedEditorInput: string): UntitledQueryEditorInput | undefined {
 		const factory = editorInputFactoryRegistry.getEditorInputFactory(UntitledTextEditorInput.ID);
 		const untitledEditorInput = factory.deserialize(instantiationService, serializedEditorInput) as UntitledTextEditorInput;
-		const queryResultsInput = instantiationService.createInstance(QueryResultsInput, untitledEditorInput.resource.toString());
-		return instantiationService.createInstance(UntitledQueryEditorInput, '', untitledEditorInput, queryResultsInput);
+		return instantiationService.createInstance(UntitledQueryEditorInput, untitledEditorInput, undefined);
 	}
 
 	canSerialize(): boolean { // we can always serialize query inputs

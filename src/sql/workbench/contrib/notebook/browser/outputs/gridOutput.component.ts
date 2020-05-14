@@ -138,7 +138,7 @@ class DataResourceTable extends GridTableBase<any> {
 		@IConfigurationService configurationService: IConfigurationService
 	) {
 		super(state, createResultSet(source), contextMenuService, instantiationService, editorService, untitledEditorService, configurationService);
-		this._gridDataProvider = this.instantiationService.createInstance(DataResourceDataProvider, source, this.resultSet, this.cellModel.notebookModel.notebookUri.toString());
+		this._gridDataProvider = this.instantiationService.createInstance(DataResourceDataProvider, source, this.resultSet, this.cellModel.notebookModel.resource.toString());
 		this._chart = this.instantiationService.createInstance(ChartView, false);
 
 		if (!this.cellOutput.metadata) {

@@ -22,6 +22,10 @@ const ConnectionProviderContrib: IJSONSchema = {
 			type: 'string',
 			description: localize('schema.providerId', "Common id for the provider")
 		},
+		languageAssociation: {
+			type: 'string',
+			description: localize('connection.schema.languageAssociation', "Language mode to associate with this connection provider.")
+		},
 		displayName: {
 			type: 'string',
 			description: localize('schema.displayName', "Display Name for the provider")

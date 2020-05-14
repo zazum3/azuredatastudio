@@ -277,7 +277,7 @@ export class CellModel implements ICellModel {
 
 	private notifyExecutionComplete(): void {
 		if (this._notebookService) {
-			this._notebookService.serializeNotebookStateChange(this.notebookModel.notebookUri, NotebookChangeType.CellExecuted, this)
+			this._notebookService.serializeNotebookStateChange(this.notebookModel.resource, NotebookChangeType.CellExecuted, this)
 				.catch(e => onUnexpectedError(e));
 		}
 	}

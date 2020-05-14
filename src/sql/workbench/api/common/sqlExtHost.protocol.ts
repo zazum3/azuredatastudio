@@ -803,16 +803,16 @@ export interface ExtHostNotebookShape {
 	 * Looks up a notebook manager for a given notebook URI
 	 * @returns handle of the manager to be used when sending
 	 */
-	$getNotebookManager(providerHandle: number, notebookUri: UriComponents): Thenable<INotebookManagerDetails>;
-	$handleNotebookClosed(notebookUri: UriComponents): void;
+	$getNotebookManager(providerHandle: number, resource: UriComponents): Thenable<INotebookManagerDetails>;
+	$handleNotebookClosed(resource: UriComponents): void;
 
 	// Server Manager APIs
 	$doStartServer(managerHandle: number, kernelSpec: azdata.nb.IKernelSpec): Thenable<void>;
 	$doStopServer(managerHandle: number): Thenable<void>;
 
 	// Content Manager APIs
-	$getNotebookContents(managerHandle: number, notebookUri: UriComponents): Thenable<azdata.nb.INotebookContents>;
-	$save(managerHandle: number, notebookUri: UriComponents, notebook: azdata.nb.INotebookContents): Thenable<azdata.nb.INotebookContents>;
+	$getNotebookContents(managerHandle: number, resource: UriComponents): Thenable<azdata.nb.INotebookContents>;
+	$save(managerHandle: number, resource: UriComponents, notebook: azdata.nb.INotebookContents): Thenable<azdata.nb.INotebookContents>;
 
 	// Session Manager APIs
 	$refreshSpecs(managerHandle: number): Thenable<azdata.nb.IAllKernels>;

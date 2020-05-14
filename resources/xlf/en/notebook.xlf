@@ -277,7 +277,7 @@
     </trans-unit>
   </body></file>
   <file original="extensions/notebook/dist/jupyter/jupyterNotebookProvider" source-language="en" datatype="plaintext"><body>
-    <trans-unit id="errNotebookUriMissing">
+    <trans-unit id="errResourceMissing">
       <source xml:lang="en">A notebook path is required</source>
     </trans-unit>
   </body></file>
@@ -373,7 +373,7 @@
       <source xml:lang="en">Failed to install {0} {1}. Error: {2}</source>
     </trans-unit>
   </body></file>
-  <file original="extensions/notebook/dist/protocol/notebookUriHandler" source-language="en" datatype="plaintext"><body>
+  <file original="extensions/notebook/dist/protocol/resourceHandler" source-language="en" datatype="plaintext"><body>
     <trans-unit id="notebook.unsupportedAction">
       <source xml:lang="en">Action {0} is not supported for this handler</source>
     </trans-unit>
