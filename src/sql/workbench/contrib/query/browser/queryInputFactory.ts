@@ -51,7 +51,7 @@ export class QueryEditorLanguageAssociation implements ILanguageAssociation {
 		//const profile = getCurrentGlobalConnection(this.objectExplorerService, this.connectionManagementService, this.editorService);
 		let profile = getCurrentGlobalConnection(this.objectExplorerService, this.connectionManagementService, this.editorService);
 
-		if (!profile && this.lastProfile) {
+		if (!profile && this.connectionManagementService.isProfileConnected(this.lastProfile)) {
 			profile = this.lastProfile;
 		}
 
