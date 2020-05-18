@@ -28,7 +28,7 @@ const editorInputFactoryRegistry = Registry.as<IEditorInputFactoryRegistry>(Edit
 export class QueryEditorLanguageAssociation implements ILanguageAssociation {
 	static readonly isDefault = true;
 	static readonly languages = ['sql'];
-	lastProfile = undefined;
+	lastProfileID = undefined;
 
 	constructor(@IInstantiationService private readonly instantiationService: IInstantiationService,
 		@IObjectExplorerService private readonly objectExplorerService: IObjectExplorerService,
@@ -51,8 +51,12 @@ export class QueryEditorLanguageAssociation implements ILanguageAssociation {
 		//const profile = getCurrentGlobalConnection(this.objectExplorerService, this.connectionManagementService, this.editorService);
 		let profile = getCurrentGlobalConnection(this.objectExplorerService, this.connectionManagementService, this.editorService);
 
-		if (!profile && this.lastProfile && this.connectionManagementService.isProfileConnected(this.lastProfile)) {
-			profile = this.lastProfile;
+		if (!profile && this.lastProfileID) {
+			let recoveredProfile = this.connectionManagementService.getConnectionProfileById(this.lastProfileID);
+			//need to handle connection here
+			if (this.connectionManagementService.isProfileConnected(recoveredProfile)) {
+				profile = recoveredProfile;
+			}
 		}
 
 		if (profile) {
@@ -64,7 +68,7 @@ export class QueryEditorLanguageAssociation implements ILanguageAssociation {
 				showFirewallRuleOnError: true
 			};
 			this.connectionManagementService.connect(profile, queryEditorInput.uri, options).catch(err => onUnexpectedError(err));
-			this.lastProfile = profile;
+			this.lastProfileID = profile.id;
 		}
 
 		return queryEditorInput;
