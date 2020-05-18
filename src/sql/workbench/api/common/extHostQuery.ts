@@ -181,6 +181,11 @@ export class ExtHostQuery implements protocol.ExtHostQueryShape {
 			if (this.uriTransformer) {
 				batchInfo.ownerUri = URI.from(this.uriTransformer.transformOutgoing(URI.parse(batchInfo.ownerUri))).toString(true);
 			}
+			// clear messages to maintain the order of things
+			if (this.messageRunner.isScheduled()) {
+				this.messageRunner.cancel();
+				this.sendMessages();
+			}
 			this.proxy.$onBatchComplete(handle, { connectionId: batchInfo.ownerUri, index: batchInfo.batchSummary.id, executionEnd: new Date(batchInfo.batchSummary.executionEnd).getTime() });
 		}));
 
@@ -188,14 +193,14 @@ export class ExtHostQuery implements protocol.ExtHostQueryShape {
 			if (this.uriTransformer) {
 				resultSetInfo.ownerUri = URI.from(this.uriTransformer.transformOutgoing(URI.parse(resultSetInfo.ownerUri))).toString(true);
 			}
-			this.proxy.$onResultSetAvailable(handle, { connectionId: resultSetInfo.ownerUri, completed: resultSetInfo.resultSetSummary.complete, resultIndex: resultSetInfo.resultSetSummary.id, rowCount: resultSetInfo.resultSetSummary.rowCount, batchIndex: resultSetInfo.resultSetSummary.batchId, columns: resultSetInfo.resultSetSummary.columnInfo.map(c => ({ title: c.columnName, type: c.isXml ? protocol.ColumnType.XML : c.isJson ? protocol.ColumnType.JSON : protocol.ColumnType.UNKNOWN  })) });
+			this.proxy.$onResultSetAvailable(handle, { connectionId: resultSetInfo.ownerUri, completed: resultSetInfo.resultSetSummary.complete, resultIndex: resultSetInfo.resultSetSummary.id, rowCount: resultSetInfo.resultSetSummary.rowCount, batchIndex: resultSetInfo.resultSetSummary.batchId, columns: resultSetInfo.resultSetSummary.columnInfo.map(c => ({ title: c.columnName, type: c.isXml ? protocol.ColumnType.XML : c.isJson ? protocol.ColumnType.JSON : protocol.ColumnType.UNKNOWN })) });
 		}));
 
 		disposables.add(provider.onResultSetUpdated(resultSetInfo => {
 			if (this.uriTransformer) {
 				resultSetInfo.ownerUri = URI.from(this.uriTransformer.transformOutgoing(URI.parse(resultSetInfo.ownerUri))).toString(true);
 			}
-			this.proxy.$onResultSetUpdated(handle, { connectionId: resultSetInfo.ownerUri, rowCount: resultSetInfo.resultSetSummary.rowCount, resultIndex: resultSetInfo.resultSetSummary.id, completed: resultSetInfo.resultSetSummary.complete, batchIndex: resultSetInfo.resultSetSummary.batchId, columns: resultSetInfo.resultSetSummary.columnInfo.map(c => ({ title: c.columnName, type: c.isXml ? protocol.ColumnType.XML : c.isJson ? protocol.ColumnType.JSON : protocol.ColumnType.UNKNOWN  })) });
+			this.proxy.$onResultSetUpdated(handle, { connectionId: resultSetInfo.ownerUri, rowCount: resultSetInfo.resultSetSummary.rowCount, resultIndex: resultSetInfo.resultSetSummary.id, completed: resultSetInfo.resultSetSummary.complete, batchIndex: resultSetInfo.resultSetSummary.batchId, columns: resultSetInfo.resultSetSummary.columnInfo.map(c => ({ title: c.columnName, type: c.isXml ? protocol.ColumnType.XML : c.isJson ? protocol.ColumnType.JSON : protocol.ColumnType.UNKNOWN })) });
 		}));
 
 		disposables.add(provider.onMessage(message => {
