@@ -5,7 +5,7 @@
 
 import { RawContextKey, IContextKeyService, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { IConnectionProfile } from 'azdata';
-import { IQueryService } from 'sql/platform/query/common/queryService';
+import { IQueryService } from 'sql/workbench/services/query/common/queryService';
 
 export class ConnectionContextKey implements IContextKey<IConnectionProfile> {
 

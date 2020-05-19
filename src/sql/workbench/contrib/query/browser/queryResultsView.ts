@@ -21,7 +21,7 @@ import { IThemeService } from 'vs/platform/theme/common/themeService';
 import { Event } from 'vs/base/common/event';
 import { startsWith } from 'vs/base/common/strings';
 import { attachTabbedPanelStyler } from 'sql/workbench/common/styler';
-import { IQuery, QueryState } from 'sql/platform/query/common/queryService';
+import { IQuery, QueryState } from 'sql/workbench/services/query/common/queryService';
 
 class MessagesView extends Disposable implements IPanelView {
 	private messagePanel: MessagePanel;

@@ -14,7 +14,7 @@ import { IConnectionManagementService, IConnectableInput, INewConnectionParams }
 import { QueryResultsInput } from 'sql/workbench/common/editor/query/queryResultsInput';
 
 import { startsWith } from 'vs/base/common/strings';
-import { IQueryService, IQuery, QueryState } from 'sql/platform/query/common/queryService';
+import { IQueryService, IQuery, QueryState } from 'sql/workbench/services/query/common/queryService';
 import { memoize } from 'vs/base/common/decorators';
 
 const MAX_SIZE = 13;

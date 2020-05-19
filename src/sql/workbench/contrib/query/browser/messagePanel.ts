@@ -30,7 +30,7 @@ import { QueryEditor } from 'sql/workbench/contrib/query/browser/queryEditor';
 import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
 import { IDataTreeViewState } from 'vs/base/browser/ui/tree/dataTree';
 import { IRange } from 'vs/editor/common/core/range';
-import { IQuery, QueryState, IResultMessage } from 'sql/platform/query/common/queryService';
+import { IQuery, QueryState, IResultMessage } from 'sql/workbench/services/query/common/queryService';
 import { Event } from 'vs/base/common/event';
 
 export interface IResultMessageIntern {

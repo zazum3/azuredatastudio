@@ -14,7 +14,7 @@ import { Event, Emitter } from 'vs/base/common/event';
 import { Disposable } from 'vs/base/common/lifecycle';
 import { IConfigurationService, IConfigurationChangeEvent } from 'vs/platform/configuration/common/configuration';
 import { find } from 'vs/base/common/arrays';
-import { IQueryService } from 'sql/platform/query/common/queryService';
+import { IQueryService } from 'sql/workbench/services/query/common/queryService';
 
 /**
  * Service that collects the results of executed queries

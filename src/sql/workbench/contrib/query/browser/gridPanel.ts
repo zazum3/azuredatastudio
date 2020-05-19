@@ -45,7 +45,7 @@ import { GridPanelState, GridTableState } from 'sql/workbench/common/editor/quer
 import { IUntitledTextEditorService } from 'vs/workbench/services/untitled/common/untitledTextEditorService';
 import { SaveFormat } from 'sql/workbench/services/query/common/resultSerializer';
 import { Progress } from 'vs/platform/progress/common/progress';
-import { IQuery, IResultSet, IColumn, ColumnType, QueryState } from 'sql/platform/query/common/queryService';
+import { IQuery, IResultSet, IColumn, ColumnType, QueryState } from 'sql/workbench/services/query/common/queryService';
 
 const ROW_HEIGHT = 29;
 const HEADER_HEIGHT = 26;

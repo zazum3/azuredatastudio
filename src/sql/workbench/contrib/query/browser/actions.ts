@@ -18,7 +18,7 @@ import * as TelemetryKeys from 'sql/platform/telemetry/common/telemetryKeys';
 import { getErrorMessage } from 'vs/base/common/errors';
 import { SaveFormat } from 'sql/workbench/services/query/common/resultSerializer';
 import { IExtensionRecommendationsService } from 'vs/workbench/services/extensionManagement/common/extensionManagement';
-import { IQuery } from 'sql/platform/query/common/queryService';
+import { IQuery } from 'sql/workbench/services/query/common/queryService';
 
 export interface IGridActionContext {
 	gridDataProvider: IGridDataProvider;

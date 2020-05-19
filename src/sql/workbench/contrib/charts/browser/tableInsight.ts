@@ -52,7 +52,7 @@ export class TableInsight extends Disposable implements IInsight {
 
 }
 
-function transformData(rows: string[][], columns: string[]): { [key: string]: string }[] {
+function transformData(rows: ReadonlyArray<ReadonlyArray<string>>, columns: ReadonlyArray<string>): { [key: string]: string }[] {
 	return rows.map(row => {
 		let object: { [key: string]: string } = {};
 		row.forEach((val, index) => {
@@ -62,7 +62,7 @@ function transformData(rows: string[][], columns: string[]): { [key: string]: st
 	});
 }
 
-function transformColumns(columns: string[]): Slick.Column<any>[] {
+function transformColumns(columns: ReadonlyArray<string>): Slick.Column<any>[] {
 	return columns.map(col => {
 		return <Slick.Column<any>>{
 			name: col,

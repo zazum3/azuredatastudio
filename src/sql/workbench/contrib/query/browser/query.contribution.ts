@@ -24,7 +24,7 @@ import {
 } from 'sql/workbench/contrib/query/browser/keyboardQueryActions';
 import * as gridActions from 'sql/workbench/contrib/editData/browser/gridActions';
 import * as gridCommands from 'sql/workbench/contrib/editData/browser/gridCommands';
-import * as Constants from 'sql/platform/query/common/constants';
+import * as Constants from 'sql/workbench/services/query/common/constants';
 import { localize } from 'vs/nls';
 import { IWorkbenchContributionsRegistry, Extensions as WorkbenchExtensions } from 'vs/workbench/common/contributions';
 

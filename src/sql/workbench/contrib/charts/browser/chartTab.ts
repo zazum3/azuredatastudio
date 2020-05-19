@@ -8,7 +8,7 @@ import { ChartView } from './chartView';
 
 import { localize } from 'vs/nls';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { IQuery } from 'sql/platform/query/common/queryService';
+import { IQuery } from 'sql/workbench/services/query/common/queryService';
 
 export class ChartTab implements IPanelTab {
 	public readonly title = localize('chartTabTitle', "Chart");

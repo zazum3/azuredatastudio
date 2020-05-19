@@ -32,7 +32,7 @@ import { isUndefinedOrNull } from 'vs/base/common/types';
 import { FileEditorInput } from 'vs/workbench/contrib/files/common/editors/fileEditorInput';
 import { FileQueryEditorInput } from 'sql/workbench/contrib/query/common/fileQueryEditorInput';
 import { TestDialogService } from 'vs/platform/dialogs/test/common/testDialogService';
-import { TestQueryService } from 'sql/platform/query/test/testQueryService';
+import { TestQueryService } from 'sql/workbench/services/query/test/testQueryService';
 
 class TestParsedArgs implements ParsedArgs {
 	[arg: string]: any;

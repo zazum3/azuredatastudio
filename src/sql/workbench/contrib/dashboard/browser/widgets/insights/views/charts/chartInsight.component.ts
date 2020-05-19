@@ -157,7 +157,7 @@ export abstract class ChartInsight extends Disposable implements IInsightsView {
 		}
 	}
 
-	private getTopNData(data: any[]): any[] {
+	private getTopNData(data: ReadonlyArray<any>): ReadonlyArray<any> {
 		if (this._config.showTopNData) {
 			if (this._config.dataDirection === 'horizontal' && this._config.labelFirstColumn) {
 				return data.slice(0, this._config.showTopNData + 1);
@@ -228,7 +228,7 @@ export abstract class ChartInsight extends Disposable implements IInsightsView {
 	}
 
 	@ChartInsight.MEMOIZER
-	public getLabels(): Array<string> {
+	public getLabels(): ReadonlyArray<string> {
 		if (this._config.dataDirection === 'horizontal') {
 			if (this._config.labelFirstColumn) {
 				return this._data.columns.slice(1);
@@ -240,7 +240,7 @@ export abstract class ChartInsight extends Disposable implements IInsightsView {
 		}
 	}
 
-	public get labels(): Array<string> {
+	public get labels(): ReadonlyArray<string> {
 		return this.getLabels();
 	}
 

@@ -18,10 +18,12 @@ import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
 import { AngularDisposable } from 'sql/base/browser/lifecycle';
 import { ConnectionContextKey } from 'sql/workbench/services/connection/common/connectionContextKey';
 
-import { ProviderMetadata, DatabaseInfo, SimpleExecuteResult } from 'azdata';
+import { ProviderMetadata, DatabaseInfo } from 'azdata';
 
 /* VS imports */
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
+import { IQueryService, getResults, ISimpleResult } from 'sql/workbench/services/query/common/queryService';
+import { URI } from 'vs/base/common/uri';
 
 /* Wrapper for a metadata service that contains the uri string to use on each request */
 export class SingleConnectionMetadataService {
@@ -76,11 +78,14 @@ export class SingleAdminService {
 
 export class SingleQueryManagementService {
 	constructor(
-		private _uri: string
+		private _uri: string,
+		@IQueryService private readonly queryService: IQueryService
 	) { }
 
-	public runQueryAndReturn(queryString: string): Thenable<SimpleExecuteResult> {
-		return this._queryManagementService.runQueryAndReturn(this._uri, queryString);
+	public runQueryAndReturn(queryString: string): Promise<ISimpleResult> {
+		const query = this.queryService.createOrGetQuery(URI.parse(this._uri));
+		query.execute(queryString);
+		return getResults(query);
 	}
 }
 
@@ -108,7 +113,8 @@ export class CommonServiceInterface extends AngularDisposable {
 		@Inject(IBootstrapParams) protected _params: IDefaultComponentParams,
 		@Inject(IMetadataService) protected _metadataService: IMetadataService,
 		@Inject(IConnectionManagementService) protected _connectionManagementService: IConnectionManagementService,
-		@Inject(IAdminService) protected _adminService: IAdminService
+		@Inject(IAdminService) protected _adminService: IAdminService,
+		@Inject(IQueryService) protected readonly queryService: IQueryService
 	) {
 		super();
 		// during testing there may not be params
@@ -140,7 +146,7 @@ export class CommonServiceInterface extends AngularDisposable {
 		this._singleMetadataService = new SingleConnectionMetadataService(this._metadataService, this._uri);
 		this._singleConnectionManagementService = new SingleConnectionManagementService(this._connectionManagementService, this._uri, this._connectionContextKey);
 		this._singleAdminService = new SingleAdminService(this._adminService, this._uri);
-		this._singleQueryManagementService = new SingleQueryManagementService(this._queryManagementService, this._uri);
+		this._singleQueryManagementService = new SingleQueryManagementService(this._uri, this.queryService);
 	}
 
 	/**

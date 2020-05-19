@@ -12,7 +12,7 @@ import * as azdata from 'azdata';
 
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 import * as WorkbenchUtils from 'sql/workbench/common/sqlWorkbenchUtils';
-import * as Constants from 'sql/platform/query/common/constants';
+import * as Constants from 'sql/workbench/services/query/common/constants';
 import * as ConnectionConstants from 'sql/platform/connection/common/constants';
 import { EditDataEditor } from 'sql/workbench/contrib/editData/browser/editDataEditor';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
@@ -49,33 +49,6 @@ function escapeSqlString(input: string, escapeChar: string) {
 		}
 	}
 	return output;
-}
-
-
-/**
- * Locates the active editor and call focus() on the editor if it is a QueryEditor.
- */
-export class FocusOnCurrentQueryKeyboardAction extends Action {
-
-	public static ID = 'focusOnCurrentQueryKeyboardAction';
-	public static LABEL = nls.localize('focusOnCurrentQueryKeyboardAction', "Focus on Current Query");
-
-	constructor(
-		id: string,
-		label: string,
-		@IEditorService private _editorService: IEditorService
-	) {
-		super(id, label);
-		this.enabled = true;
-	}
-
-	public run(): Promise<void> {
-		const editor = this._editorService.activeEditorPane;
-		if (editor instanceof QueryEditor) {
-			editor.focus();
-		}
-		return Promise.resolve(null);
-	}
 }
 
 /**

@@ -27,6 +27,7 @@ import { startsWith } from 'vs/base/common/strings';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { FutureInternal, notebookConstants } from 'sql/workbench/services/notebook/browser/interfaces';
 import { tryMatchCellMagic } from 'sql/workbench/services/notebook/browser/utils';
+import { IQuery, IQueryService, IResultSet } from 'sql/workbench/services/query/common/queryService';
 
 export const sqlKernelError: string = localize("sqlKernelError", "SQL kernel error");
 export const MAX_ROWS = 5000;
@@ -156,7 +157,7 @@ export class SqlSession implements nb.ISession {
 }
 
 class SqlKernel extends Disposable implements nb.IKernel {
-	private _queryRunner: QueryRunner;
+	private _query: IQuery;
 	private _currentConnection: IConnectionProfile;
 	private _currentConnectionProfile: ConnectionProfile;
 	static kernelId: number = 0;
@@ -170,7 +171,7 @@ class SqlKernel extends Disposable implements nb.IKernel {
 	constructor(private _path: string,
 		@IConnectionManagementService private _connectionManagementService: IConnectionManagementService,
 		@ICapabilitiesService private _capabilitiesService: ICapabilitiesService,
-		@IInstantiationService private _instantiationService: IInstantiationService,
+		@IQueryService private _queryService: IInstantiationService,
 		@IErrorMessageService private _errorMessageService: IErrorMessageService,
 		@IConfigurationService private _configurationService: IConfigurationService,
 		@ILogService private readonly logService: ILogService,
@@ -261,7 +262,7 @@ class SqlKernel extends Disposable implements nb.IKernel {
 	public set connection(conn: IConnectionProfile) {
 		this._currentConnection = conn;
 		this._currentConnectionProfile = new ConnectionProfile(this._capabilitiesService, this._currentConnection);
-		this._queryRunner = undefined;
+		this._query = undefined;
 	}
 
 	getSpec(): Thenable<nb.IKernelSpec> {
@@ -271,19 +272,19 @@ class SqlKernel extends Disposable implements nb.IKernel {
 	requestExecute(content: nb.IExecuteRequest, disposeOnDone?: boolean): nb.IFuture {
 		let canRun: boolean = true;
 		let code = this.getCodeWithoutCellMagic(content);
-		if (this._queryRunner) {
+		if (this._query) {
 			// Cancel any existing query
-			if (this._future && !this._queryRunner.hasCompleted) {
-				this._queryRunner.cancelQuery().then(ok => undefined, error => this._errorMessageService.showDialog(Severity.Error, sqlKernelError, error));
+			if (this._future && !this._query.hasCompleted) {
+				this._query.cancel().then(ok => undefined, error => this._errorMessageService.showDialog(Severity.Error, sqlKernelError, error));
 				// TODO when we can just show error as an output, should show an "execution canceled" error in output
 				this._future.handleDone().catch(err => onUnexpectedError(err));
 			}
-			this._queryRunner.runQuery(code).catch(err => onUnexpectedError(err));
+			this._query.execute(code).catch(err => onUnexpectedError(err));
 		} else if (this._currentConnection && this._currentConnectionProfile) {
-			this._queryRunner = this._instantiationService.createInstance(QueryRunner, this._connectionPath);
+			this._query = this.queryService
 			this._connectionManagementService.connect(this._currentConnectionProfile, this._connectionPath).then((result) => {
 				this.addQueryEventListeners(this._queryRunner);
-				this._queryRunner.runQuery(code).catch(err => onUnexpectedError(err));
+				this._query.execute(code).catch(err => onUnexpectedError(err));
 			}).catch(err => onUnexpectedError(err));
 		} else {
 			canRun = false;
@@ -329,17 +330,17 @@ class SqlKernel extends Disposable implements nb.IKernel {
 
 	interrupt(): Thenable<void> {
 		// TODO: figure out what to do with the QueryCancelResult
-		return this._queryRunner.cancelQuery().then((cancelResult) => {
+		return this._query.cancel().then((cancelResult) => {
 		});
 	}
 
-	private addQueryEventListeners(queryRunner: QueryRunner): void {
-		this._register(queryRunner.onQueryEnd(() => {
+	private addQueryEventListeners(query: IQuery): void {
+		this._register(query.onQueryEnd(() => {
 			this.queryComplete().catch(error => {
 				this._errorMessageService.showDialog(Severity.Error, sqlKernelError, error);
 			});
 		}));
-		this._register(queryRunner.onMessage(messages => {
+		this._register(query.onMessage(messages => {
 			// TODO handle showing a messages output (should be updated with all messages, only changing 1 output in total)
 			for (const message of messages) {
 				if (this._future && isUndefinedOrNull(message.range)) {
@@ -347,7 +348,7 @@ class SqlKernel extends Disposable implements nb.IKernel {
 				}
 			}
 		}));
-		this._register(queryRunner.onBatchEnd(batch => {
+		this._register(query.onBatchEnd(batch => {
 			if (this._future) {
 				this._future.handleBatchEnd(batch);
 			}
@@ -382,11 +383,11 @@ export class SQLFuture extends Disposable implements FutureInternal {
 	private doneDeferred = new Deferred<nb.IShellMessage>();
 	private configuredMaxRows: number = MAX_ROWS;
 	private _outputAddedPromises: Promise<void>[] = [];
-	private _querySubsetResultMap: Map<number, ResultSetSubset> = new Map<number, ResultSetSubset>();
+	private _querySubsetResultMap: Map<number, IResultSet> = new Map<number, IResultSet>();
 	private _errorOccurred: boolean = false;
 	private _stopOnError: boolean = true;
 	constructor(
-		private _queryRunner: QueryRunner,
+		private _query: IQuery,
 		private _executionCount: number | undefined,
 		configurationService: IConfigurationService,
 		private readonly logService: ILogService
@@ -403,11 +404,11 @@ export class SQLFuture extends Disposable implements FutureInternal {
 	}
 
 	get inProgress(): boolean {
-		return this._queryRunner && !this._queryRunner.hasCompleted;
+		return this._query && !this._query.hasCompleted;
 	}
 	set inProgress(val: boolean) {
-		if (this._queryRunner && !val) {
-			this._queryRunner.cancelQuery().catch(err => onUnexpectedError(err));
+		if (this._query && !val) {
+			this._query.cancel().catch(err => onUnexpectedError(err));
 		}
 	}
 	get msg(): nb.IMessage {
@@ -500,10 +501,10 @@ export class SQLFuture extends Disposable implements FutureInternal {
 		}
 	}
 
-	private async getAllQueryRows(rowCount: number, resultSet: ResultSetSummary): Promise<void> {
+	private async getAllQueryRows(rowCount: number, resultSet: IResultSet): Promise<void> {
 		let deferred: Deferred<void> = new Deferred<void>();
 		if (rowCount > 0) {
-			this._queryRunner.getQueryRows(0, rowCount, resultSet.batchId, resultSet.id).then((result) => {
+			resultSet.fetch(0, rowCount).then((result) => {
 				this._querySubsetResultMap.set(resultSet.id, result);
 				deferred.resolve();
 			}, (err) => {

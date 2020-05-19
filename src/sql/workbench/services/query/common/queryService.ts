@@ -11,8 +11,55 @@ import { Event, Emitter } from 'vs/base/common/event';
 import { isArray } from 'vs/base/common/types';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 import { Iterable } from 'vs/base/common/iterator';
+import { IRange } from 'vs/editor/common/core/range';
 
 export const IQueryService = createDecorator<IQueryService>('queryService');
+
+export interface ISimpleResult {
+	readonly columns: ReadonlyArray<IColumn>;
+	readonly rows: ReadonlyArray<ReadonlyArray<string>>;
+}
+
+export function getResults(query: IQuery): Promise<ISimpleResult> {
+	return new Promise<ISimpleResult>(async (resolve, reject) => {
+		const res: { columns: ReadonlyArray<IColumn>, rows: ReadonlyArray<ReadonlyArray<string>> } = {
+			columns: undefined,
+			rows: undefined
+		};
+		if (query.resultSets.length > 0) {
+			const resultSet = query.resultSets[0];
+			res.columns = resultSet.columns;
+			if (resultSet.completed) {
+				res.rows = (await resultSet.fetch(0, resultSet.rowCount)).rows;
+				resolve(res);
+			} else {
+				const toDispose = query.onResultSetUpdated(async e => {
+					if (e.completed) {
+						toDispose.dispose();
+						res.rows = (await e.fetch(0, e.rowCount)).rows;
+						resolve(res);
+					}
+				});
+			}
+		} else {
+			Event.once(query.onResultSetAvailable)(async e => {
+				res.columns = e.columns;
+				if (e.completed) {
+					res.rows = (await e.fetch(0, e.rowCount)).rows;
+					resolve(res);
+				} else {
+					const toDispose = query.onResultSetUpdated(async e => {
+						if (e.completed) {
+							toDispose.dispose();
+							res.rows = (await e.fetch(0, e.rowCount)).rows;
+							resolve(res);
+						}
+					});
+				}
+			});
+		}
+	});
+}
 
 export interface IFetchSubsetParams {
 	readonly resultIndex: number;
@@ -65,11 +112,12 @@ export interface IQueryService {
 	/**
 	 * Create a new query or return on if it already exists given the uri
 	 * Will return undefined if the connection is not connected
-	 * @param connection
+	 * @param connectionId id for the connection to run against
+	 * @param associatedURI uri if query is associated with a file, ignored for now more of a placeholder
 	 * @param forceNew force create a new query even if one already exists for the given connection
 	 * This should only be done if it is known that the connection supports multiple queries on the same connection (unlikely)
 	 */
-	createOrGetQuery(associatedURI: URI, forceNew?: boolean): IQuery | undefined;
+	createOrGetQuery(connectionId: string, associatedURI?: URI, forceNew?: boolean): IQuery | undefined;
 }
 
 export interface IResultMessage {
@@ -125,7 +173,7 @@ export interface IQuery {
 	/**
 	 * File associated with this query
 	 */
-	readonly associatedFile: URI;
+	readonly associatedFile?: URI;
 	/**
 	 * State of the query
 	 */
@@ -136,6 +184,16 @@ export interface IQuery {
 	 * Execute the query with the associatedFile for this query
 	 */
 	execute(): Promise<void>;
+	/**
+	 * Execute query within the given selection
+	 * @param selection range in the document to execute on
+	 */
+	execute(selection: IRange): Promise<void>;
+	/**
+	 * Execute the string as a query
+	 * @param query
+	 */
+	execute(query: string): Promise<void>;
 
 	/**
 	 * Cancel the query if currently executing, otherwise it will throw
@@ -228,7 +286,8 @@ class Query extends Disposable implements IQuery {
 
 	constructor(
 		private readonly queryService: QueryService,
-		public readonly associatedFile: URI
+		public readonly connectionId: string,
+		public readonly associatedFile?: URI
 	) {
 		super();
 	}
@@ -248,14 +307,14 @@ class Query extends Disposable implements IQuery {
 			this._messages = [];
 			this._startTime = undefined;
 			this._endTime = undefined;
-			await this.queryService.executeQuery(this.associatedFile);
+			await this.queryService.executeQuery(this.connectionId, this.associatedFile);
 			this._startTime = Date.now(); // create a bogus start time and we will do our best to update when we get a time from the provider
 			this.setState(QueryState.EXECUTING);
 		}
 	}
 
 	async cancel(): Promise<void> {
-		const message = await this.queryService.cancelQuery(this.associatedFile);
+		const message = await this.queryService.cancelQuery(this.connectionId);
 		this.handleMessage({ message }); // should we be doing this?
 		this.setState(QueryState.NOT_EXECUTING); // no sure if this is needed or if querycomplete gets called, but this is just being safe
 	}
@@ -265,7 +324,7 @@ class Query extends Disposable implements IQuery {
 	}
 
 	private fetch(params: IFetchSubsetParams): Promise<IFetchResponse> {
-		return this.queryService.fetchData(this.associatedFile, params);
+		return this.queryService.fetchData(this.connectionId, params);
 	}
 
 	public handleMessage(e: IResultMessage | ReadonlyArray<IResultMessage>): void {
@@ -347,14 +406,14 @@ export class QueryService extends Disposable implements IQueryService {
 		super();
 	}
 
-	createOrGetQuery(associatedURI: URI): IQuery | undefined {
-		const existing = this.queries.get(associatedURI.toString());
+	createOrGetQuery(connectionId: string, associatedURI?: URI, forceNew: boolean = false): IQuery | undefined {
+		const existing = this.queries.get(connectionId);
 		if (existing) {
 			return existing;
 		}
-		const query = new Query(this, associatedURI);
+		const query = new Query(this, connectionId, associatedURI);
 		if (query) {
-			this.queries.set(associatedURI.toString(), query);
+			this.queries.set(connectionId, query);
 		}
 		return query;
 	}
@@ -410,29 +469,29 @@ export class QueryService extends Disposable implements IQueryService {
 	}
 
 	//#region @type{Query} helpers
-	executeQuery(file: URI): Promise<void> {
-		const provider = this.withProvider(file);
-		return provider.runQuery(file.toString());
+	executeQuery(connectionId: string, associatedFile?: URI): Promise<void> {
+		const provider = this.withProvider(connectionId);
+		return provider.runQuery(connectionId);
 	}
 
-	cancelQuery(file: URI): Promise<string> {
-		const provider = this.withProvider(file);
-		return provider.cancelQuery(file.toString());
+	cancelQuery(connectionId: string): Promise<string> {
+		const provider = this.withProvider(connectionId);
+		return provider.cancelQuery(connectionId);
 	}
 
-	fetchData(file: URI, params: IFetchSubsetParams): Promise<IFetchResponse> {
-		const provider = this.withProvider(file);
-		return provider.fetchSubset(file.toString(), params);
+	fetchData(connectionId: string, params: IFetchSubsetParams): Promise<IFetchResponse> {
+		const provider = this.withProvider(connectionId);
+		return provider.fetchSubset(connectionId, params);
 	}
 
-	setExecutionOptions(file: URI, options: { [key: string]: number | boolean | string }): Promise<void> {
-		const provider = this.withProvider(file);
-		return provider.setExecutionOptions(file.toString(), options);
+	setExecutionOptions(connectionId: string, options: { [key: string]: number | boolean | string }): Promise<void> {
+		const provider = this.withProvider(connectionId);
+		return provider.setExecutionOptions(connectionId, options);
 	}
 	//#endregion
 
-	private withProvider(file: URI): IQueryProvider {
-		const provider = this.connectionManagementService.getProviderIdFromUri(file.toString());
+	private withProvider(connectionId: string): IQueryProvider {
+		const provider = this.connectionManagementService.getProviderIdFromUri(connectionId);
 		const providerStub = this.queryProviders.get(provider);
 		if (!providerStub) {
 			throw new Error(`Query provider could not be found: ${provider}`);

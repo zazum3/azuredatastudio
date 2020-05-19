@@ -26,6 +26,7 @@ import { deepClone } from 'vs/base/common/objects';
 import { RawContextKey, IContextKey } from 'vs/platform/contextkey/common/contextkey';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { onUnexpectedError } from 'vs/base/common/errors';
+import { IQueryService } from 'sql/workbench/services/query/common/queryService';
 
 const DASHBOARD_SETTINGS = 'dashboard';
 
@@ -65,13 +66,14 @@ export class DashboardServiceInterface extends CommonServiceInterface {
 		@Inject(IMetadataService) metadataService: IMetadataService,
 		@Inject(IConnectionManagementService) connectionManagementService: IConnectionManagementService,
 		@Inject(IAdminService) adminService: IAdminService,
+		@Inject(IQueryService) queryService: IQueryService,
 		@Inject(IBootstrapParams) params: IDashboardComponentParams,
 		@Inject(forwardRef(() => Router)) private _router: Router,
 		@Inject(INotificationService) private _notificationService: INotificationService,
 		@Inject(IAngularEventingService) private angularEventingService: IAngularEventingService,
 		@Inject(IConfigurationService) private _configService: IConfigurationService
 	) {
-		super(params, metadataService, connectionManagementService, adminService);
+		super(params, metadataService, connectionManagementService, adminService, queryService);
 		// during testing there may not be params
 		if (this._params) {
 			this.dashboardContextKey = this._dashboardContextKey.bindTo(this.scopedContextKeyService);

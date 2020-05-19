@@ -61,8 +61,8 @@ export interface ISize {
 }
 
 export interface IInsightData {
-	columns: Array<string>;
-	rows: Array<Array<string>>;
+	columns: ReadonlyArray<string>;
+	rows: ReadonlyArray<ReadonlyArray<string>>;
 }
 
 export interface IInsightsView {

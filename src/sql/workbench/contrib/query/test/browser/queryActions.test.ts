@@ -31,7 +31,7 @@ import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/u
 import { IUntitledTextEditorService } from 'vs/workbench/services/untitled/common/untitledTextEditorService';
 import { TestStorageService } from 'vs/workbench/test/common/workbenchTestServices';
 import { IRange } from 'vs/editor/common/core/range';
-import { TestQueryService } from 'sql/platform/query/test/testQueryService';
+import { TestQueryService } from 'sql/workbench/services/query/test/testQueryService';
 
 suite('SQL QueryAction Tests', () => {
 

@@ -20,8 +20,6 @@ import { resolveQueryFilePath } from 'sql/workbench/services/insights/common/ins
 
 import { RunInsightQueryAction } from './actions';
 
-import { SimpleExecuteResult } from 'azdata';
-
 import { Action } from 'vs/base/common/actions';
 import * as types from 'vs/base/common/types';
 import * as nls from 'vs/nls';
@@ -35,12 +33,13 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 import { IFileService } from 'vs/platform/files/common/files';
 import { URI } from 'vs/base/common/uri';
 import { subscriptionToDisposable } from 'sql/base/browser/lifecycle';
+import { ISimpleResult } from 'sql/workbench/services/query/common/queryService';
 
 const insightRegistry = Registry.as<IInsightRegistry>(Extensions.InsightContribution);
 
 interface IStorageResult {
 	date: string;
-	results: SimpleExecuteResult;
+	results: ISimpleResult;
 }
 
 @Component({
@@ -57,7 +56,7 @@ interface IStorageResult {
 })
 export class InsightsWidget extends DashboardWidget implements IDashboardWidget, AfterContentInit {
 	private insightConfig: IInsightsConfig;
-	private queryObv: Observable<SimpleExecuteResult>;
+	private queryObv: Observable<ISimpleResult>;
 	@ViewChild(ComponentHostDirective) private componentHost: ComponentHostDirective;
 
 	private _typeKey: string;
@@ -95,7 +94,7 @@ export class InsightsWidget extends DashboardWidget implements IDashboardWidget,
 								this._updateChild(result);
 								this.setupInterval();
 							} else {
-								this.queryObv = Observable.fromPromise(Promise.resolve<SimpleExecuteResult>(result));
+								this.queryObv = Observable.fromPromise(Promise.resolve<ISimpleResult>(result));
 							}
 						},
 						error => {
@@ -105,7 +104,7 @@ export class InsightsWidget extends DashboardWidget implements IDashboardWidget,
 							if (this._inited) {
 								this.showError(error);
 							} else {
-								this.queryObv = Observable.fromPromise(Promise.resolve<SimpleExecuteResult>(error));
+								this.queryObv = Observable.fromPromise(Promise.resolve<ISimpleResult>(error));
 							}
 						}
 					).then(() => this._changeRef.detectChanges());
@@ -179,7 +178,7 @@ export class InsightsWidget extends DashboardWidget implements IDashboardWidget,
 		};
 	}
 
-	private _storeResult(result: SimpleExecuteResult): SimpleExecuteResult {
+	private _storeResult(result: ISimpleResult): ISimpleResult {
 		if (this.insightConfig.cacheId) {
 			const currentTime = new Date();
 			const store: IStorageResult = {
@@ -205,7 +204,7 @@ export class InsightsWidget extends DashboardWidget implements IDashboardWidget,
 					this.setupInterval();
 					this._changeRef.detectChanges();
 				} else {
-					this.queryObv = Observable.fromPromise(Promise.resolve<SimpleExecuteResult>(JSON.parse(storage)));
+					this.queryObv = Observable.fromPromise(Promise.resolve<ISimpleResult>(JSON.parse(storage)));
 				}
 				return true;
 			} else {
@@ -227,9 +226,9 @@ export class InsightsWidget extends DashboardWidget implements IDashboardWidget,
 		return `insights.${this.insightConfig.cacheId}.${this.dashboardService.connectionManagementService.connectionInfo.connectionProfile.getOptionsKey()}`;
 	}
 
-	private _runQuery(): Promise<SimpleExecuteResult> {
+	private _runQuery(): Promise<ISimpleResult> {
 		this.setLoadingStatus(true);
-		return Promise.resolve(this.dashboardService.queryManagementService.runQueryAndReturn(this.insightConfig.query as string).then(
+		return this.dashboardService.queryManagementService.runQueryAndReturn(this.insightConfig.query as string).then(
 			result => {
 				this.setLoadingStatus(false);
 				return this._storeResult(result);
@@ -238,15 +237,15 @@ export class InsightsWidget extends DashboardWidget implements IDashboardWidget,
 				this.setLoadingStatus(false);
 				throw error;
 			}
-		));
+		);
 	}
 
-	private _updateChild(result: SimpleExecuteResult): void {
+	private _updateChild(result: ISimpleResult): void {
 		this.componentHost.viewContainerRef.clear();
 		this.error = undefined;
 		this._changeRef.detectChanges();
 
-		if (result.rowCount === 0) {
+		if (result.rows.length === 0) {
 			this.showError(nls.localize('noResults', "No results to show"));
 			return;
 		}
@@ -260,7 +259,7 @@ export class InsightsWidget extends DashboardWidget implements IDashboardWidget,
 		if (componentInstance.setConfig) {
 			componentInstance.setConfig(this.insightConfig.type[this._typeKey]);
 		}
-		componentInstance.data = { columns: result.columnInfo.map(item => item.columnName), rows: result.rows.map(row => row.map(item => (item.invariantCultureDisplayValue === null || item.invariantCultureDisplayValue === undefined) ? item.displayValue : item.invariantCultureDisplayValue)) };
+		componentInstance.data = { columns: result.columns.map(item => item.title), rows: result.rows };
 
 		if (componentInstance.init) {
 			componentInstance.init();

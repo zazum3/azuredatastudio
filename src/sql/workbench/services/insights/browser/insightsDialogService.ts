@@ -10,8 +10,8 @@ import { BaseActionContext } from 'sql/workbench/browser/actions';
 import { IInsightsConfigDetails, IInsightsConfig } from 'sql/platform/dashboard/browser/insightRegistry';
 
 export interface IInsightsDialogModel {
-	rows: string[][];
-	columns: string[];
+	rows: ReadonlyArray<ReadonlyArray<string>>;
+	columns: ReadonlyArray<string>;
 	getListResources(labelIndex: number, valueIndex: number): ListResource[];
 	reset(): void;
 	onDataChange: Event<void>;

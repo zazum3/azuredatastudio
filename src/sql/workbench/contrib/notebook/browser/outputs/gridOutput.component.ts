@@ -38,7 +38,7 @@ import { Orientation } from 'vs/base/browser/ui/splitview/splitview';
 import { ToggleableAction } from 'sql/workbench/contrib/notebook/browser/notebookActions';
 import { IInsightOptions } from 'sql/workbench/common/editor/query/chartState';
 import { NotebookChangeType } from 'sql/workbench/services/notebook/common/contracts';
-import { IResultSet } from 'sql/platform/query/common/queryService';
+import { IResultSet } from 'sql/workbench/services/query/common/queryService';
 
 @Component({
 	selector: GridOutputComponent.SELECTOR,

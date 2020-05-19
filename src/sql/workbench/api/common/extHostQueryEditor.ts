@@ -70,5 +70,4 @@ export class ExtHostQueryEditor implements ExtHostQueryEditorShape {
 			resolve(new ExtHostQueryDocument(mssqlProviderName, fileUri, this._proxy));
 		});
 	}
-
 }

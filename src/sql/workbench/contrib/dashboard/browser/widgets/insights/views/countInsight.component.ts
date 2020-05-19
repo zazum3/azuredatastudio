@@ -16,8 +16,8 @@ import { IInsightsView, IInsightData } from 'sql/platform/dashboard/browser/insi
 	`
 })
 export default class CountInsight implements IInsightsView {
-	protected _labels: Array<string>;
-	protected _values: Array<string>;
+	protected _labels: ReadonlyArray<string>;
+	protected _values: ReadonlyArray<string>;
 
 	constructor(
 		@Inject(forwardRef(() => ChangeDetectorRef)) private _changeRef: ChangeDetectorRef) { }

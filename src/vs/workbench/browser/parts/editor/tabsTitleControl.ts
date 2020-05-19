@@ -47,7 +47,7 @@ import { IPathService } from 'vs/workbench/services/path/common/pathService';
 import { IPath, win32, posix } from 'vs/base/common/path';
 
 // {{SQL CARBON EDIT}} -- Display the editor's tab color
-import * as QueryConstants from 'sql/platform/query/common/constants';
+import * as QueryConstants from 'sql/workbench/services/query/common/constants';
 import * as WorkbenchUtils from 'sql/workbench/common/sqlWorkbenchUtils';
 // {{SQL CARBON EDIT}} -- End
 

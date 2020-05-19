@@ -23,7 +23,7 @@ import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
 import { IConnectionManagementService } from 'sql/platform/connection/common/connectionManagement';
 import { CancellationToken } from 'vs/base/common/cancellation';
 import { IStorageService } from 'vs/platform/storage/common/storage';
-import { IQueryService } from 'sql/platform/query/common/queryService';
+import { IQueryService } from 'sql/workbench/services/query/common/queryService';
 
 export class DashboardEditor extends BaseEditor {
 

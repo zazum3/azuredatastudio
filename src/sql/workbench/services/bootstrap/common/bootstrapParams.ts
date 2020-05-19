@@ -6,14 +6,7 @@
 import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { ConnectionContextKey } from 'sql/workbench/services/connection/common/connectionContextKey';
-import { Event } from 'vs/base/common/event';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-
-export interface IQueryComponentParams extends IBootstrapParams {
-	dataService: DataService;
-	onSaveViewState: Event<void>;
-	onRestoreViewState: Event<void>;
-}
 
 export interface IDefaultComponentParams extends IBootstrapParams {
 	connection: IConnectionProfile;

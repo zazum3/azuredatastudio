@@ -12,7 +12,7 @@ import { IConfigurationService } from 'vs/platform/configuration/common/configur
 import { IResolvedTextEditorModel } from 'vs/editor/common/services/resolverService';
 import { UntitledTextEditorInput } from 'vs/workbench/services/untitled/common/untitledTextEditorInput';
 import { IUntitledTextEditorModel } from 'vs/workbench/services/untitled/common/untitledTextEditorModel';
-import { IQueryService } from 'sql/platform/query/common/queryService';
+import { IQueryService } from 'sql/workbench/services/query/common/queryService';
 
 export class UntitledQueryEditorInput extends QueryEditorInput implements IEncodingSupport {
 

@@ -28,7 +28,7 @@ import * as nls from 'vs/nls';
 import { find } from 'vs/base/common/arrays';
 import { INotificationService } from 'vs/platform/notification/common/notification';
 import { Event, Emitter } from 'vs/base/common/event';
-import { IQuery } from 'sql/platform/query/common/queryService';
+import { IQuery } from 'sql/workbench/services/query/common/queryService';
 
 const insightRegistry = Registry.as<IInsightRegistry>(Extensions.InsightContribution);
 

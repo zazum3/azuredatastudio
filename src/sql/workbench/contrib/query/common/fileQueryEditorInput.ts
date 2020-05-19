@@ -13,7 +13,7 @@ import { EncodingMode, IMoveResult, GroupIdentifier } from 'vs/workbench/common/
 import { BinaryEditorModel } from 'vs/workbench/common/editor/binaryEditorModel';
 import { ITextFileEditorModel } from 'vs/workbench/services/textfile/common/textfiles';
 import { URI } from 'vs/base/common/uri';
-import { IQueryService } from 'sql/platform/query/common/queryService';
+import { IQueryService } from 'sql/workbench/services/query/common/queryService';
 
 type PublicPart<T> = { [K in keyof T]: T[K] };
 

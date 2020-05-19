@@ -25,6 +25,7 @@ import { ServerInfoContextKey } from 'sql/workbench/services/connection/common/s
 import { fillInActions } from 'vs/platform/actions/browser/menuEntryActionViewItem';
 import { Separator } from 'vs/base/browser/ui/actionbar/actionbar';
 import { firstIndex, find } from 'vs/base/common/arrays';
+import { IQueryService } from 'sql/workbench/services/query/common/queryService';
 
 /**
  *  Provides actions for the server tree elements
@@ -35,7 +36,8 @@ export class ServerTreeActionProvider {
 		@IInstantiationService private _instantiationService: IInstantiationService,
 		@IConnectionManagementService private _connectionManagementService: IConnectionManagementService,
 		@IMenuService private menuService: IMenuService,
-		@IContextKeyService private _contextKeyService: IContextKeyService
+		@IContextKeyService private _contextKeyService: IContextKeyService,
+		@IQueryService private readonly queryService: IQueryService
 	) {
 	}
 
@@ -139,7 +141,7 @@ export class ServerTreeActionProvider {
 
 	private getContextKeyService(context: ObjectExplorerContext): IContextKeyService {
 		let scopedContextService = this._contextKeyService.createScoped();
-		let connectionContextKey = new ConnectionContextKey(scopedContextService, this._queryManagementService);
+		let connectionContextKey = new ConnectionContextKey(scopedContextService, this.queryService);
 		let connectionProfile = context && context.profile;
 		connectionContextKey.set(connectionProfile);
 		let serverInfoContextKey = new ServerInfoContextKey(scopedContextService);

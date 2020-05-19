@@ -19,13 +19,14 @@ import { IFileService } from 'vs/platform/files/common/files';
 import { URI } from 'vs/base/common/uri';
 import { IInsightsDialogModel } from 'sql/workbench/services/insights/browser/insightsDialogService';
 import { IInsightsConfigDetails } from 'sql/platform/dashboard/browser/insightRegistry';
+import { IQuery, IColumn, IFetchResponse, IQueryService } from 'sql/workbench/services/query/common/queryService';
 
 export class InsightsDialogController {
-	private _queryRunner: QueryRunner;
+	private _query: IQuery;
 	private _connectionProfile: IConnectionProfile;
 	private _connectionUri: string;
-	private _columns: IColumn[];
-	private _rows: ICellValue[][];
+	private _columns: ReadonlyArray<IColumn>;
+	private _rows: ReadonlyArray<ReadonlyArray<string>>;
 
 	constructor(
 		private readonly _model: IInsightsDialogModel,
@@ -34,7 +35,8 @@ export class InsightsDialogController {
 		@IInstantiationService private readonly _instantiationService: IInstantiationService,
 		@IConnectionManagementService private readonly _connectionManagementService: IConnectionManagementService,
 		@ILogService private readonly logService: ILogService,
-		@IFileService private readonly fileService: IFileService
+		@IFileService private readonly fileService: IFileService,
+		@IQueryService private readonly queryService: IQueryService
 	) { }
 
 	public async update(input: IInsightsConfigDetails, connectionProfile: IConnectionProfile): Promise<void> {
@@ -94,27 +96,27 @@ export class InsightsDialogController {
 	}
 
 	private async createQuery(queryString: string, connectionProfile: IConnectionProfile): Promise<void> {
-		if (this._queryRunner) {
-			if (!this._queryRunner.hasCompleted) {
-				await this._queryRunner.cancelQuery();
+		if (this._query) {
+			if (!this._query.hasCompleted) {
+				await this._query.cancel();
 			}
 			try {
 				await this.createNewConnection(connectionProfile);
 			} catch (e) {
 				return Promise.reject(e);
 			}
-			this._queryRunner.uri = this._connectionUri;
+			this._query.uri = this._connectionUri;
 		} else {
 			try {
 				await this.createNewConnection(connectionProfile);
 			} catch (e) {
 				return Promise.reject(e);
 			}
-			this._queryRunner = this._instantiationService.createInstance(QueryRunner, this._connectionUri);
-			this.addQueryEventListeners(this._queryRunner);
+			this._query = this.queryService.createOrGetQuery(this._connectionUri);
+			this.addQueryEventListeners(this._query);
 		}
 
-		return this._queryRunner.runQuery(queryString);
+		return this._query.execute(queryString);
 	}
 
 	private async createNewConnection(connectionProfile: IConnectionProfile): Promise<void> {
@@ -133,13 +135,13 @@ export class InsightsDialogController {
 		}
 	}
 
-	private addQueryEventListeners(queryRunner: QueryRunner): void {
-		queryRunner.onQueryEnd(() => {
+	private addQueryEventListeners(query: IQuery): void {
+		query.onQueryEnd(() => {
 			this.queryComplete().catch(error => {
 				this._errorMessageService.showDialog(Severity.Error, nls.localize("insightsError", "Insights error"), error);
 			});
 		});
-		queryRunner.onMessage(messages => {
+		query.onMessage(messages => {
 			const errorMessage = messages.find(m => m.isError);
 			if (errorMessage) {
 				this._errorMessageService.showDialog(Severity.Error, nls.localize("insightsError", "Insights error"), errorMessage.message);
@@ -148,33 +150,25 @@ export class InsightsDialogController {
 	}
 
 	private async queryComplete(): Promise<void> {
-		let batches = this._queryRunner.batchSets;
-		// currently only support 1 batch set 1 resultset
-		if (batches.length > 0) {
-			let batch = batches[0];
-			if (batch.resultSetSummaries.length > 0
-				&& batch.resultSetSummaries[0].rowCount > 0
-			) {
-				let resultset = batch.resultSetSummaries[0];
-				this._columns = resultset.columnInfo;
-				let rows: ResultSetSubset;
-				try {
-					rows = await this._queryRunner.getQueryRows(0, resultset.rowCount, batch.id, resultset.id);
-				} catch (e) {
-					return Promise.reject(e);
-				}
-				this._rows = rows.rows;
-				this.updateModel();
+		if (this._query.resultSets.length > 0) {
+			const resultset = this._query.resultSets[0];
+			this._columns = resultset.columns;
+			let rows: IFetchResponse;
+			try {
+				rows = await resultset.fetch(0, resultset.rowCount);
+			} catch (e) {
+				return Promise.reject(e);
 			}
+			this._rows = rows.rows;
+			this.updateModel();
 		}
 		// TODO issue #2746 should ideally show a warning inside the dialog if have no data
 	}
 
 	private updateModel(): void {
-		let data = this._rows.map(r => r.map(c => c.displayValue));
-		let columns = this._columns.map(c => c.columnName);
+		let columns = this._columns.map(c => c.title);
 
-		this._model.rows = data;
+		this._model.rows = this._rows;
 		this._model.columns = columns;
 	}
 }

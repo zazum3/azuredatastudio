@@ -22,7 +22,7 @@ import { ConnectionGlobalStatus } from 'sql/workbench/services/connection/browse
 import * as TelemetryKeys from 'sql/platform/telemetry/common/telemetryKeys';
 import { IResourceProviderService } from 'sql/workbench/services/resourceProvider/common/resourceProviderService';
 import { IAngularEventingService, AngularEventType } from 'sql/platform/angularEventing/browser/angularEventingService';
-import * as QueryConstants from 'sql/platform/query/common/constants';
+import * as QueryConstants from 'sql/workbench/services/query/common/constants';
 import { Deferred } from 'sql/base/common/promise';
 import { ConnectionOptionSpecialType } from 'sql/workbench/api/common/sqlExtHostTypes';
 import { IAccountManagementService, AzureResource } from 'sql/platform/accounts/common/interfaces';

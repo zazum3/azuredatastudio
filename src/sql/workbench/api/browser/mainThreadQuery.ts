@@ -8,7 +8,7 @@ import * as protocol from 'sql/workbench/api/common/sqlExtHost.protocol';
 import { Disposable, IDisposable, combinedDisposable, toDisposable } from 'vs/base/common/lifecycle';
 import { Emitter } from 'vs/base/common/event';
 import { IExtHostContext } from 'vs/workbench/api/common/extHost.protocol';
-import { IResultMessage, IQueryService, IFetchResponse, IQueryProviderEvent, IResultSetSummary, IFetchSubsetParams } from 'sql/platform/query/common/queryService';
+import { IResultMessage, IQueryService, IFetchResponse, IQueryProviderEvent, IResultSetSummary, IFetchSubsetParams } from 'sql/workbench/services/query/common/queryService';
 import { values } from 'vs/base/common/collections';
 
 interface QueryEvents {
@@ -35,7 +35,7 @@ export class MainThreadQuery extends Disposable implements protocol.MainThreadQu
 		this.proxy = extHostContext.getProxy(protocol.SqlExtHostContext.ExtHostQuery);
 	}
 
-	////#region query
+	//#region query
 	public async $registerProvider(providerId: string, handle: number): Promise<void> {
 		const emitters = {
 			onQueryComplete: new Emitter<IQueryProviderEvent>(),
