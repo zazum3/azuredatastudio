@@ -8,7 +8,7 @@ import * as TypeMoq from 'typemoq';
 import * as azdata from 'azdata';
 import { ConnectionProfile } from 'sql/platform/connection/common/connectionProfile';
 import { ConnectionProfileGroup } from 'sql/platform/connection/common/connectionProfileGroup';
-import { CommandLineWorkbenchContribution } from 'sql/workbench/contrib/commandLine/electron-browser/commandLine';
+import { CommandLineWorkbenchContribution, SqlArgs } from 'sql/workbench/contrib/commandLine/electron-browser/commandLine';
 import * as Constants from 'sql/platform/connection/common/constants';
 import { ParsedArgs } from 'vs/platform/environment/node/argv';
 import { ICapabilitiesService } from 'sql/platform/capabilities/common/capabilitiesService';
@@ -34,11 +34,9 @@ import { FileQueryEditorInput } from 'sql/workbench/contrib/query/common/fileQue
 import { TestDialogService } from 'vs/platform/dialogs/test/common/testDialogService';
 import { TestQueryService } from 'sql/workbench/services/query/test/testQueryService';
 
-class TestParsedArgs implements ParsedArgs {
+class TestParsedArgs implements ParsedArgs, SqlArgs {
 	[arg: string]: any;
 	_: string[];
-	aad?: boolean;
-	add?: boolean;
 	database?: string;
 	command?: string;
 	debugBrkPluginHost?: string;
@@ -66,7 +64,6 @@ class TestParsedArgs implements ParsedArgs {
 	help?: boolean;
 	'install-extension'?: string[];
 	'install-source'?: string;
-	integrated?: boolean;
 	'list-extensions'?: boolean;
 	locale?: string;
 	log?: string;
@@ -96,6 +93,7 @@ class TestParsedArgs implements ParsedArgs {
 	version?: boolean;
 	wait?: boolean;
 	waitMarkerFilePath?: string;
+	authenticationType?: string;
 }
 suite('commandLineService tests', () => {
 
@@ -196,6 +194,8 @@ suite('commandLineService tests', () => {
 		args.server = 'myserver';
 		args.database = 'mydatabase';
 		args.user = 'myuser';
+		args.authenticationType = Constants.sqlLogin;
+
 		connectionManagementService.setup((c) => c.showConnectionDialog()).verifiable(TypeMoq.Times.never());
 		connectionManagementService.setup(c => c.hasRegisteredServers()).returns(() => true).verifiable(TypeMoq.Times.atMostOnce());
 		connectionManagementService.setup(c => c.getConnectionGroups(TypeMoq.It.isAny())).returns(() => []);
@@ -372,6 +372,7 @@ suite('commandLineService tests', () => {
 		args.server = 'myserver';
 		args.database = 'mydatabase';
 		args.user = 'myuser';
+		args.authenticationType = Constants.sqlLogin;
 		args._ = ['c:\\dir\\file.sql'];
 		connectionManagementService.setup((c) => c.showConnectionDialog()).verifiable(TypeMoq.Times.never());
 		connectionManagementService.setup(c => c.hasRegisteredServers()).returns(() => true).verifiable(TypeMoq.Times.atMostOnce());
@@ -432,7 +433,7 @@ suite('commandLineService tests', () => {
 
 		test('handleUrl opens a new connection if a server name is passed', async () => {
 			// Given a URI pointing to a server
-			let uri: URI = URI.parse('azuredatastudio://connect?server=myserver&database=mydatabase&user=myuser');
+			let uri: URI = URI.parse('azuredatastudio://connect?server=myserver&database=mydatabase&user=myuser&authenticationType=SqlLogin');
 
 			const connectionManagementService: TypeMoq.Mock<IConnectionManagementService>
 				= TypeMoq.Mock.ofType<IConnectionManagementService>(TestConnectionManagementService, TypeMoq.MockBehavior.Strict);
@@ -523,7 +524,7 @@ suite('commandLineService tests', () => {
 
 		test('handleUrl ignores commands and connects', async () => {
 			// Given I pass a command
-			let uri: URI = URI.parse('azuredatastudio://connect?command=mycommand&server=myserver&database=mydatabase&user=myuser');
+			let uri: URI = URI.parse('azuredatastudio://connect?command=mycommand&server=myserver&database=mydatabase&user=myuser&authenticationType=SqlLogin');
 
 			const connectionManagementService: TypeMoq.Mock<IConnectionManagementService>
 				= TypeMoq.Mock.ofType<IConnectionManagementService>(TestConnectionManagementService, TypeMoq.MockBehavior.Strict);

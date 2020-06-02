@@ -35,6 +35,7 @@ import { NotebookChangeType } from 'sql/workbench/services/notebook/common/contr
 import { find, firstIndex } from 'vs/base/common/arrays';
 import { onUnexpectedError } from 'vs/base/common/errors';
 import { notebookConstants } from 'sql/workbench/services/notebook/browser/interfaces';
+import { IQueryService } from 'sql/workbench/services/query/common/queryService';
 
 export interface NotebookProviderProperties {
 	provider: string;
@@ -114,7 +115,7 @@ export class NotebookService extends Disposable implements INotebookService {
 		@IInstantiationService private _instantiationService: IInstantiationService,
 		@IFileService private readonly _fileService: IFileService,
 		@ILogService private readonly _logService: ILogService,
-		@ILogService private readonly logService: ILogService
+		@IQueryService private readonly queryService: IQueryService
 	) {
 		super();
 		this._providersMemento = new Memento('notebookProviders', this._storageService);
@@ -138,11 +139,11 @@ export class NotebookService extends Disposable implements INotebookService {
 				this.cleanupProviders();
 
 				// If providers have already registered by this point, add them now (since onHandlerAdded will never fire)
-				if (this._queryManagementService.getRegisteredProviders().length > 0) {
+				if (this.queryService.providers.length > 0) {
 					this.updateSQLRegistrationWithConnectionProviders();
 				}
 
-				this._register(this._queryManagementService.onHandlerAdded((queryType) => {
+				this._register(this.queryService.onHandlerAdded((queryType) => {
 					this.updateSQLRegistrationWithConnectionProviders();
 				}));
 			}).catch(err => onUnexpectedError(err));
@@ -165,7 +166,7 @@ export class NotebookService extends Disposable implements INotebookService {
 		// Update the SQL extension
 		let sqlNotebookProvider = this._providerToStandardKernels.get(notebookConstants.SQL);
 		if (sqlNotebookProvider) {
-			let sqlConnectionTypes = this._queryManagementService.getRegisteredProviders();
+			let sqlConnectionTypes = this.queryService.providers;
 			let provider = find(sqlNotebookProvider, p => p.name === notebookConstants.SQL);
 			if (provider) {
 				this._providerToStandardKernels.set(notebookConstants.SQL, [{
@@ -179,7 +180,7 @@ export class NotebookService extends Disposable implements INotebookService {
 		this._registrationComplete.resolve();
 	}
 
-	private updateRegisteredProviders(p: { id: string; registration: NotebookProviderRegistration; }) {
+	private updateRegisteredProviders(p: { id: string; registration: NotebookProviderRegistration }) {
 		let registration = p.registration;
 
 		if (!this._providers.has(p.id)) {
@@ -396,7 +397,7 @@ export class NotebookService extends Disposable implements INotebookService {
 				try {
 					await this._extensionService.whenInstalledExtensionsRegistered();
 				} catch (error) {
-					this.logService.error(error);
+					this._logService.error(error);
 				}
 				instance = await this.waitOnProviderAvailability(providerDescriptor);
 			} else {

@@ -10,7 +10,7 @@ import { generateUuid } from 'vs/base/common/uuid';
 import { attachListStyler } from 'vs/platform/theme/common/styler';
 import { IThemeService, IColorTheme } from 'vs/platform/theme/common/themeService';
 import { IInstantiationService } from 'vs/platform/instantiation/common/instantiation';
-import { WorkbenchDataTree } from 'vs/platform/list/browser/listService';
+import { WorkbenchDataTree, horizontalScrollingKey } from 'vs/platform/list/browser/listService';
 import { isArray, isString } from 'vs/base/common/types';
 import { Disposable, DisposableStore, dispose } from 'vs/base/common/lifecycle';
 import { $, Dimension, createStyleSheet, addStandardDisposableGenericMouseDownListner } from 'vs/base/browser/dom';
@@ -32,6 +32,7 @@ import { IDataTreeViewState } from 'vs/base/browser/ui/tree/dataTree';
 import { IRange } from 'vs/editor/common/core/range';
 import { IQuery, QueryState, IResultMessage } from 'sql/workbench/services/query/common/queryService';
 import { Event } from 'vs/base/common/event';
+import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 
 export interface IResultMessageIntern {
 	id?: string;
@@ -101,9 +102,11 @@ export class MessagePanel extends Disposable {
 		@IThemeService private readonly themeService: IThemeService,
 		@IContextMenuService private readonly contextMenuService: IContextMenuService,
 		@IClipboardService private readonly clipboardService: IClipboardService,
-		@ITextResourcePropertiesService private readonly textResourcePropertiesService: ITextResourcePropertiesService
+		@ITextResourcePropertiesService private readonly textResourcePropertiesService: ITextResourcePropertiesService,
+		@IConfigurationService private configurationService: IConfigurationService
 	) {
 		super();
+		const horizontalScrollEnabled = this.configurationService.getValue(horizontalScrollingKey) || false;
 		this.tree = <WorkbenchDataTree<Model, IResultMessageIntern, FuzzyScore>>instantiationService.createInstance(
 			WorkbenchDataTree,
 			'MessagePanel',
@@ -119,7 +122,7 @@ export class MessagePanel extends Disposable {
 				accessibilityProvider: new AccessibilityProvider(),
 				mouseSupport: false,
 				setRowLineHeight: false,
-				supportDynamicHeights: true,
+				supportDynamicHeights: !horizontalScrollEnabled,
 				identityProvider: new IdentityProvider()
 			});
 		this._register(this.tree.onContextMenu(e => this.onContextMenu(e)));
@@ -193,7 +196,7 @@ export class MessagePanel extends Disposable {
 		this.onMessage(query.messages, true);
 	}
 
-	private onMessage(message: IResultMessage | readonly IResultMessage [], setInput: boolean = false) {
+	private onMessage(message: IResultMessage | readonly IResultMessage[], setInput: boolean = false) {
 		if (isArray(message)) {
 			this.model.messages.push(...(message as IResultMessage[]));
 		} else {
@@ -210,7 +213,7 @@ export class MessagePanel extends Disposable {
 		const errorColor = theme.getColor(resultsErrorColor);
 		const content: string[] = [];
 		if (errorColor) {
-			content.push(`.message-tree .monaco-tree-rows .error-message { color: ${errorColor}; }`);
+			content.push(`.message-tree .monaco-list-rows .error-message { color: ${errorColor}; }`);
 		}
 
 		const newStyles = content.join('\n');
