@@ -68,7 +68,7 @@ export default class LineChart extends BarChart {
 		return values(dataSetMap);
 	}
 
-	public get labels(): Array<string> {
+	public get labels(): ReadonlyArray<string> {
 		if (this._config.dataType === DataType.Number) {
 			return super.getLabels();
 		} else {

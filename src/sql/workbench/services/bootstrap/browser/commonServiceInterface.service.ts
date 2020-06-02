@@ -83,7 +83,7 @@ export class SingleQueryManagementService {
 	) { }
 
 	public runQueryAndReturn(queryString: string): Promise<ISimpleResult> {
-		const query = this.queryService.createOrGetQuery(URI.parse(this._uri));
+		const query = this.queryService.createOrGetQuery(this._uri);
 		query.execute(queryString);
 		return getResults(query);
 	}

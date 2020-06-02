@@ -93,7 +93,7 @@ export class Graph implements IInsight {
 			return;
 		}
 		this._data = data;
-		let labels: Array<string>;
+		let labels: ReadonlyArray<string>;
 		let chartData: Array<Chart.ChartDataSets>;
 
 		if (this.options.dataDirection === DataDirection.Horizontal) {
@@ -162,14 +162,14 @@ export class Graph implements IInsight {
 			this.chartjs.data.datasets = chartData;
 			this.chartjs.config.type = this.options.type;
 			// we don't want to include lables for timeSeries
-			this.chartjs.data.labels = this.originalType === 'timeSeries' ? [] : labels;
+			this.chartjs.data.labels = this.originalType === 'timeSeries' ? [] : labels.slice();
 			this.chartjs.options = this.transformOptions(this.options);
 			this.chartjs.update({ duration: 0 });
 		} else {
 			this.chartjs = new chartjs.Chart(this.canvas.getContext('2d'), {
 				data: {
 					// we don't want to include lables for timeSeries
-					labels: this.originalType === 'timeSeries' ? [] : labels,
+					labels: this.originalType === 'timeSeries' ? [] : labels.slice(),
 					datasets: chartData
 				},
 				type: this.options.type,

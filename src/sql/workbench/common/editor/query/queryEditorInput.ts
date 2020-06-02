@@ -160,7 +160,7 @@ export abstract class QueryEditorInput extends EditorInput implements IConnectab
 
 	@memoize
 	public get query(): IQuery {
-		const query = this.queryService.createOrGetQuery(this.resource);
+		const query = this.queryService.createOrGetQuery(this.resource.toString(), this.resource);
 		query.onDidStateChange(e => {
 			if (e === QueryState.EXECUTING) {
 				this.state.executing = true;
