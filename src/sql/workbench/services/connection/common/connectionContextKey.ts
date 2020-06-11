@@ -14,12 +14,15 @@ export class ConnectionContextKey implements IContextKey<IConnectionProfile> {
 	static Database = new RawContextKey<string>('databaseName', undefined);
 	static Connection = new RawContextKey<IConnectionProfile>('connection', undefined);
 	static IsQueryProvider = new RawContextKey<boolean>('isQueryProvider', false);
+	static CanOpenInAzurePortal = new RawContextKey<boolean>('canOpenInAzurePortal', false);
 
 	private _providerKey: IContextKey<string>;
 	private _serverKey: IContextKey<string>;
 	private _databaseKey: IContextKey<string>;
 	private _connectionKey: IContextKey<IConnectionProfile>;
 	private _isQueryProviderKey: IContextKey<boolean>;
+	private _canOpenInAzurePortal: IContextKey<boolean>;
+
 
 	constructor(
 		@IContextKeyService contextKeyService: IContextKeyService,
@@ -30,14 +33,25 @@ export class ConnectionContextKey implements IContextKey<IConnectionProfile> {
 		this._databaseKey = ConnectionContextKey.Database.bindTo(contextKeyService);
 		this._connectionKey = ConnectionContextKey.Connection.bindTo(contextKeyService);
 		this._isQueryProviderKey = ConnectionContextKey.IsQueryProvider.bindTo(contextKeyService);
+		this._canOpenInAzurePortal = ConnectionContextKey.CanOpenInAzurePortal.bindTo(contextKeyService);
 	}
 
 	set(value: IConnectionProfile) {
+		this.setCanOpenInPortal(value);
 		this._connectionKey.set(value);
 		this._providerKey.set(value && value.providerName);
 		this._serverKey.set(value && value.serverName);
 		this._databaseKey.set(value && value.databaseName);
 		this._isQueryProviderKey.set(value && value.providerName && this.queryService.providers.indexOf(value.providerName) !== -1);
+	}
+
+	private setCanOpenInPortal(connectionProfile: IConnectionProfile): void {
+		if (connectionProfile &&
+			connectionProfile.azureResourceId &&
+			connectionProfile.azureTenantId &&
+			connectionProfile.azurePortalEndpoint) {
+			this._canOpenInAzurePortal.set(true);
+		}
 	}
 
 	reset(): void {
@@ -46,6 +60,7 @@ export class ConnectionContextKey implements IContextKey<IConnectionProfile> {
 		this._databaseKey.reset();
 		this._connectionKey.reset();
 		this._isQueryProviderKey.reset();
+		this._canOpenInAzurePortal.reset();
 	}
 
 	public get(): IConnectionProfile {

@@ -234,13 +234,18 @@ export class RunQueryAction extends QueryTaskbarAction {
 		if (this.isConnected(editor)) {
 			// if the selection isn't empty then execute the selection
 			// otherwise, either run the statement or the script depending on parameter
-			const selection = this.editorService.activeTextEditorControl.getSelection();
+			let selection = this.editorService.activeTextEditorControl.getSelection();
 			if (runCurrentStatement && selection) {
 				editor.query.execute(selection);
 			} else {
 				editor.query.execute(selection);
 			}
 		}
+	}
+
+	protected isCursorPosition(selection: IRange) {
+		return selection.startLineNumber === selection.endLineNumber
+			&& selection.startColumn === selection.endColumn;
 	}
 }
 
