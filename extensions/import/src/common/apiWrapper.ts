@@ -84,5 +84,4 @@ export class ApiWrapper {
 		return azdata.connection.getConnectionString(connectionId, includePassword);
 	}
 
-
 }

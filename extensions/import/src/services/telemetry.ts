@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 
 import * as constants from '../common/constants';
 import { IMessage, ITelemetryEventProperties, ITelemetryEventMeasures } from './contracts';
+import { ApiWrapper } from '../common/apiWrapper';
 
 
 /**
@@ -71,8 +72,8 @@ export class LanguageClientErrorHandler {
 
 
 export class Telemetry {
-	private static reporter: TelemetryReporter;
-	private static disabled: boolean;
+	public static reporter: TelemetryReporter;
+	public static disabled: boolean;
 
 	/**
 	 * Disable telemetry reporting
@@ -84,14 +85,14 @@ export class Telemetry {
 	/**
 	 * Initialize the telemetry reporter for use.
 	 */
-	public static initialize(): void {
+	public static initialize(apiWrapper: ApiWrapper): void {
 		if (typeof this.reporter === 'undefined') {
 			// Check if the user has opted out of telemetry
-			if (!vscode.workspace.getConfiguration('telemetry').get<boolean>('enableTelemetry', true)) {
+			if (!apiWrapper.getConfiguration('telemetry').get<boolean>('enableTelemetry', true)) {
 				this.disable();
 				return;
 			}
-			let packageInfo = vscode.extensions.getExtension('Microsoft.import').packageJSON;
+			let packageInfo = apiWrapper.getExtension('Microsoft.import').packageJSON;
 			this.reporter = new TelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
 		}
 	}
@@ -126,4 +127,4 @@ export class Telemetry {
 	}
 }
 
-Telemetry.initialize();
+Telemetry.initialize(new ApiWrapper());
