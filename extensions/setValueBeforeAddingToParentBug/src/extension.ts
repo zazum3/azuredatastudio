@@ -42,7 +42,7 @@ function divAfter(view: azdata.ModelView) {
 	text.value = 'Initial value';
 
 	div.addItem(text);
-	text.value = 'Set value after adding to div';
+	text.value = 'Set value after adding to div'; // Doesn't work
 	return div;
 }
 
