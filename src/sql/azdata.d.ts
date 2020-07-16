@@ -5043,7 +5043,8 @@ declare module 'azdata' {
 			| 'busy'
 			| 'restarting'
 			| 'dead'
-			| 'connected';
+			| 'connected'
+			| 'autorestarting';
 
 		/**
 		 * An arguments object for the kernel changed event.

@@ -104,6 +104,13 @@ export class SessionStub implements Session.ISession {
 }
 
 export class KernelStub implements Kernel.IKernel {
+	handleComms: boolean;
+	sendControlMessage<T extends KernelMessage.ControlMessageType>(msg: KernelMessage.IControlMessage<T>, expectReply?: boolean, disposeOnDone?: boolean): Kernel.IControlFuture<KernelMessage.IControlMessage<T>, KernelMessage.IControlMessage<KernelMessage.ControlMessageType>> {
+		throw new Error('Method not implemented.');
+	}
+	requestDebug(content: { seq: number; type: 'request'; command: string; arguments?: any; }, disposeOnDone?: boolean): Kernel.IControlFuture<KernelMessage.IDebugRequestMsg, KernelMessage.IDebugReplyMsg> {
+		throw new Error('Method not implemented.');
+	}
 	get terminated(): ISignal<this, void> {
 		throw new Error('Method not implemented.');
 	}
@@ -158,7 +165,7 @@ export class KernelStub implements Kernel.IKernel {
 	getSpec(): Promise<Kernel.ISpecModel> {
 		throw new Error('Method not implemented.');
 	}
-	sendShellMessage(msg: KernelMessage.IShellMessage, expectReply?: boolean, disposeOnDone?: boolean): Kernel.IFuture {
+	sendShellMessage(msg: KernelMessage.IShellMessage, expectReply?: boolean, disposeOnDone?: boolean): Kernel.IFuture<any, any> {
 		throw new Error('Method not implemented.');
 	}
 	reconnect(): Promise<void> {
@@ -173,22 +180,22 @@ export class KernelStub implements Kernel.IKernel {
 	requestKernelInfo(): Promise<KernelMessage.IInfoReplyMsg> {
 		throw new Error('Method not implemented.');
 	}
-	requestComplete(content: KernelMessage.ICompleteRequest): Promise<KernelMessage.ICompleteReplyMsg> {
+	requestComplete(content: KernelMessage.ICompleteRequestMsg['content']): Promise<KernelMessage.ICompleteReplyMsg> {
 		throw new Error('Method not implemented.');
 	}
-	requestInspect(content: KernelMessage.IInspectRequest): Promise<KernelMessage.IInspectReplyMsg> {
+	requestInspect(content: KernelMessage.ICompleteRequestMsg['content']): Promise<KernelMessage.IInspectReplyMsg> {
 		throw new Error('Method not implemented.');
 	}
-	requestHistory(content: KernelMessage.IHistoryRequest): Promise<KernelMessage.IHistoryReplyMsg> {
+	requestHistory(content: KernelMessage.IHistoryRequestMsg['content']): Promise<KernelMessage.IHistoryReplyMsg> {
 		throw new Error('Method not implemented.');
 	}
-	requestExecute(content: KernelMessage.IExecuteRequest, disposeOnDone?: boolean): Kernel.IFuture {
+	requestExecute(content: KernelMessage.IExecuteRequestMsg['content'], disposeOnDone?: boolean): Kernel.IFuture<any, any> {
 		throw new Error('Method not implemented.');
 	}
-	requestIsComplete(content: KernelMessage.IIsCompleteRequest): Promise<KernelMessage.IIsCompleteReplyMsg> {
+	requestIsComplete(content: KernelMessage.IIsCompleteRequestMsg['content']): Promise<KernelMessage.IIsCompleteReplyMsg> {
 		throw new Error('Method not implemented.');
 	}
-	requestCommInfo(content: KernelMessage.ICommInfoRequest): Promise<KernelMessage.ICommInfoReplyMsg> {
+	requestCommInfo(content: KernelMessage.ICommInfoRequestMsg['content']): Promise<KernelMessage.ICommInfoReplyMsg> {
 		throw new Error('Method not implemented.');
 	}
 	sendInputReply(content: KernelMessage.IInputReply): void {
@@ -214,7 +221,7 @@ export class KernelStub implements Kernel.IKernel {
 	}
 }
 
-export class FutureStub implements Kernel.IFuture {
+export class FutureStub implements Kernel.IFuture<any, any> {
 	get msg(): KernelMessage.IShellMessage {
 		throw new Error('Method not implemented.');
 	}

@@ -45,6 +45,7 @@ const indentationFilter = [
 	'!ThirdPartyNotices.txt',
 	'!LICENSE.{txt,rtf}',
 	'!LICENSES.chromium.html',
+	'!requirements.txt',
 	'!**/LICENSE',
 	'!src/vs/nls.js',
 	'!src/vs/nls.build.js',

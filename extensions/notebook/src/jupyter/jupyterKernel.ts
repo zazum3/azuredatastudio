@@ -41,7 +41,8 @@ function toIOPubMessage(msgImpl: KernelMessage.IIOPubMessage): nb.IIOPubMessage 
 
 function toIInputReply(content: nb.IInputReply): KernelMessage.IInputReply {
 	return {
-		value: content.value
+		value: content.value,
+		status: 'ok'
 	};
 }
 export class JupyterKernel implements nb.IKernel {
@@ -89,7 +90,7 @@ export class JupyterKernel implements nb.IKernel {
 	requestExecute(content: nb.IExecuteRequest, disposeOnDone?: boolean): nb.IFuture {
 		content.code = Array.isArray(content.code) ? content.code.join('') : content.code;
 		content.code = content.code.replace(/\r+\n/gm, '\n'); // Remove \r (if it exists) from newlines
-		let futureImpl = this.kernelImpl.requestExecute(content as KernelMessage.IExecuteRequest, disposeOnDone);
+		let futureImpl = this.kernelImpl.requestExecute(content as KernelMessage.IExecuteRequestMsg['content'], disposeOnDone);
 		return new JupyterFuture(futureImpl);
 	}
 
@@ -113,7 +114,7 @@ export class JupyterFuture implements nb.IFuture {
 
 	private _inProgress: boolean;
 
-	constructor(private futureImpl: Kernel.IFuture) {
+	constructor(private futureImpl: Kernel.IFuture<any, any>) {
 		this._inProgress = true;
 	}
 

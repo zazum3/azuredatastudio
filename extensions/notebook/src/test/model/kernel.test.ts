@@ -87,8 +87,8 @@ describe('Jupyter Session', function (): void {
 			parent_header: undefined
 		};
 		futureMock.setup(f => f.msg).returns(() => msg);
-		let executeRequest: KernelMessage.IExecuteRequest;
-		let shouldDispose: KernelMessage.IExecuteRequest;
+		let executeRequest: KernelMessage.IExecuteRequestMsg;
+		let shouldDispose: KernelMessage.IExecuteRequestMsg;
 		mockJupyterKernel.setup(k => k.requestExecute(TypeMoq.It.isAny(), TypeMoq.It.isAny())).returns((request, disposeOnDone) => {
 			executeRequest = request;
 			shouldDispose = disposeOnDone;
@@ -104,7 +104,7 @@ describe('Jupyter Session', function (): void {
 		should(future).be.instanceof(JupyterFuture);
 		should(future.msg.type).equal('shell');
 		should(future.msg.content.code).equal(code);
-		should(executeRequest.code).equal(code);
+		should(executeRequest.content.code).equal(code);
 		should(shouldDispose).be.true();
 	});
 
@@ -185,7 +185,7 @@ describe('Jupyter Future', function (): void {
 			channel: <any>channel,
 			content: { value: 'test' },
 			metadata: { value: 'test' },
-			header: { username: 'test', version: '1', msg_id: undefined, msg_type: undefined, session: undefined },
+			header: { username: 'test', version: '1', msg_id: undefined, msg_type: undefined, session: undefined, date: undefined },
 			parent_header: { username: 'test', version: '1', msg_id: undefined, msg_type: undefined, session: undefined }
 		});
 		let msg = getMessage();

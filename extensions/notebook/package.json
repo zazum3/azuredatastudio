@@ -528,7 +528,12 @@
     }
   },
   "dependencies": {
-    "@jupyterlab/services": "^3.2.1",
+    "@jupyterlab/apputils": "^1.2.2",
+    "@jupyterlab/docregistry": "^1.2.2",
+    "@jupyterlab/notebook": "^1.2.0",
+    "@jupyterlab/rendermime": "^1.2.0",
+    "@jupyterlab/coreutils": "^3.1.0",
+    "@jupyterlab/services": "^4.2.0",
     "@types/adm-zip": "^0.4.32",
     "@types/tar": "^4.0.3",
     "adm-zip": "^0.4.14",
@@ -546,6 +551,10 @@
     "ws": "^7.2.0"
   },
   "devDependencies": {
+    "@phosphor/widgets": "^1.9.3",
+    "@jupyter-widgets/base": "^2.0.1",
+    "@jupyter-widgets/controls": "^1.5.2",
+    "@jupyter-widgets/jupyterlab-manager": "^1.0.2",
     "@types/fs-extra": "^5.0.0",
     "@types/glob": "^7.1.1",
     "@types/js-yaml": "^3.12.1",
