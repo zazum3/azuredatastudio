@@ -53,5 +53,11 @@
 	"bdc-agreement-azdata-eula": "azdata License Terms",
 	"bdc-agreement-bdc-eula": "SQL Server License Terms",
 	"deployment.configuration.title": "Deployment configuration",
-	"azdata-install-location-description": "Location of the azdata package used for the install command"
+	"azdata-install-location-description": "Location of the azdata package used for the install command",
+	"resource-type-sql-azure-setup-display-name": "SQL Server on Azure",
+	"resource-type-sql-azure-setup-description": "Best for modern cloud applications. Hyperscale and serverless options are available.",
+	"resource-type-sql-azure-resource-type-name": "Resource Type",
+	"resource-type-sql-azure-resource-type-single-database": "Single database",
+	"resource-type-sql-azure-resource-type-elastic-pool": "Elastic pool",
+	"resource-type-sql-azure-resource-type-database-server": "Database server"
 }

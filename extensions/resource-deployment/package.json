@@ -391,6 +391,54 @@
             "when": "version=sql2019"
           }
         ]
+      },
+      {
+        "name": "sql-azure-setup",
+        "displayIndex": 4,
+        "displayName": "%resource-type-sql-azure-setup-display-name%",
+        "description": "%resource-type-sql-azure-setup-description%",
+        "platforms": "*",
+        "icon": {
+          "light": "./images/sql_server_on_azure.svg",
+          "dark": "./images/sql_server_on_azure.svg"
+        },
+        "options": [
+          {
+            "name": "resource-type",
+            "displayName": "%resource-type-sql-azure-resource-type-name%",
+            "values": [
+              {
+                "name": "single-database",
+                "displayName": "%resource-type-sql-azure-resource-type-single-database%"
+              },
+              {
+                "name": "elastic-pool",
+                "displayName": "%resource-type-sql-azure-resource-type-elastic-pool%"
+              },
+              {
+                "name": "database-server",
+                "displayName": "%resource-type-sql-azure-resource-type-database-server%"
+              }
+            ]
+          }
+        ],
+        "providers": [
+          {
+            "webPageUrl": "https://ms.portal.azure.com/#create/Microsoft.SQLDatabase",
+            "requiredTools": [],
+            "when": "resource-type=single-database"
+          },
+          {
+            "webPageUrl": "https://ms.portal.azure.com/#create/Microsoft.SQLElasticDatabasePool",
+            "requiredTools": [],
+            "when": "resource-type=elastic-pool"
+          },
+          {
+            "webPageUrl": "https://ms.portal.azure.com/#create/Microsoft.SQLServer",
+            "requiredTools": [],
+            "when": "resource-type=database-server"
+          }
+        ]
       }
     ]
   },
