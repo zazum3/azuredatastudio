@@ -1,0 +1,136 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the Source EULA. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+import { inject, injectable } from 'inversify';
+import { ConfigurationTarget, Uri } from 'vscode';
+import { IDocumentManager, IWorkspaceService } from '../common/application/types';
+import { traceError } from '../common/logger';
+import { FileSystemPaths } from '../common/platform/fs-paths';
+import { IPythonExecutionFactory } from '../common/process/types';
+import { IPersistentStateFactory, Resource } from '../common/types';
+import { IServiceContainer } from '../ioc/types';
+import { isMacDefaultPythonPath } from '../pythonEnvironments/discovery';
+import {
+	getInterpreterTypeName,
+	InterpreterInformation,
+	InterpreterType,
+	PythonInterpreter,
+	sortInterpreters
+} from '../pythonEnvironments/info';
+import { IInterpreterHelper } from './contracts';
+import { IInterpreterHashProviderFactory } from './locators/types';
+
+const EXPITY_DURATION = 24 * 60 * 60 * 1000;
+type CachedPythonInterpreter = Partial<PythonInterpreter> & { fileHash: string };
+
+export type WorkspacePythonPath = {
+	folderUri: Uri;
+	configTarget: ConfigurationTarget.Workspace | ConfigurationTarget.WorkspaceFolder;
+};
+
+export function getFirstNonEmptyLineFromMultilineString(stdout: string) {
+	if (!stdout) {
+		return '';
+	}
+	const lines = stdout
+		.split(/\r?\n/g)
+		.map((line) => line.trim())
+		.filter((line) => line.length > 0);
+	return lines.length > 0 ? lines[0] : '';
+}
+
+export function isInterpreterLocatedInWorkspace(interpreter: PythonInterpreter, activeWorkspaceUri: Uri) {
+	const fileSystemPaths = FileSystemPaths.withDefaults();
+	const interpreterPath = fileSystemPaths.normCase(interpreter.path);
+	const resourcePath = fileSystemPaths.normCase(activeWorkspaceUri.fsPath);
+	return interpreterPath.startsWith(resourcePath);
+}
+
+@injectable()
+export class InterpreterHelper implements IInterpreterHelper {
+	private readonly persistentFactory: IPersistentStateFactory;
+	constructor(
+		@inject(IServiceContainer) private serviceContainer: IServiceContainer,
+		@inject(IInterpreterHashProviderFactory) private readonly hashProviderFactory: IInterpreterHashProviderFactory
+	) {
+		this.persistentFactory = this.serviceContainer.get<IPersistentStateFactory>(IPersistentStateFactory);
+	}
+	public getActiveWorkspaceUri(resource: Resource): WorkspacePythonPath | undefined {
+		const workspaceService = this.serviceContainer.get<IWorkspaceService>(IWorkspaceService);
+		if (!workspaceService.hasWorkspaceFolders) {
+			return null;
+		}
+		if (Array.isArray(workspaceService.workspaceFolders) && workspaceService.workspaceFolders.length === 1) {
+			return { folderUri: workspaceService.workspaceFolders[0].uri, configTarget: ConfigurationTarget.Workspace };
+		}
+
+		if (resource) {
+			const workspaceFolder = workspaceService.getWorkspaceFolder(resource);
+			if (workspaceFolder) {
+				return { configTarget: ConfigurationTarget.WorkspaceFolder, folderUri: workspaceFolder.uri };
+			}
+		}
+		const documentManager = this.serviceContainer.get<IDocumentManager>(IDocumentManager);
+
+		if (documentManager.activeTextEditor) {
+			const workspaceFolder = workspaceService.getWorkspaceFolder(documentManager.activeTextEditor.document.uri);
+			if (workspaceFolder) {
+				return { configTarget: ConfigurationTarget.WorkspaceFolder, folderUri: workspaceFolder.uri };
+			}
+		}
+		return null;
+	}
+	public async getInterpreterInformation(pythonPath: string): Promise<undefined | Partial<PythonInterpreter>> {
+		const fileHash = await this.hashProviderFactory
+			.create({ pythonPath })
+			.then((provider) => provider.getInterpreterHash(pythonPath))
+			.catch((ex) => {
+				traceError(`Failed to create File hash for interpreter ${pythonPath}`, ex);
+				return '';
+			});
+		const store = this.persistentFactory.createGlobalPersistentState<CachedPythonInterpreter>(
+			`${pythonPath}.v3`,
+			undefined,
+			EXPITY_DURATION
+		);
+		if (store.value && fileHash && store.value.fileHash === fileHash) {
+			return store.value;
+		}
+		const processService = await this.serviceContainer
+			.get<IPythonExecutionFactory>(IPythonExecutionFactory)
+			.create({ pythonPath });
+
+		try {
+			const info = await processService
+				.getInterpreterInformation()
+				.catch<InterpreterInformation | undefined>(() => undefined);
+			if (!info) {
+				return null;
+			}
+			const details = {
+				...info,
+				fileHash
+			};
+			await store.updateValue(details);
+			return details;
+		} catch (ex) {
+			traceError(`Failed to get interpreter information for '${pythonPath}'`, ex);
+			return null;
+		}
+	}
+	public isMacDefaultPythonPath(pythonPath: string) {
+		return isMacDefaultPythonPath(pythonPath);
+	}
+	public getInterpreterTypeDisplayName(interpreterType: InterpreterType) {
+		return getInterpreterTypeName(interpreterType);
+	}
+	public getBestInterpreter(interpreters?: PythonInterpreter[]): PythonInterpreter | undefined {
+		if (!Array.isArray(interpreters) || interpreters.length === 0) {
+			return null;
+		}
+		const sorted = sortInterpreters(interpreters);
+		return sorted[sorted.length - 1];
+	}
+}

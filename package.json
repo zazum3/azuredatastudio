@@ -196,6 +196,7 @@
     "webpack": "^4.43.0",
     "webpack-cli": "^3.3.12",
     "webpack-stream": "^5.2.1",
+    "windows-process-tree": "0.2.4",
     "yaserver": "^0.2.0"
   },
   "repository": {
@@ -209,7 +210,6 @@
     "vscode-windows-ca-certs": "0.2.0",
     "vscode-windows-registry": "1.0.2",
     "windows-foreground-love": "0.2.0",
-    "windows-mutex": "0.3.0",
-    "windows-process-tree": "0.2.4"
+    "windows-mutex": "0.3.0"
   }
 }
