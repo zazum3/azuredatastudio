@@ -392,6 +392,23 @@
           }
         ]
       }
+    ],
+    "resourceDeploymentHostTypes":[
+      {
+        "name":"local",
+        "displayName": "SQL server (local)",
+        "displayIndex": 1
+      },
+      {
+        "name":"hybrid",
+        "displayName":"Azure Arc (hybrid)",
+        "displayIndex": 2
+      },
+      {
+        "name":"cloud",
+        "displayName":"Azure Sql (cloud)",
+        "displayIndex": 3
+      }
     ]
   },
   "dependencies": {

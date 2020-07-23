@@ -378,3 +378,11 @@ export interface Command {
 	additionalEnvironmentVariables?: NodeJS.ProcessEnv;
 	ignoreError?: boolean;
 }
+
+export interface ResourceHostType {
+	name: string;
+	displayName: string;
+	displayIndex: number;
+	options: any[];
+	description: string;
+}

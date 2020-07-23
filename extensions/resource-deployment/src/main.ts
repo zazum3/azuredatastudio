@@ -11,7 +11,9 @@ import { PlatformService } from './services/platformService';
 import { ResourceTypeService } from './services/resourceTypeService';
 import { ToolsService } from './services/toolsService';
 import { DeploymentInputDialog } from './ui/deploymentInputDialog';
+import { ResourceHostTypePickerDialog } from './ui/resourceHostTypePickerDialog';
 import { ResourceTypePickerDialog } from './ui/resourceTypePickerDialog';
+
 
 const localize = nls.loadMessageBundle();
 
@@ -40,8 +42,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		if (!defaultResourceType) {
 			vscode.window.showErrorMessage(localize('resourceDeployment.UnknownResourceType', "The resource type: {0} is not defined", defaultResourceTypeName));
 		} else {
-			const dialog = new ResourceTypePickerDialog(toolsService, resourceTypeService, defaultResourceType, resourceTypeNameFilters);
-			dialog.open();
+			if (!resourceTypeNameFilters) {
+				const dialog = new ResourceHostTypePickerDialog(resourceTypeService);
+				dialog.open();
+			}
+			else {
+				const dialog = new ResourceTypePickerDialog(toolsService, resourceTypeService, defaultResourceType, resourceTypeNameFilters);
+				dialog.open();
+			}
+
 		}
 	};
 

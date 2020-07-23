@@ -13,7 +13,7 @@ import * as nls from 'vscode-nls';
 import { INotebookService } from './notebookService';
 import { IPlatformService } from './platformService';
 import { IToolsService } from './toolsService';
-import { ResourceType, ResourceTypeOption, NotebookPathInfo, DeploymentProvider, instanceOfWizardDeploymentProvider, instanceOfDialogDeploymentProvider, instanceOfNotebookDeploymentProvider, instanceOfDownloadDeploymentProvider, instanceOfWebPageDeploymentProvider, instanceOfCommandDeploymentProvider, instanceOfNotebookBasedDialogInfo, instanceOfNotebookWizardDeploymentProvider } from '../interfaces';
+import { ResourceType, ResourceTypeOption, NotebookPathInfo, DeploymentProvider, instanceOfWizardDeploymentProvider, instanceOfDialogDeploymentProvider, instanceOfNotebookDeploymentProvider, instanceOfDownloadDeploymentProvider, instanceOfWebPageDeploymentProvider, instanceOfCommandDeploymentProvider, instanceOfNotebookBasedDialogInfo, instanceOfNotebookWizardDeploymentProvider, ResourceHostType } from '../interfaces';
 import { DeployClusterWizard } from '../ui/deployClusterWizard/deployClusterWizard';
 import { DeploymentInputDialog } from '../ui/deploymentInputDialog';
 
@@ -26,10 +26,12 @@ export interface IResourceTypeService {
 	getResourceTypes(filterByPlatform?: boolean): ResourceType[];
 	validateResourceTypes(resourceTypes: ResourceType[]): string[];
 	startDeployment(provider: DeploymentProvider): void;
+	getResourceHostTypes(): ResourceHostType[];
 }
 
 export class ResourceTypeService implements IResourceTypeService {
 	private _resourceTypes: ResourceType[] = [];
+	private _resourceHostTypes: ResourceHostType[] = [];
 
 	constructor(private platformService: IPlatformService, private toolsService: IToolsService, private notebookService: INotebookService) { }
 
@@ -321,6 +323,22 @@ export class ResourceTypeService implements IResourceTypeService {
 			});
 		});
 		return promise;
+	}
+
+	public getResourceHostTypes(): ResourceHostType[] {
+		if (this._resourceHostTypes.length === 0) {
+			vscode.extensions.all.forEach((extension) => {
+				const extensionResourceHostTypes = extension.packageJSON.contributes && extension.packageJSON.contributes.resourceDeploymentHostTypes as ResourceHostType[];
+				if (extensionResourceHostTypes) {
+					extensionResourceHostTypes.forEach((resourceHostType) => {
+						this._resourceHostTypes.push(resourceHostType);
+					});
+				}
+			});
+		}
+
+		let resourceHostTypes = this._resourceHostTypes;
+		return resourceHostTypes;
 	}
 
 }
