@@ -6,7 +6,7 @@
 // tslint:disable:no-any no-require-imports no-function-expression no-invalid-this
 
 import { ProgressLocation, ProgressOptions, window } from 'vscode';
-import '../../common/extensions';
+import '../extensions';
 import { IServiceContainer } from '../../ioc/types';
 import { isTestExecution } from '../constants';
 import { traceError, traceVerbose } from '../logger';

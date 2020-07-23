@@ -22,13 +22,14 @@ import {
 	getSelectedAndFocusedInfo,
 	ICellViewModel,
 	IMainState,
-	ServerStatus
-} from '../../interactive-common/mainState';
+	ServerStatus,
+	createEditableCellVM,
+	generateTestState
+} from '../mainState';
 import { getLocString } from '../../react-common/locReactSide';
 import { PostOffice } from '../../react-common/postOffice';
 import { combineReducers, createQueueableActionMiddleware, QueuableAction } from '../../react-common/reduxUtils';
 import { computeEditorOptions, getDefaultSettings } from '../../react-common/settingsReactSide';
-import { createEditableCellVM, generateTestState } from '../mainState';
 import { forceLoad } from '../transforms';
 import { isAllowedAction, isAllowedMessage, postActionToExtension } from './helpers';
 import { generatePostOfficeSendReducer } from './postOffice';

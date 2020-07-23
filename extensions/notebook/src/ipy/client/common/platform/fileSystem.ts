@@ -12,7 +12,7 @@ import * as glob from 'glob';
 import { injectable } from 'inversify';
 import { promisify } from 'util';
 import * as vscode from 'vscode';
-import '../../common/extensions';
+import '../extensions';
 import { traceError } from '../logger';
 import { createDirNotEmptyError, isFileExistsError, isFileNotFoundError, isNoPermissionsError } from './errors';
 import { FileSystemPaths, FileSystemPathUtils } from './fs-paths';

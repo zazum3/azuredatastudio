@@ -7,7 +7,7 @@ import { inject, injectable } from 'inversify';
 import * as md5 from 'md5';
 import * as path from 'path';
 import { Disposable, Event, EventEmitter, Uri } from 'vscode';
-import '../../client/common/extensions';
+import '../common/extensions';
 import { IDocumentManager, IWorkspaceService } from '../common/application/types';
 import { DeprecatePythonPath } from '../common/experiments/groups';
 import { traceError } from '../common/logger';
