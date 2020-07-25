@@ -129,6 +129,20 @@ export interface INotebookService {
 	 * @param isTrusted True if notebook is to be set to trusted, false otherwise.
 	 */
 	setTrusted(notebookUri: URI, isTrusted: boolean): Promise<boolean>;
+
+	/**
+	 * Saves the kernels for a particular notebook provider
+	 * @param providerId Notebook provider id
+	 * @param kernels list of kernels for provider id
+	 */
+	saveKernelsForProvider(providerId: string, kernels: azdata.nb.IKernelSpec[]): void;
+
+	/**
+	 * Gets cached kernel information for a given provider
+	 * @param providerId Notebook provider id
+	 */
+	getCachedKernelsForProvider(providerId: string): azdata.nb.IKernelSpec[] | undefined;
+
 }
 
 export interface INotebookProvider {

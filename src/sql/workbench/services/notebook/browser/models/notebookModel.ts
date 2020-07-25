@@ -14,7 +14,7 @@ import { NotebookChangeType, CellType, CellTypes } from 'sql/workbench/services/
 import { nbversion } from 'sql/workbench/services/notebook/common/notebookConstants';
 import * as notebookUtils from 'sql/workbench/services/notebook/browser/models/notebookUtils';
 import * as TelemetryKeys from 'sql/platform/telemetry/common/telemetryKeys';
-import { INotebookManager, SQL_NOTEBOOK_PROVIDER, DEFAULT_NOTEBOOK_PROVIDER } from 'sql/workbench/services/notebook/browser/notebookService';
+import { INotebookManager, SQL_NOTEBOOK_PROVIDER, DEFAULT_NOTEBOOK_PROVIDER, INotebookService } from 'sql/workbench/services/notebook/browser/notebookService';
 import { NotebookContexts } from 'sql/workbench/services/notebook/browser/models/notebookContexts';
 import { IConnectionProfile } from 'sql/platform/connection/common/interfaces';
 import { INotification, Severity, INotificationService } from 'vs/platform/notification/common/notification';
@@ -80,6 +80,7 @@ export class NotebookModel extends Disposable implements INotebookModel {
 	private _connectionUrisToDispose: string[] = [];
 	private _textCellsLoading: number = 0;
 	private _standardKernels: notebookUtils.IStandardKernelWithProvider[];
+	private _cachedKernels: nb.IKernelSpec[] = [];
 
 	public requestConnectionHandler: () => Promise<boolean>;
 
@@ -88,7 +89,8 @@ export class NotebookModel extends Disposable implements INotebookModel {
 		public connectionProfile: IConnectionProfile | undefined,
 		@ILogService private readonly logService: ILogService,
 		@INotificationService private readonly notificationService: INotificationService,
-		@IAdsTelemetryService private readonly adstelemetryService: IAdsTelemetryService
+		@IAdsTelemetryService private readonly adstelemetryService: IAdsTelemetryService,
+		@INotebookService private readonly notebookService: INotebookService
 	) {
 		super();
 		if (!_notebookOptions || !_notebookOptions.notebookUri || !_notebookOptions.notebookManagers) {
@@ -213,6 +215,10 @@ export class NotebookModel extends Disposable implements INotebookModel {
 
 	public standardKernelsDisplayName(): string[] {
 		return Array.from(this._kernelDisplayNameToNotebookProviderIds.keys());
+	}
+
+	public cachedKernelsDisplayNames(): string[] | undefined {
+		return this._cachedKernels?.map(k => k.display_name);
 	}
 
 	public get inErrorState(): boolean {
@@ -466,6 +472,12 @@ export class NotebookModel extends Disposable implements INotebookModel {
 			if (standardKernel) {
 				this._defaultKernel = { name: standardKernel.name, display_name: standardKernel.displayName };
 			}
+			if (!standardKernel) {
+				let cachedKernel = find(this._cachedKernels, kernel => kernel.display_name === displayName);
+				if (cachedKernel) {
+					this._defaultKernel = { name: cachedKernel.name, display_name: cachedKernel.display_name };
+				}
+			}
 		}
 		if (this._defaultKernel) {
 			let clientSession = this._notebookOptions.factory.createClientSession({
@@ -517,6 +529,19 @@ export class NotebookModel extends Disposable implements INotebookModel {
 	}
 
 	public setDefaultKernelAndProviderId() {
+		this.notebookOptions?.notebookManagers?.forEach(m => {
+			let providerId = m.providerId;
+			let cachedKernels = this.notebookService.getCachedKernelsForProvider(providerId);
+			if (cachedKernels) {
+				cachedKernels.forEach(kernel => {
+					this._cachedKernels.push(kernel);
+					if (!this._kernelDisplayNameToNotebookProviderIds.has(kernel.display_name)) {
+						this._kernelDisplayNameToNotebookProviderIds.set(kernel.display_name, providerId);
+					}
+				});
+			}
+		});
+
 		if (this._savedKernelInfo) {
 			this.sanitizeSavedKernelInfo();
 			let provider = this._kernelDisplayNameToNotebookProviderIds.get(this._savedKernelInfo.display_name);
@@ -528,6 +553,10 @@ export class NotebookModel extends Disposable implements INotebookModel {
 						// We don't know which provider it is before that provider is chosen to query its specs. Choosing the "last" one registered.
 						this._providerId = m.providerId;
 					}
+					let providerId = m.providerId;
+					this.notebookService.getCachedKernelsForProvider(providerId).forEach(kernel => {
+						this._cachedKernels.push(kernel);
+					});
 				});
 			}
 			this._defaultKernel = this._savedKernelInfo;
@@ -571,10 +600,19 @@ export class NotebookModel extends Disposable implements INotebookModel {
 		return undefined;
 	}
 
-	public getStandardKernelFromDisplayName(displayName: string): notebookUtils.IStandardKernelWithProvider {
+	public getStandardOrCachedKernelFromDisplayName(displayName: string): notebookUtils.IStandardKernelWithProvider {
 		if (displayName && this._standardKernels) {
 			let kernel = find(this._standardKernels, kernel => kernel.displayName.toLowerCase() === displayName.toLowerCase());
 			return kernel;
+		}
+		if (displayName && this._cachedKernels) {
+			let kernel = find(this._cachedKernels, kernel => kernel.display_name.toLowerCase() === displayName.toLowerCase());
+			return {
+				connectionProviderIds: [],
+				displayName: kernel.display_name,
+				name: kernel.name,
+				notebookProvider: this._kernelDisplayNameToNotebookProviderIds.get(kernel.display_name)
+			};
 		}
 		return undefined;
 	}
@@ -892,6 +930,7 @@ export class NotebookModel extends Disposable implements INotebookModel {
 				} else {
 					throw new Error(localize('ProviderNoManager', "Can't find notebook manager for provider {0}", providerId));
 				}
+				this.notebookService.saveKernelsForProvider(this._providerId, manager?.sessionManager?.specs?.kernels);
 				return true;
 			}
 		}
@@ -902,10 +941,10 @@ export class NotebookModel extends Disposable implements INotebookModel {
 		if (!displayName) {
 			return undefined;
 		}
-		let standardKernel = this.getStandardKernelFromDisplayName(displayName);
-		if (standardKernel) {
+		let standardOrCachedKernel = this.getStandardOrCachedKernelFromDisplayName(displayName);
+		if (standardOrCachedKernel) {
 			let providerId = this._kernelDisplayNameToNotebookProviderIds.get(displayName);
-			if (alwaysReturnId || (!this._oldKernel || this._oldKernel.name !== standardKernel.name)) {
+			if (alwaysReturnId || (!this._oldKernel || this._oldKernel.name !== standardOrCachedKernel.name)) {
 				return providerId;
 			}
 		} else {

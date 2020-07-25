@@ -265,6 +265,12 @@ export class NotebookServiceStub implements INotebookService {
 	navigateTo(notebookUri: URI, sectionId: string): void {
 		throw new Error('Method not implemented.');
 	}
+	getCachedKernelsForProvider(providerId: string): nb.IKernelSpec[] {
+		throw new Error('Method not implemented.');
+	}
+	saveKernelsForProvider(providerId: string, kernels: nb.IKernelSpec[]): void {
+		throw new Error('Method not implemented.');
+	}
 }
 
 export class ClientSessionStub implements IClientSession {

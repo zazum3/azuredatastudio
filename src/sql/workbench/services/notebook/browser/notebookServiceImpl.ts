@@ -40,6 +40,7 @@ import { IProductService } from 'vs/platform/product/common/productService';
 export interface NotebookProviderProperties {
 	provider: string;
 	fileExtensions: string[];
+	kernels: string[];
 }
 
 interface NotebookProviderCache {
@@ -60,6 +61,18 @@ interface TrustedNotebookCache {
 
 export interface TrustedNotebooksMemento {
 	trustedNotebooksCache: TrustedNotebookCache;
+}
+
+interface KernelsMetadata {
+	kernels: nb.IKernelSpec[];
+}
+interface KernelsCache {
+	// provider to be cached
+	[providerId: string]: KernelsMetadata;
+}
+
+export interface KernelsMemento {
+	kernelsCache: KernelsCache;
 }
 
 const notebookRegistry = Registry.as<INotebookProviderRegistry>(Extensions.NotebookProviderContribution);
@@ -88,12 +101,15 @@ export class ProviderDescriptor {
 export const NotebookUriNotDefined = localize('notebookUriNotDefined', "No URI was passed when creating a notebook manager");
 export const NotebookServiceNoProviderRegistered = localize('notebookServiceNoProvider', "Notebook provider does not exist");
 export const FailToSaveTrustState = 'Failed to save trust state to cache';
+export const FailToSaveKernelsState = 'Failed to save kernels state to cache';
 export const TrustedNotebooksMementoId = 'notebooks.trusted';
+export const KernelsMementoId = 'notebook.kernels';
 export class NotebookService extends Disposable implements INotebookService {
 	_serviceBrand: undefined;
 
 	private _providersMemento: Memento;
 	private _trustedNotebooksMemento: Memento;
+	private _kernelsMemento: Memento;
 	private _mimeRegistry: RenderMimeRegistry;
 	private _providers: Map<string, ProviderDescriptor> = new Map();
 	private _navigationProviders: Map<string, INavigationProvider> = new Map();
@@ -124,6 +140,7 @@ export class NotebookService extends Disposable implements INotebookService {
 		super();
 		this._providersMemento = new Memento('notebookProviders', this._storageService);
 		this._trustedNotebooksMemento = new Memento(TrustedNotebooksMementoId, this._storageService);
+		this._kernelsMemento = new Memento(KernelsMementoId, this._storageService);
 		if (this._storageService !== undefined && this.providersMemento.notebookProviderCache === undefined) {
 			this.providersMemento.notebookProviderCache = <NotebookProviderCache>{};
 		}
@@ -460,6 +477,14 @@ export class NotebookService extends Disposable implements INotebookService {
 		return cache;
 	}
 
+	private get kernelsMemento(): KernelsMemento {
+		let cache = this._kernelsMemento.getMemento(StorageScope.GLOBAL) as KernelsMemento;
+		if (!cache.kernelsCache) {
+			cache.kernelsCache = {};
+		}
+		return cache;
+	}
+
 	private cleanupProviders(): void {
 		let knownProviders = Object.keys(notebookRegistry.providers);
 		let cache = this.providersMemento.notebookProviderCache;
@@ -518,6 +543,10 @@ export class NotebookService extends Disposable implements INotebookService {
 			}
 		}
 		return true;
+	}
+
+	getCachedKernelsForProvider(providerId: string): nb.IKernelSpec[] | undefined {
+		return this.kernelsMemento.kernelsCache[providerId]?.kernels;
 	}
 
 	private async getModifiedTimeForFile(notebookUri: URI): Promise<number> {
@@ -612,6 +641,20 @@ export class NotebookService extends Disposable implements INotebookService {
 		}
 	}
 
+	private updateKernelsForProvider(providerId: string, kernels: nb.IKernelSpec[]) {
+		try {
+			let kernelsCache = this.kernelsMemento.kernelsCache;
+			kernelsCache[providerId] = {
+				kernels: kernels
+			};
+			this._kernelsMemento.saveMemento();
+		} catch (err) {
+			if (this._logService) {
+				this._logService.trace(`${FailToSaveKernelsState}: ${toErrorMessage(err)}`);
+			}
+		}
+	}
+
 	navigateTo(notebookUri: URI, sectionId: string): void {
 		let editor = this._editors.get(notebookUri.toString());
 		if (editor) {
@@ -638,5 +681,9 @@ export class NotebookService extends Disposable implements INotebookService {
 		}
 
 		return isTrusted;
+	}
+
+	saveKernelsForProvider(providerId: string, kernels: nb.IKernelSpec[]): void {
+		this.updateKernelsForProvider(providerId, kernels);
 	}
 }

@@ -318,7 +318,8 @@ export class KernelsDropdown extends SelectBox {
 
 	// Update SelectBox values
 	public updateKernel(kernel: azdata.nb.IKernel) {
-		let kernels: string[] = this._showAllKernels ? [...new Set(this.model.specs.kernels.map(a => a.display_name).concat(this.model.standardKernelsDisplayName()))]
+		let kernels: string[] = this._showAllKernels
+			? [...new Set(this.model.specs.kernels.map(a => a.display_name).concat(this.model.standardKernelsDisplayName()).concat(this.model.cachedKernelsDisplayNames()))]
 			: this.model.standardKernelsDisplayName();
 		if (kernel && kernel.isReady) {
 			let standardKernel = this.model.getStandardKernelFromName(kernel.name);
