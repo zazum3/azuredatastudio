@@ -86,10 +86,11 @@ export class EditDataInput extends EditorInput implements IConnectableInput {
 			this._register(
 				this._queryModelService.onEditSessionReady((result) => {
 					if (self.uri === result.ownerUri) {
-						self.initEditEnd(result);
+						//	self.initEditEnd(result);
 					}
 				})
 			);
+
 		}
 	}
 
@@ -138,10 +139,10 @@ export class EditDataInput extends EditorInput implements IConnectableInput {
 		this._updateTaskbar.fire(this);
 	}
 
-	public initEditEnd(result: EditSessionReadyParams): void {
+	public initEditEnd(result?: EditSessionReadyParams): void {
 		this._refreshButtonEnabled = true;
 		this._stopButtonEnabled = false;
-		if (!result.success) {
+		if (result && !result.success) {
 			this.notificationService.notify({
 				severity: Severity.Error,
 				message: result.message

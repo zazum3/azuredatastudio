@@ -71,6 +71,8 @@ export class EditDataEditor extends BaseEditor {
 	private _queryEditorVisible: IContextKey<boolean>;
 	private hideQueryResultsView = false;
 
+	private newEditInput: EditDataInput;
+
 	constructor(
 		@ITelemetryService _telemetryService: ITelemetryService,
 		@IThemeService themeService: IThemeService,
@@ -224,6 +226,7 @@ export class EditDataEditor extends BaseEditor {
 			newInput.onRowDropDownSet(this._changeMaxRowsActionItem.defaultRowCount);
 			newInput.setupComplete();
 		}
+		this.newEditInput = newInput;
 
 		return super.setInput(newInput, options, CancellationToken.None)
 			.then(() => this._updateInput(oldInput, newInput, options));
@@ -494,6 +497,7 @@ export class EditDataEditor extends BaseEditor {
 	 */
 	private _onResultsEditorCreated(resultsEditor: EditDataResultsEditor, resultsInput: EditDataResultsInput, options: EditorOptions): Promise<void> {
 		this._resultsEditor = resultsEditor;
+		this._resultsEditor.editInput = this.newEditInput;
 		return this._resultsEditor.setInput(resultsInput, options);
 	}
 
@@ -673,9 +677,9 @@ export class EditDataEditor extends BaseEditor {
 	private _updateTaskbar(owner: EditDataInput): void {
 		// Update the taskbar if the owner of this call is being presented
 		if (owner.matches(this.editDataInput)) {
-			if (!this._refreshTableAction.isClicked()) {
-				this._refreshTableAction.enabled = owner.refreshButtonEnabled;
-			}
+			//if (!this._refreshTableAction.isClicked()) {
+			this._refreshTableAction.enabled = owner.refreshButtonEnabled;
+			//}
 			this._stopRefreshTableAction.enabled = owner.stopButtonEnabled;
 			this._changeMaxRowsActionItem.setCurrentOptionIndex = owner.rowLimit;
 			this._showQueryPaneAction.queryPaneEnabled = owner.queryPaneEnabled;

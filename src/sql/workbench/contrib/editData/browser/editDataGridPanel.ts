@@ -31,7 +31,7 @@ import { StandardKeyboardEvent } from 'vs/base/browser/keyboardEvent';
 import { EditUpdateCellResult } from 'azdata';
 import { ILogService } from 'vs/platform/log/common/log';
 import { deepClone, assign } from 'vs/base/common/objects';
-import { Event } from 'vs/base/common/event';
+import { Event, Emitter } from 'vs/base/common/event';
 import { equals } from 'vs/base/common/arrays';
 import * as DOM from 'vs/base/browser/dom';
 import { onUnexpectedError } from 'vs/base/common/errors';
@@ -40,6 +40,9 @@ export class EditDataGridPanel extends GridParentComponent {
 	// The time(in milliseconds) we wait before refreshing the grid.
 	// We use clearTimeout and setTimeout pair to avoid unnecessary refreshes.
 	private refreshGridTimeoutInMs = 200;
+
+	//The time we wait (in milliseconds) until it is safe to manually run the refresh function again.
+	private refreshRunTimeoutInMs = 1000;
 
 	// The timeout handle for the refresh grid task
 	private refreshGridTimeoutHandle: any;
@@ -78,6 +81,9 @@ export class EditDataGridPanel extends GridParentComponent {
 	public loadDataFunction: (offset: number, count: number) => Promise<{}[]>;
 	public onBeforeAppendCell: (row: number, column: number) => string;
 	public onGridRendered: (event: Slick.OnRenderedEventArgs<any>) => void;
+
+	//emitter to indicate when refresh has completed:
+	private refreshCompleted = new Emitter<boolean>();
 
 	private savedViewState: {
 		gridSelections: Slick.Range[];
@@ -155,6 +161,10 @@ export class EditDataGridPanel extends GridParentComponent {
 
 	public onDestroy(): void {
 		this.baseDestroy();
+	}
+
+	public get getRefreshCompleted(): Event<Boolean> {
+		return this.refreshCompleted.event;
 	}
 
 	handleStart(self: EditDataGridPanel, event: any): void {
@@ -409,7 +419,7 @@ export class EditDataGridPanel extends GridParentComponent {
 		if (self.placeHolderDataSets[0]) {
 			this.refreshDatasets();
 		}
-		self.refreshGrid();
+		self.refreshGrid(true);
 
 		// Setup the state of the selected cell
 		this.resetCurrentCell();
@@ -439,7 +449,7 @@ export class EditDataGridPanel extends GridParentComponent {
 		return inputStr.replace(/(\r\n|\n|\r)/g, '\u0000');
 	}
 
-	private refreshGrid(): Thenable<void> {
+	private refreshGrid(isCalledFromHandle?: boolean): Thenable<void> {
 		return new Promise<void>(async (resolve, reject) => {
 
 			clearTimeout(this.refreshGridTimeoutHandle);
@@ -461,6 +471,9 @@ export class EditDataGridPanel extends GridParentComponent {
 
 				if (this.firstRender) {
 					setTimeout(() => this.setActive());
+				}
+				if (isCalledFromHandle) {
+					setTimeout(() => this.refreshCompleted.fire(true), this.refreshRunTimeoutInMs);
 				}
 				resolve();
 			}, this.refreshGridTimeoutInMs);

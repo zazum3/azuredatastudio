@@ -64,9 +64,7 @@ export abstract class EditDataAction extends Action {
 export class RefreshTableAction extends EditDataAction {
 	private static EnabledClass = 'start';
 	public static ID = 'refreshTableAction';
-	private static clicked = false;
-	//timeout to ensure query has completed fully.
-	private timeoutClicked = 2000;
+
 
 
 	constructor(editor: EditDataEditor,
@@ -78,15 +76,11 @@ export class RefreshTableAction extends EditDataAction {
 		this.label = nls.localize('editData.run', "Run");
 	}
 
-	public isClicked(): boolean {
-		return RefreshTableAction.clicked;
-	}
+
 
 	public run(): Promise<void> {
-		if (!RefreshTableAction.clicked && this.isConnected(this.editor)) {
-			RefreshTableAction.clicked = true;
+		if (this.isConnected(this.editor)) {
 			this.enabled = false;
-			this._notificationService.status(nls.localize('refreshEditDataTable', "Table refresh in progress, please wait for completion."), { hideAfter: this.timeoutClicked });
 			let input = this.editor.editDataInput;
 
 			let rowLimit: number = undefined;
@@ -107,10 +101,6 @@ export class RefreshTableAction extends EditDataAction {
 				});
 			});
 		}
-		setTimeout(() => {
-			RefreshTableAction.clicked = false;
-			this.enabled = true;
-		}, this.timeoutClicked);
 		return Promise.resolve(null);
 	}
 }
