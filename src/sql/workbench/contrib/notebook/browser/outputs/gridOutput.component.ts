@@ -103,14 +103,12 @@ export class GridOutputComponent extends AngularDisposable implements IMimeCompo
 		if (!this._table) {
 			let source = <IDataResource><any>this._bundleOptions.data[this.mimeType];
 			let state = new GridTableState(0, 0);
+			// We need a longterm solution
+			state.columnSizes = [];
 			this._table = this.instantiationService.createInstance(DataResourceTable, source, this.cellModel, this.cellOutput, state);
 			let outputElement = <HTMLElement>this.output.nativeElement;
 			outputElement.appendChild(this._table.element);
 			this._register(attachTableStyler(this._table, this.themeService));
-			this.layout();
-
-			this._table.onAdd();
-			this._initialized = true;
 		}
 	}
 
@@ -118,6 +116,10 @@ export class GridOutputComponent extends AngularDisposable implements IMimeCompo
 		if (this._table) {
 			let maxSize = Math.min(this._table.maximumSize, 500);
 			this._table.layout(maxSize, undefined, ActionsOrientation.HORIZONTAL);
+			if (!this._initialized) {
+				this._table.onAdd();
+				this._initialized = true;
+			}
 		}
 	}
 }

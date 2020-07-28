@@ -154,7 +154,7 @@ export class TextCellComponent extends CellView implements OnInit, OnChanges {
 				this.toggleUserSelect(this.isActive());
 				// If the activeCellId is undefined (i.e. in an active cell update), don't unnecessarily set editMode to false;
 				// it will be set to true in a subsequent call to toggleEditMode()
-				if (changedProp.previousValue !== undefined) {
+				if (changedProp.previousValue !== undefined && this.isEditMode) {
 					this.toggleEditMode(false);
 				}
 				break;
@@ -246,7 +246,6 @@ export class TextCellComponent extends CellView implements OnInit, OnChanges {
 	public set previewMode(value: boolean) {
 		this.showPreview = value;
 		this._changeRef.detectChanges();
-		this.updatePreview();
 	}
 
 	private toggleUserSelect(userSelect: boolean): void {

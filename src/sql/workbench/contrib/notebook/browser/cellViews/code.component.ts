@@ -265,10 +265,10 @@ export class CodeComponent extends CellView implements OnInit, OnChanges {
 	}
 
 	public layout(): void {
+		let height = this._editor.getScrollHeight(false, this._cellModel.isCollapsed);
 		this._editor.layout(new DOM.Dimension(
 			DOM.getContentWidth(this.codeElement.nativeElement),
-			DOM.getContentHeight(this.codeElement.nativeElement)));
-		this._editor.setHeightToScrollHeight(false, this._cellModel.isCollapsed);
+			height));
 	}
 
 	protected initActionBar() {
