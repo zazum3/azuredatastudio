@@ -95,6 +95,7 @@ declare module 'azdata' {
 	export namespace dataprotocol {
 		export function registerSerializationProvider(provider: SerializationProvider): vscode.Disposable;
 		export function registerSqlAssessmentServicesProvider(provider: SqlAssessmentServicesProvider): vscode.Disposable;
+		export function registerAccessibilityProvider(provider: AccessibilityProvider): vscode.Disposable;
 	}
 
 	export interface HyperlinkComponent {
@@ -533,4 +534,11 @@ declare module 'azdata' {
 		delete?: boolean;
 	}
 
+	export enum AltTextTarget {
+		Query = 0
+	}
+
+	export interface AccessibilityProvider extends DataProvider {
+		getAltText(target: AltTextTarget, ownerUri: string): Promise<string>;
+	}
 }
