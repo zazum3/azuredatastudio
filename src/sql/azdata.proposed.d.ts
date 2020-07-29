@@ -538,7 +538,12 @@ declare module 'azdata' {
 		Query = 0
 	}
 
+	export interface IAccessibleChartData {
+		columns: Array<string>;
+		rows: Array<Array<string>>;
+	}
+
 	export interface AccessibilityProvider extends DataProvider {
-		getAltText(target: AltTextTarget, ownerUri: string): Promise<string>;
+		getAltText(target: AltTextTarget, data: IAccessibleChartData): Promise<string>;
 	}
 }
