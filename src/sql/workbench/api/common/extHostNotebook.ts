@@ -218,6 +218,14 @@ export class ExtHostNotebook implements ExtHostNotebookShape {
 		this._proxy.$registerNotebookProvider(provider.providerId, handle);
 		return this._createDisposable(handle);
 	}
+
+	registerMimeTypeRenderer(mimeType: string): vscode.Disposable {
+		// if (!provider || !provider.providerId) {
+		// 	throw new Error(localize('providerRequired', "A NotebookProvider with valid providerId must be passed to this method"));
+		// }
+		this._proxy.$registerNotebookProvider(mimeType, 8);
+		return this._createDisposable(8);
+	}
 	//#endregion
 
 

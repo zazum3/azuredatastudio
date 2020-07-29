@@ -4553,6 +4553,8 @@ declare module 'azdata' {
 		 */
 		export function registerNotebookProvider(provider: NotebookProvider): vscode.Disposable;
 
+		export function registerMimeTypeRenderer(mimeType: string): vscode.Disposable;
+
 		export interface IStandardKernel {
 			readonly name: string;
 			readonly displayName: string;

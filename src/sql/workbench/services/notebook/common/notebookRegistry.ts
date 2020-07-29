@@ -127,6 +127,20 @@ let notebookLanguageMagicType: IJSONSchema = {
 	}
 };
 
+let mimeTypeRenderersContrib: IJSONSchema = {
+	description: localize('vscode.extension.contributes.notebook.mimeTypeRenderers', "Contributes mime type renderers."),
+	type: 'object',
+	properties: {
+		mimeTypes: {
+			description: localize('carbon.extension.contributes.notebook.mimeTypes', "Mime Types"),
+			type: 'array',
+			items: {
+				type: 'string'
+			}
+		}
+	}
+};
+
 let languageMagicContrib: IJSONSchema = {
 	description: localize('vscode.extension.contributes.notebook.languagemagics', "Contributes notebook language."),
 	oneOf: [

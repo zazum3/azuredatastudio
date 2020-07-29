@@ -24,6 +24,8 @@ export class MainThreadNotebook extends Disposable implements MainThreadNotebook
 	private _proxy: ExtHostNotebookShape;
 	private _providers = new Map<number, NotebookProviderWrapper>();
 	private _futures = new Map<number, FutureWrapper>();
+	private _mimeRenderers = new Map<number, string>();
+
 
 	constructor(
 		extHostContext: IExtHostContext,
@@ -62,6 +64,14 @@ export class MainThreadNotebook extends Disposable implements MainThreadNotebook
 			registration.dispose();
 			this._providers.delete(handle);
 		}
+	}
+
+	public $registerMimeTypeRenderer(mimeType: string, handle: number): void {
+		// let proxy: Proxies = {
+		// 	main: this,
+		// 	ext: this._proxy
+		// };
+		this._mimeRenderers.set(handle, mimeType);
 	}
 
 	public $onFutureMessage(futureId: number, type: FutureMessageType, payload: azdata.nb.IMessage): void {
