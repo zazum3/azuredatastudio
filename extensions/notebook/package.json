@@ -557,6 +557,7 @@
     }
   },
   "dependencies": {
+    "@jupyter-widgets/base": "/Users/chlafren/ipywidgets/packages/base",
     "@jupyterlab/apputils": "^1.2.2",
     "@jupyterlab/coreutils": "^3.1.0",
     "@jupyterlab/docregistry": "^1.2.2",
@@ -594,7 +595,9 @@
     "ws": "^7.2.0"
   },
   "devDependencies": {
-    "@jupyter-widgets/base": "2.0.2",
+    "@babel/core": "^7.10.5",
+    "@babel/preset-env": "^7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
     "@jupyter-widgets/controls": "^1.5.2",
     "@jupyter-widgets/html-manager": "^0.18.4",
     "@jupyter-widgets/jupyterlab-manager": "^1.0.2",
