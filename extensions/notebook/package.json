@@ -435,7 +435,8 @@
           "command": "notebook.command.openNotebookFolder",
           "when": "view == bookTreeView",
           "group": "navigation"
-        }, {
+        },
+        {
           "command": "notebook.command.openRemoteBook",
           "when": "view == bookTreeView"
         }
@@ -593,8 +594,9 @@
     "ws": "^7.2.0"
   },
   "devDependencies": {
-    "@jupyter-widgets/base": "^2.0.1",
+    "@jupyter-widgets/base": "2.0.2",
     "@jupyter-widgets/controls": "^1.5.2",
+    "@jupyter-widgets/html-manager": "^0.18.4",
     "@jupyter-widgets/jupyterlab-manager": "^1.0.2",
     "@nteract/transform-dataresource": "^5.0.4-alpha.0",
     "@nteract/transform-geojson": "^5.1.13",
@@ -612,8 +614,8 @@
     "@types/redux-logger": "^3.0.7",
     "@types/request": "^2.48.1",
     "@types/rimraf": "^2.0.2",
-    "@types/stack-trace": "0.0.29",
     "@types/sinon": "^9.0.4",
+    "@types/stack-trace": "0.0.29",
     "@types/temp-write": "^3.3.0",
     "@types/tmp": "^0.2.0",
     "@types/uuid": "^3.4.5",

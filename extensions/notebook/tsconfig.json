@@ -4,7 +4,8 @@
 		"experimentalDecorators": true,
 		"jsx": "react",
 		"lib": [
-			"dom"
+			"dom",
+			"es2018"
 		],
 		"outDir": "./out",
 		"strict": false,

@@ -5,6 +5,7 @@
 
 import { nb } from 'azdata';
 import { Kernel, KernelMessage } from '@jupyterlab/services';
+import * as base from '@jupyter-widgets/base';
 
 function toShellMessage(msgImpl: KernelMessage.IShellMessage): nb.IShellMessage {
 	return {
@@ -75,7 +76,7 @@ export class JupyterKernel implements nb.IKernel {
 		return this.kernelImpl.ready;
 	}
 
-	public get info(): nb.IInfoReply {
+	public get info(): any {
 		return this.kernelImpl.info as nb.IInfoReply;
 	}
 
@@ -91,6 +92,9 @@ export class JupyterKernel implements nb.IKernel {
 		content.code = Array.isArray(content.code) ? content.code.join('') : content.code;
 		content.code = content.code.replace(/\r+\n/gm, '\n'); // Remove \r (if it exists) from newlines
 		let futureImpl = this.kernelImpl.requestExecute(content as KernelMessage.IExecuteRequestMsg['content'], disposeOnDone);
+		if (base) { }
+		// this._widgetManager = new WidgetManager(this.kernelImpl);
+		// if (this._widgetManager) {}
 		return new JupyterFuture(futureImpl);
 	}
 
