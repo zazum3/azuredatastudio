@@ -12,6 +12,7 @@ export interface ResourceType {
 	name: string;
 	displayName: string;
 	description: string;
+	resourceHostType: string;
 	platforms: string[] | '*';
 	icon: { light: string; dark: string };
 	options: ResourceTypeOption[];
@@ -385,4 +386,13 @@ export interface ResourceHostType {
 	displayIndex: number;
 	options: any[];
 	description: string;
+	icon: { light: string; dark: string };
+}
+
+export interface ResourceTypeFilter {
+	name: string;
+	displayName: string;
+	description: string;
+	resourceHostType: string;
+	platforms: string[] | '*';
 }

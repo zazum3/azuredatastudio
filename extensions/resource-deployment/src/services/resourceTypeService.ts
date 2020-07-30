@@ -331,6 +331,8 @@ export class ResourceTypeService implements IResourceTypeService {
 				const extensionResourceHostTypes = extension.packageJSON.contributes && extension.packageJSON.contributes.resourceDeploymentHostTypes as ResourceHostType[];
 				if (extensionResourceHostTypes) {
 					extensionResourceHostTypes.forEach((resourceHostType) => {
+						resourceHostType.icon.dark = path.join(extension.extensionPath, resourceHostType.icon.dark);
+						resourceHostType.icon.light = path.join(extension.extensionPath, resourceHostType.icon.light);
 						this._resourceHostTypes.push(resourceHostType);
 					});
 				}
@@ -340,7 +342,6 @@ export class ResourceTypeService implements IResourceTypeService {
 		let resourceHostTypes = this._resourceHostTypes;
 		return resourceHostTypes;
 	}
-
 }
 
 async function exists(path: string): Promise<boolean> {

@@ -7,27 +7,32 @@ import * as nls from 'vscode-nls';
 import { ResourceHostType } from '../interfaces';
 import { IResourceTypeService } from '../services/resourceTypeService';
 import { DialogBase } from './dialogBase';
+import { ResourceTypePickerDialog } from './resourceTypePickerDialog';
+import { IToolsService } from '../services/toolsService';
 
 const localize = nls.loadMessageBundle();
 
 export class ResourceHostTypePickerDialog extends DialogBase {
-	private _selectedResourceType: ResourceHostType = null;
+	private _selectedResourceHostType: ResourceHostType;
 	private _view!: azdata.ModelView;
 	private _resourceDescriptionLabel!: azdata.TextComponent;
 	private _cardGroup!: azdata.RadioCardGroupComponent;
 
 	constructor(
+		private toolsService: IToolsService,
 		private resourceTypeService: IResourceTypeService,
+		defaultResourceHostType: ResourceHostType,
 		private _resourceTypeNameFilters?: string[]) {
 		super(localize('resourceTypePickerDialog.title', "Where would like to host SQL server?"), 'ResourceTypePickerDialog', true);
-		this._dialogObject.okButton.label = localize('deploymentDialog.OKButtonText', "Select");
-		this._dialogObject.okButton.enabled = false; // this is enabled after all tools are discovered.
+		this._selectedResourceHostType = defaultResourceHostType;
+		this._dialogObject.okButton.label = localize('deploymentHostDialog.OKButtonText', "Next");
+		this._dialogObject.okButton.enabled = true;
 	}
 
 	initialize() {
 		let tab = azdata.window.createTab('');
 		this._dialogObject.registerCloseValidator(() => {
-			const isValid = this._selectedResourceType !== undefined;
+			const isValid = this._selectedResourceHostType !== undefined;
 			return isValid;
 		});
 		tab.registerContent((view: azdata.ModelView) => {
@@ -43,6 +48,7 @@ export class ResourceHostTypePickerDialog extends DialogBase {
 					return <azdata.RadioCard>{
 						id: resourceType.name,
 						label: resourceType.displayName,
+						icon: resourceType.icon
 					};
 				}),
 				iconHeight: '50px',
@@ -58,7 +64,7 @@ export class ResourceHostTypePickerDialog extends DialogBase {
 					this.selectResourceType(resourceType);
 				}
 			}));
-			this._resourceDescriptionLabel = view.modelBuilder.text().withProperties<azdata.TextComponentProperties>({ value: this._selectedResourceType ? this._selectedResourceType.description : undefined }).component();
+			this._resourceDescriptionLabel = view.modelBuilder.text().withProperties<azdata.TextComponentProperties>({ value: this._selectedResourceHostType ? this._selectedResourceHostType.description : undefined }).component();
 
 			const formBuilder = view.modelBuilder.formContainer().withFormItems(
 				[
@@ -78,16 +84,22 @@ export class ResourceHostTypePickerDialog extends DialogBase {
 			const form = formBuilder.withLayout({ width: '100%' }).component();
 
 			return view.initializeModel(form).then(() => {
-				if (this._selectedResourceType) {
-					this._cardGroup.selectedCardId = this._selectedResourceType.name;
+				if (this._selectedResourceHostType) {
+					this._cardGroup.selectedCardId = this._selectedResourceHostType.name;
 				}
 			});
 		});
 		this._dialogObject.content = [tab];
 	}
 
+
+	protected onComplete(): void {
+		const dialog = new ResourceTypePickerDialog(this.toolsService, this.resourceTypeService);
+		dialog.open();
+	}
+
 	private selectResourceType(resourceHostType: ResourceHostType): void {
-		this._selectedResourceType = resourceHostType;
+		this._selectedResourceHostType = resourceHostType;
 		this._resourceDescriptionLabel.value = '';
 		if (resourceHostType.options) {
 			resourceHostType.options.forEach(option => {

@@ -69,6 +69,7 @@
         "displayIndex": 2,
         "displayName": "%resource-type-sql-image-display-name%",
         "description": "%resource-type-sql-image-description%",
+        "resourceHostType": "local",
         "platforms": "*",
         "icon": {
           "light": "./images/sql_server_container.svg",
@@ -200,6 +201,7 @@
         "displayIndex": 3,
         "displayName": "%resource-type-sql-bdc-display-name%",
         "description": "%resource-type-sql-bdc-description%",
+        "resourceHostType": "local",
         "platforms": "*",
         "icon": {
           "light": "./images/sql_bdc.svg",
@@ -356,6 +358,7 @@
         "displayIndex": 1,
         "displayName": "%resource-type-sql-windows-setup-display-name%",
         "description": "%resource-type-sql-windows-setup-description%",
+        "resourceHostType": "local",
         "platforms": [
           "win32"
         ],
@@ -393,21 +396,33 @@
         ]
       }
     ],
-    "resourceDeploymentHostTypes":[
+    "resourceHostTypes": [
       {
-        "name":"local",
+        "name": "local",
         "displayName": "SQL server (local)",
-        "displayIndex": 1
+        "displayIndex": 1,
+        "icon": {
+          "light": "./images/local_host.svg",
+          "dark": "./images/local_host.svg"
+        }
       },
       {
-        "name":"hybrid",
-        "displayName":"Azure Arc (hybrid)",
-        "displayIndex": 2
+        "name": "hybrid",
+        "displayName": "Azure Arc (hybrid)",
+        "displayIndex": 2,
+        "icon": {
+          "light": "./images/hybrid_host.svg",
+          "dark": "./images/hybrid_host.svg"
+        }
       },
       {
-        "name":"cloud",
-        "displayName":"Azure Sql (cloud)",
-        "displayIndex": 3
+        "name": "cloud",
+        "displayName": "Azure Sql (cloud)",
+        "displayIndex": 3,
+        "icon": {
+          "light": "./images/cloud_host.svg",
+          "dark": "./images/cloud_host.svg"
+        }
       }
     ]
   },

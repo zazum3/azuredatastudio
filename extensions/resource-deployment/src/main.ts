@@ -24,6 +24,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	const notebookService = new NotebookService(platformService, context.extensionPath);
 	const resourceTypeService = new ResourceTypeService(platformService, toolsService, notebookService);
 	const resourceTypes = resourceTypeService.getResourceTypes();
+	const resourceHostTypes = resourceTypeService.getResourceHostTypes();
 	const validationFailures = resourceTypeService.validateResourceTypes(resourceTypes);
 	if (validationFailures.length !== 0) {
 		const errorMessage = localize('resourceDeployment.FailedToLoadExtension', "Failed to load extension: {0}, Error detected in the resource type definition in package.json, check debug console for details.", context.extensionPath);
@@ -31,6 +32,21 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		validationFailures.forEach(message => console.error(message));
 		return;
 	}
+
+	/**
+	 *
+	 * @param defaultHostResourceTypeName
+	 */
+	const openHostDialog = (defaultHostResourceTypeName: string) => {
+		const defaultResourceHostType = resourceHostTypes.find(resourceHostType => resourceHostType.name === defaultHostResourceTypeName);
+		if (!defaultResourceHostType) {
+			vscode.window.showErrorMessage(localize('resourceDeployment.UnknownResourceType', "The resource host type: {0} is not defined", defaultHostResourceTypeName));
+		} else {
+			const dialog = new ResourceHostTypePickerDialog(toolsService, resourceTypeService, defaultResourceHostType);
+			dialog.open();
+		}
+	};
+
 	/**
 	 * Opens a new ResourceTypePickerDialog
 	 * @param defaultResourceTypeName The resource type name to have selected by default
@@ -40,17 +56,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	const openDialog = (defaultResourceTypeName: string, resourceTypeNameFilters?: string[]) => {
 		const defaultResourceType = resourceTypes.find(resourceType => resourceType.name === defaultResourceTypeName);
 		if (!defaultResourceType) {
-			vscode.window.showErrorMessage(localize('resourceDeployment.UnknownResourceType', "The resource type: {0} is not defined", defaultResourceTypeName));
+			vscode.window.showErrorMessage(localize('resourceDeployment.UnknownResourceHostType', "The resource type: {0} is not defined", defaultResourceTypeName));
 		} else {
-			if (!resourceTypeNameFilters) {
-				const dialog = new ResourceHostTypePickerDialog(resourceTypeService);
-				dialog.open();
-			}
-			else {
-				const dialog = new ResourceTypePickerDialog(toolsService, resourceTypeService, defaultResourceType, resourceTypeNameFilters);
-				dialog.open();
-			}
-
+			const dialog = new ResourceTypePickerDialog(toolsService, resourceTypeService, defaultResourceType, resourceTypeNameFilters);
+			dialog.open();
 		}
 	};
 
@@ -69,15 +78,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		if (typeof defaultResourceTypeName === 'string') {
 			openDialog(defaultResourceTypeName, resourceTypeNameFilters);
 		} else {
-			let defaultDeploymentType: string;
-			if (platformService.platform() === 'win32') {
-				defaultDeploymentType = 'sql-windows-setup';
-			} else {
-				defaultDeploymentType = 'sql-image';
-			}
-			openDialog(defaultDeploymentType, resourceTypeNameFilters);
+			let defaultDeploymentHostType: string;
+			defaultDeploymentHostType = 'local';
+			openHostDialog(defaultDeploymentHostType);
 		}
 	});
+
 	vscode.commands.registerCommand('azdata.openNotebookInputDialog', (dialogInfo: NotebookBasedDialogInfo) => {
 		const dialog = new DeploymentInputDialog(notebookService, platformService, dialogInfo);
 		dialog.open();
