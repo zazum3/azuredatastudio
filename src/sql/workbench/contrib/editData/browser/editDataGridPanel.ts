@@ -83,7 +83,7 @@ export class EditDataGridPanel extends GridParentComponent {
 	public onGridRendered: (event: Slick.OnRenderedEventArgs<any>) => void;
 
 	//emitter to indicate when refresh has completed:
-	private refreshCompleted = new Emitter<boolean>();
+	private refreshCompleted: Emitter<void> = new Emitter<void>();
 
 	private savedViewState: {
 		gridSelections: Slick.Range[];
@@ -148,6 +148,7 @@ export class EditDataGridPanel extends GridParentComponent {
 					break;
 			}
 		}));
+		this.toDispose.add(this.refreshCompleted);
 		this.dataService.onLoaded();
 	}
 
@@ -163,9 +164,11 @@ export class EditDataGridPanel extends GridParentComponent {
 		this.baseDestroy();
 	}
 
-	public get getRefreshCompleted(): Event<Boolean> {
+	public get getRefreshCompleted(): Event<void> {
 		return this.refreshCompleted.event;
 	}
+
+
 
 	handleStart(self: EditDataGridPanel, event: any): void {
 		self.dataSet = undefined;
@@ -472,8 +475,8 @@ export class EditDataGridPanel extends GridParentComponent {
 				if (this.firstRender) {
 					setTimeout(() => this.setActive());
 				}
-				if (isCalledFromHandle) {
-					setTimeout(() => this.refreshCompleted.fire(true), this.refreshRunTimeoutInMs);
+				if (isCalledFromHandle && this.refreshCompleted) {
+					setTimeout(() => this.refreshCompleted.fire(), this.refreshRunTimeoutInMs);
 				}
 				resolve();
 			}, this.refreshGridTimeoutInMs);

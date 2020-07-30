@@ -497,7 +497,7 @@ export class EditDataEditor extends BaseEditor {
 	 */
 	private _onResultsEditorCreated(resultsEditor: EditDataResultsEditor, resultsInput: EditDataResultsInput, options: EditorOptions): Promise<void> {
 		this._resultsEditor = resultsEditor;
-		this._resultsEditor.editInput = this.newEditInput;
+		this._resultsEditor.addEditInput(this.newEditInput);
 		return this._resultsEditor.setInput(resultsInput, options);
 	}
 

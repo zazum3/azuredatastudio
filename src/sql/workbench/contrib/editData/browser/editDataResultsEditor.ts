@@ -26,9 +26,10 @@ export class EditDataResultsEditor extends BaseEditor {
 
 	public static ID: string = 'workbench.editor.editDataResultsEditor';
 	protected _input: EditDataResultsInput;
-	protected _editInput: EditDataInput;
+	protected _currentEditInput: EditDataInput;
+	protected _currentEditInputUri: string;
 	protected _rawOptions: BareResultsGridInfo;
-	protected static _editDataGridPanel: EditDataGridPanel;
+	protected static _gridPanels: { [uriString: string]: EditDataGridPanel } = {};
 
 	private styleSheet = DOM.createStyleSheet();
 
@@ -63,11 +64,11 @@ export class EditDataResultsEditor extends BaseEditor {
 		super.dispose();
 	}
 
-	public set editInput(newInput: EditDataInput) {
-		this._editInput = newInput;
-		// need to figure out how to register refresh to run enable on input change.
-		if (EditDataResultsEditor._editDataGridPanel) {
-			this._register(EditDataResultsEditor._editDataGridPanel.getRefreshCompleted(() => this._editInput.initEditEnd()));
+	public addEditInput(newInput: EditDataInput): void {
+		this._currentEditInput = newInput;
+		this._currentEditInputUri = newInput.uri;
+		if (EditDataResultsEditor._gridPanels[this._currentEditInputUri]) {
+			this._register(EditDataResultsEditor._gridPanels[this._currentEditInputUri].getRefreshCompleted(() => this._currentEditInput.initEditEnd()));
 		}
 	}
 
@@ -117,8 +118,8 @@ export class EditDataResultsEditor extends BaseEditor {
 		// Otherwise many components will be left around and be subscribed
 		// to events from the backing data service
 		this._applySettings();
-		EditDataResultsEditor._editDataGridPanel = this._register(this._instantiationService.createInstance(EditDataGridPanel, dataService, input.onSaveViewStateEmitter.event, input.onRestoreViewStateEmitter.event));
-		this._register(EditDataResultsEditor._editDataGridPanel.getRefreshCompleted(() => this._editInput.initEditEnd()));
-		EditDataResultsEditor._editDataGridPanel.render(this.getContainer());
+		EditDataResultsEditor._gridPanels[this._currentEditInputUri] = this._register(this._instantiationService.createInstance(EditDataGridPanel, dataService, input.onSaveViewStateEmitter.event, input.onRestoreViewStateEmitter.event));
+		this._register(EditDataResultsEditor._gridPanels[this._currentEditInputUri].getRefreshCompleted(() => this._currentEditInput.initEditEnd()));
+		EditDataResultsEditor._gridPanels[this._currentEditInputUri].render(this.getContainer());
 	}
 }
