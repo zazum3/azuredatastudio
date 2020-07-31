@@ -18,6 +18,7 @@ import { IBootstrapParams } from 'sql/workbench/services/bootstrap/common/bootst
 import { BaseTextEditor } from 'vs/workbench/browser/parts/editor/textEditor';
 import { Range } from 'vs/editor/common/core/range';
 import { IStandardKernelWithProvider } from 'sql/workbench/services/notebook/browser/models/notebookUtils';
+import { WidgetManager } from 'sql/workbench/contrib/notebook/browser/outputs/widgetManager';
 
 export const SERVICE_ID = 'sqlNotebookService';
 export const INotebookService = createDecorator<INotebookService>(SERVICE_ID);
@@ -94,6 +95,10 @@ export interface INotebookService {
 	getMimeRegistry(): RenderMimeRegistry;
 
 	renameNotebookEditor(oldUri: URI, newUri: URI, currentEditor: INotebookEditor): void;
+
+	getWidgetManager(kernelId: string);
+
+	addWidgetManager(kernelId: string, manager: WidgetManager);
 
 	/**
 	 * Checks if a notebook has previously been marked as trusted, and that

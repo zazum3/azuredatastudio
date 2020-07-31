@@ -4956,6 +4956,210 @@ declare module 'azdata' {
 			 * request fails or the response is invalid.
 			 */
 			interrupt(): Thenable<void>;
+
+			connectToComm?(targetName: string, commId?: string): IComm;
+
+			requestCommInfo?(content: ICommInfoRequest): Promise<ICommInfoReplyMsg>;
+
+			registerCommTarget?(targetName: string, callback: (comm: IComm, msg: ICommOpenMsg) => void | PromiseLike<void>): void;
+		}
+
+		export interface IDisposable {
+			/**
+			 * Test whether the object has been disposed.
+			 *
+			 * #### Notes
+			 * This property is always safe to access.
+			 */
+			readonly isDisposed: boolean;
+			/**
+			 * Dispose of the resources held by the object.
+			 *
+			 * #### Notes
+			 * If the object's `dispose` method is called more than once, all
+			 * calls made after the first will be a no-op.
+			 *
+			 * #### Undefined Behavior
+			 * It is undefined behavior to use any functionality of the object
+			 * after it has been disposed unless otherwise explicitly noted.
+			 */
+			dispose(): void;
+		}
+
+		/**
+		* The content of a `'comm_info_request'` message.
+		*
+		* See [Messaging in Jupyter](https://jupyter-client.readthedocs.io/en/latest/messaging.html#comm-info).
+		*
+		* **See also:** [[ICommInfoReply]], [[IKernel.commInfo]]
+		*/
+		interface ICommInfoRequest extends JSONObject {
+			target?: string;
+		}
+
+		interface ICommCloseMsg extends IIOPubMessage2 {
+			content: ICommClose;
+		}
+
+		interface ICommClose extends JSONObject {
+			comm_id: string;
+			data: JSONValue;
+		}
+
+		/**
+     * A `'comm_info_reply'` message on the `'stream'` channel.
+     *
+     * See [Messaging in Jupyter](https://jupyter-client.readthedocs.io/en/latest/messaging.html#comm-info).
+     *
+     * **See also:** [[ICommInfoRequest]], [[IKernel.commInfo]]
+     */
+		interface ICommInfoReplyMsg extends IShellMessage {
+			content: {
+				/**
+				 * Mapping of comm ids to target names.
+				 */
+				comms: {
+					[commId: string]: {
+						target_name: string;
+					};
+				};
+			};
+		}
+
+		/**
+		 * A type alias for a JSON primitive.
+		 */
+		export type JSONPrimitive = boolean | number | string | null;
+		/**
+		 * A type alias for a JSON value.
+		 */
+		export type JSONValue = JSONPrimitive | JSONObject | JSONArray;
+
+		export interface JSONArray extends Array<JSONValue> {
+		}
+
+		/**
+		 * A type definition for a JSON object.
+		 */
+		export interface JSONObject {
+			[key: string]: JSONValue;
+		}
+
+		interface IComm extends IDisposable {
+			/**
+			 * The unique id for the comm channel.
+			 */
+			readonly commId: string;
+			/**
+			 * The target name for the comm channel.
+			 */
+			readonly targetName: string;
+			/**
+			 * Callback for a comm close event.
+			 *
+			 * #### Notes
+			 * This is called when the comm is closed from either the server or client.
+			 * If this is called in response to a kernel message and the handler returns
+			 * a promise, all kernel message processing pauses until the promise is
+			 * resolved.
+			 */
+			onClose: (msg: ICommCloseMsg) => void | PromiseLike<void>;
+			/**
+			 * Callback for a comm message received event.
+			 *
+			 * #### Notes
+			 * If the handler returns a promise, all kernel message processing pauses
+			 * until the promise is resolved.
+			 */
+			onMsg: (msg: ICommMsgMsg) => void | PromiseLike<void>;
+			/**
+			 * Open a comm with optional data and metadata.
+			 *
+			 * @param data - The data to send to the server on opening.
+			 *
+			 * @param metadata - Additional metatada for the message.
+			 *
+			 * @returns A future for the generated message.
+			 *
+			 * #### Notes
+			 * This sends a `comm_open` message to the server.
+			 */
+			open(data?: JSONValue, metadata?: JSONObject, buffers?: (ArrayBuffer | ArrayBufferView)[]): IFuture;
+			/**
+			 * Send a `comm_msg` message to the kernel.
+			 *
+			 * @param data - The data to send to the server on opening.
+			 *
+			 * @param metadata - Additional metatada for the message.
+			 *
+			 * @param buffers - Optional buffer data.
+			 *
+			 * @param disposeOnDone - Whether to dispose of the future when done.
+			 *
+			 * @returns A future for the generated message.
+			 *
+			 * #### Notes
+			 * This is a no-op if the comm has been closed.
+			 */
+			send(data: JSONValue, metadata?: JSONObject, buffers?: (ArrayBuffer | ArrayBufferView)[], disposeOnDone?: boolean): IFuture;
+			/**
+			 * Close the comm.
+			 *
+			 * @param data - The data to send to the server on opening.
+			 *
+			 * @param metadata - Additional metatada for the message.
+			 *
+			 * @returns A future for the generated message.
+			 *
+			 * #### Notes
+			 * This will send a `comm_close` message to the kernel, and call the
+			 * `onClose` callback if set.
+			 *
+			 * This is a no-op if the comm is already closed.
+			 */
+			close(data?: JSONValue, metadata?: JSONObject, buffers?: (ArrayBuffer | ArrayBufferView)[]): IFuture;
+		}
+
+		/**
+     * A `'comm_msg'` message on the `'iopub'` channel.
+     *
+     * See [Comm msg](https://jupyter-client.readthedocs.io/en/latest/messaging.html#opening-a-comm).
+     */
+		interface ICommMsgMsg extends IIOPubMessage2 {
+			content: ICommMsg;
+		}
+
+		/**
+		 * The content of a `'comm_msg'` message.  The message can
+		 * be received on the `'iopub'` channel or send on the `'shell'` channel.
+		 *
+		 * See [Comm msg](https://jupyter-client.readthedocs.io/en/latest/messaging.html#opening-a-comm).
+		 */
+		interface ICommMsg extends JSONObject {
+			comm_id: string;
+			data: JSONValue;
+		}
+
+		/**
+		 * A `'comm_open'` message on the `'iopub'` channel.
+		 *
+		 * See [Comm open](https://jupyter-client.readthedocs.io/en/latest/messaging.html#opening-a-comm).
+		 */
+		interface ICommOpenMsg extends IIOPubMessage2 {
+			content: ICommOpen;
+		}
+
+		/**
+		 * The content of a `'comm_open'` message.  The message can
+		 * be received on the `'iopub'` channel or send on the `'shell'` channel.
+		 *
+		 * See [Comm open](https://jupyter-client.readthedocs.io/en/latest/messaging.html#opening-a-comm).
+		 */
+		interface ICommOpen extends JSONObject {
+			comm_id: string;
+			target_name: string;
+			data: JSONValue;
+			target_module?: string;
 		}
 
 		export interface IInfoReply {
@@ -5079,17 +5283,21 @@ declare module 'azdata' {
 			handle(message: T): void | Thenable<void>;
 		}
 
+		export interface CommMessageHandler {
+			handle(comm: IComm, msg: ICommOpenMsg): void | Thenable<void>;
+		}
+
 		/**
 		 * A Future interface for responses from the kernel.
 		 *
 		 * When a message is sent to a kernel, a Future is created to handle any
 		 * responses that may come from the kernel.
 		 */
-		export interface IFuture extends vscode.Disposable {
+		export interface IFuture extends IDisposable {
 			/**
 			 * The original outgoing message.
 			 */
-			readonly msg: IMessage;
+			readonly msg: IShellMessage2;
 
 			/**
 			 * A Thenable that resolves when the future is done.
@@ -5101,7 +5309,7 @@ declare module 'azdata' {
 			 * The `done` Thenable resolves to the reply message if there is one,
 			 * otherwise it resolves to `undefined`.
 			 */
-			readonly done: Thenable<IShellMessage | undefined>;
+			readonly done: Promise<IShellMessage2 | undefined>;
 
 			/**
 			 * Set the reply handler for the kernel future.
@@ -5112,7 +5320,7 @@ declare module 'azdata' {
 			 * `done` Thenable also resolves to the reply message after this handler has
 			 * been called.
 			 */
-			setReplyHandler(handler: MessageHandler<IShellMessage>): void;
+			setReplyHandler?(handler: MessageHandler<IShellMessage>): void;
 
 			/**
 			 * Sets the stdin handler for the kernel future.
@@ -5121,7 +5329,7 @@ declare module 'azdata' {
 			 * If the handler returns a Thenable, all kernel message processing pauses
 			 * until the Thenable is resolved.
 			 */
-			setStdInHandler(handler: MessageHandler<IStdinMessage>): void;
+			setStdInHandler?(handler: MessageHandler<IStdinMessage>): void;
 
 			/**
 			 * Sets the iopub handler for the kernel future.
@@ -5130,7 +5338,53 @@ declare module 'azdata' {
 			 * If the handler returns a Thenable, all kernel message processing pauses
 			 * until the Thenable is resolved.
 			 */
-			setIOPubHandler(handler: MessageHandler<IIOPubMessage>): void;
+			setIOPubHandler?(handler: MessageHandler<IIOPubMessage>): void;
+
+			/**
+					* The reply handler for the kernel future.
+					*
+					* #### Notes
+					* If the handler returns a promise, all kernel message processing pauses
+					* until the promise is resolved. If there is a reply message, the future
+					* `done` promise also resolves to the reply message after this handler has
+					* been called.
+					*/
+			onReply: (msg: IShellMessage2) => void | PromiseLike<void>;
+			/**
+			 * The stdin handler for the kernel future.
+			 *
+			 * #### Notes
+			 * If the handler returns a promise, all kernel message processing pauses
+			 * until the promise is resolved.
+			 */
+			onStdin: (msg: IStdinMessage) => void | PromiseLike<void>;
+			/**
+			 * The iopub handler for the kernel future.
+			 *
+			 * #### Notes
+			 * If the handler returns a promise, all kernel message processing pauses
+			 * until the promise is resolved.
+			 */
+			onIOPub: (msg: IIOPubMessage2) => void | PromiseLike<void>;
+			/**
+			 * Register hook for IOPub messages.
+			 *
+			 * @param hook - The callback invoked for an IOPub message.
+			 *
+			 * #### Notes
+			 * The IOPub hook system allows you to preempt the handlers for IOPub
+			 * messages handled by the future.
+			 *
+			 * The most recently registered hook is run first. A hook can return a
+			 * boolean or a promise to a boolean, in which case all kernel message
+			 * processing pauses until the promise is fulfilled. If a hook return value
+			 * resolves to false, any later hooks will not run and the function will
+			 * return a promise resolving to false. If a hook throws an error, the error
+			 * is logged to the console and the next hook is run. If a hook is
+			 * registered during the hook processing, it will not run until the next
+			 * message. If a hook is removed during the hook processing, it will be
+			 * deactivated immediately.
+			 */
 
 			/**
 			 * Register hook for IOPub messages.
@@ -5173,7 +5427,7 @@ declare module 'azdata' {
 			sendInputReply(content: IInputReply): void;
 		}
 
-		export interface IExecuteReplyMsg extends IShellMessage {
+		export interface IExecuteReplyMsg extends IShellMessage2 {
 			content: IExecuteReply;
 		}
 
@@ -5182,7 +5436,7 @@ declare module 'azdata' {
 		 *
 		 * See [Messaging in Jupyter](https://jupyter-client.readthedocs.io/en/latest/messaging.html#execution-results).
 		 */
-		export interface IExecuteReply {
+		export interface IExecuteReply extends JSONObject {
 			status: 'ok' | 'error' | 'abort';
 			execution_count: number | null;
 		}
@@ -5199,7 +5453,7 @@ declare module 'azdata' {
 		 *
 		 * **See also:** [[IMessage]]
 		 */
-		export interface IHeader {
+		export interface IHeader extends JSONObject {
 			username: string;
 			version: string;
 			session: string;
@@ -5211,11 +5465,20 @@ declare module 'azdata' {
 		 * A kernel message
 		 */
 		export interface IMessage {
-			type: Channel;
+			type?: Channel;
 			header: IHeader;
 			parent_header: IHeader | {};
 			metadata: {};
 			content: any;
+		}
+
+		interface IMessage2 {
+			header: IHeader;
+			parent_header: IHeader | {};
+			metadata: JSONObject;
+			content: JSONObject;
+			channel: Channel;
+			buffers?: (ArrayBuffer | ArrayBufferView)[];
 		}
 
 		/**
@@ -5226,9 +5489,20 @@ declare module 'azdata' {
 		}
 
 		/**
+		 * A kernel message on the `'shell'` channel.
+		 */
+		export interface IShellMessage2 extends IMessage2 {
+			channel: 'shell';
+		}
+
+		/**
 		 * A kernel message on the `'iopub'` channel.
 		 */
 		export interface IIOPubMessage extends IMessage {
+			channel: 'iopub';
+		}
+
+		export interface IIOPubMessage2 extends IMessage2 {
 			channel: 'iopub';
 		}
 

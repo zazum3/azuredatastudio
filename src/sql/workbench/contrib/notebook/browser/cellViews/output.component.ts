@@ -91,7 +91,9 @@ export class OutputComponent extends CellView implements OnInit, AfterViewInit {
 
 	public layout(): void {
 		if (this.componentInstance && this.componentInstance.layout) {
-			this.componentInstance.layout();
+			if (this.componentInstance.mimeType !== 'application/vnd.jupyter.widget-view+json') {
+				this.componentInstance.layout();
+			}
 		}
 	}
 

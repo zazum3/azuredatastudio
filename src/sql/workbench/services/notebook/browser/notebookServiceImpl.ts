@@ -36,6 +36,7 @@ import { onUnexpectedError } from 'vs/base/common/errors';
 import { notebookConstants } from 'sql/workbench/services/notebook/browser/interfaces';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { IProductService } from 'vs/platform/product/common/productService';
+import { WidgetManager } from 'sql/workbench/contrib/notebook/browser/outputs/widgetManager';
 
 export interface NotebookProviderProperties {
 	provider: string;
@@ -60,6 +61,10 @@ interface TrustedNotebookCache {
 
 export interface TrustedNotebooksMemento {
 	trustedNotebooksCache: TrustedNotebookCache;
+}
+
+export class WidgetManagerRegistry {
+	public wManagers = new Map<string, WidgetManager>();
 }
 
 const notebookRegistry = Registry.as<INotebookProviderRegistry>(Extensions.NotebookProviderContribution);
@@ -108,6 +113,7 @@ export class NotebookService extends Disposable implements INotebookService {
 	private _isRegistrationComplete = false;
 	private _trustedCacheQueue: URI[] = [];
 	private _unTrustedCacheQueue: URI[] = [];
+	private _widgetManagers: WidgetManagerRegistry = new WidgetManagerRegistry();
 
 	constructor(
 		@ILifecycleService lifecycleService: ILifecycleService,
@@ -182,6 +188,14 @@ export class NotebookService extends Disposable implements INotebookService {
 		}
 		this._isRegistrationComplete = true;
 		this._registrationComplete.resolve();
+	}
+
+	getWidgetManager(kernelId: string): WidgetManager {
+		return this._widgetManagers.wManagers.get(kernelId);
+	}
+
+	addWidgetManager(kernelId: string, manager: WidgetManager) {
+		this._widgetManagers.wManagers.set(kernelId, manager);
 	}
 
 	private updateRegisteredProviders(p: { id: string; registration: NotebookProviderRegistration }) {

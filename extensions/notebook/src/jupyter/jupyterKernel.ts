@@ -87,6 +87,7 @@ export class JupyterKernel implements nb.IKernel {
 	}
 
 	requestExecute(content: nb.IExecuteRequest, disposeOnDone?: boolean): nb.IFuture {
+		// this.kernelImpl.registerCommTarget('jupyter.widget', this.handleCommMsg);
 		content.code = Array.isArray(content.code) ? content.code.join('') : content.code;
 		content.code = content.code.replace(/\r+\n/gm, '\n'); // Remove \r (if it exists) from newlines
 		let futureImpl = this.kernelImpl.requestExecute(content as KernelMessage.IExecuteRequest, disposeOnDone);
@@ -102,6 +103,23 @@ export class JupyterKernel implements nb.IKernel {
 			let msg: nb.ICompleteReplyMsg = toShellMessage(completeMsg);
 			return msg;
 		});
+	}
+
+	connectToComm(targetName: string, commId?: string): nb.IComm {
+		return this.kernelImpl.connectToComm(targetName, commId);
+	}
+
+	requestCommInfo(content: nb.ICommInfoRequest): Promise<nb.ICommInfoReplyMsg> {
+		return this.kernelImpl.requestCommInfo(content);
+	}
+
+	// do we need this with above?
+	registerCommTarget(targetName: string, callback: (comm: Kernel.IComm, msg: KernelMessage.ICommOpenMsg) => void | PromiseLike<void>): void {
+		return this.kernelImpl.registerCommTarget(targetName, callback);
+	}
+
+	handleCommMsg(comm:Kernel.IComm, msg: KernelMessage.ICommOpenMsg): void | PromiseLike<void> {
+		return;
 	}
 
 	interrupt(): Promise<void> {
@@ -143,6 +161,20 @@ export class JupyterFuture implements nb.IFuture {
 			let shellMsg = toShellMessage(msg);
 			return handler.handle(shellMsg);
 		};
+	}
+
+	onStdin(): void {
+		return;
+	}
+	onReply(): void {
+		return;
+	}
+	onIOPub(): void {
+		return;
+	}
+
+	get isDisposed(): boolean {
+		return this.futureImpl.isDisposed;
 	}
 
 	setStdInHandler(handler: nb.MessageHandler<nb.IStdinMessage>): void {

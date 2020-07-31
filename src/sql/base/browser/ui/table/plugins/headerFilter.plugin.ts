@@ -78,16 +78,16 @@ export class HeaderFilter<T extends Slick.SlickData> {
 		if (column.id === '_detail_selector') {
 			return;
 		}
-		const $el = jQuery('<div tabIndex="0"></div>')
-			.addClass('slick-header-menubutton')
-			.data('column', column);
+		// const $el = jQuery('<div tabIndex="0"></div>')
+		// 	.addClass('slick-header-menubutton')
+		// 	.data('column', column);
 
-		$el.bind('click', (e: KeyboardEvent) => this.showFilter(e)).appendTo(args.node);
-		$el.bind('keydown', (e: KeyboardEvent) => {
-			if (e.key === 'Enter' || e.keyCode === 13) {
-				this.showFilter(e);
-			}
-		}).appendTo(args.node);
+		// $el.bind('click', (e: KeyboardEvent) => this.showFilter(e)).appendTo(args.node);
+		// $el.bind('keydown', (e: KeyboardEvent) => {
+		// 	if (e.key === 'Enter' || e.keyCode === 13) {
+		// 		this.showFilter(e);
+		// 	}
+		// }).appendTo(args.node);
 	}
 
 	private handleBeforeHeaderCellDestroy(e: Event, args: Slick.OnBeforeHeaderCellDestroyEventArgs<T>) {
@@ -100,7 +100,7 @@ export class HeaderFilter<T extends Slick.SlickData> {
 		const $item = jQuery('<div class="slick-header-menuitem">')
 			.data('command', command)
 			.data('column', columnDef)
-			.bind('click', (e) => this.handleMenuItemClick(e, command, columnDef))
+			// .bind('click', (e) => this.handleMenuItemClick(e, command, columnDef))
 			.appendTo(menu);
 
 		const $icon = jQuery('<div class="slick-header-menuicon">')
@@ -148,6 +148,7 @@ export class HeaderFilter<T extends Slick.SlickData> {
 		jQuery(':checkbox', $filter).bind('click', (e) => {
 			this.workingFilters = this.changeWorkingFilter(filterItems, this.workingFilters, jQuery(e.target));
 		});
+		this.showFilter(undefined);
 	}
 
 	private showFilter(e: KeyboardEvent) {
@@ -202,8 +203,8 @@ export class HeaderFilter<T extends Slick.SlickData> {
 		const okElement = jQuery('#filter-ok-button');
 		okElement.bind('click', (ev) => {
 			this.columnDef.filterValues = this.workingFilters.splice(0);
-			this.setButtonImage($menuButton, this.columnDef.filterValues.length > 0);
-			this.handleApply(ev, this.columnDef);
+			// this.setButtonImage($menuButton, this.columnDef.filterValues.length > 0);
+			// this.handleApply(ev, this.columnDef);
 		});
 
 		this.clearButton = new Button(this.$menu.get(0));
@@ -213,8 +214,8 @@ export class HeaderFilter<T extends Slick.SlickData> {
 		const clearElement = jQuery('#filter-clear-button');
 		clearElement.bind('click', (ev) => {
 			this.columnDef.filterValues!.length = 0;
-			this.setButtonImage($menuButton, false);
-			this.handleApply(ev, this.columnDef);
+			// this.setButtonImage($menuButton, false);
+			// this.handleApply(ev, this.columnDef);
 		});
 
 		this.cancelButton = new Button(this.$menu.get(0));
@@ -301,25 +302,25 @@ export class HeaderFilter<T extends Slick.SlickData> {
 		return workingFilters;
 	}
 
-	private setButtonImage($el: JQuery<HTMLElement>, filtered: boolean) {
-		const element: HTMLElement = $el.get(0);
-		if (filtered) {
-			element.className += ' filtered';
-		} else {
-			const classList = element.classList;
-			if (classList.contains('filtered')) {
-				classList.remove('filtered');
-			}
-		}
-	}
+	// private setButtonImage($el: JQuery<HTMLElement>, filtered: boolean) {
+	// 	const element: HTMLElement = $el.get(0);
+	// 	if (filtered) {
+	// 		element.className += ' filtered';
+	// 	} else {
+	// 		const classList = element.classList;
+	// 		if (classList.contains('filtered')) {
+	// 			classList.remove('filtered');
+	// 		}
+	// 	}
+	// }
 
-	private handleApply(e: JQuery.Event<HTMLElement, null>, columnDef: Slick.Column<T>) {
-		this.hideMenu();
+	// private handleApply(e: JQueryEventObject, columnDef: Slick.Column<T>) {
+	// 	this.hideMenu();
 
-		this.onFilterApplied.notify({ 'grid': this.grid, 'column': columnDef }, e, self);
-		e.preventDefault();
-		e.stopPropagation();
-	}
+	// 	this.onFilterApplied.notify({ 'grid': this.grid, 'column': columnDef }, e, self);
+	// 	e.preventDefault();
+	// 	e.stopPropagation();
+	// }
 
 	private getFilterValues(dataView: Slick.DataProvider<T>, column: Slick.Column<T>): Array<any> {
 		const seen: Array<string> = [];
@@ -373,16 +374,16 @@ export class HeaderFilter<T extends Slick.SlickData> {
 		return seen.sort((v) => { return v; });
 	}
 
-	private handleMenuItemClick(e: JQuery.Event<HTMLElement, null>, command: string, columnDef: Slick.Column<T>) {
-		this.hideMenu();
+	// private handleMenuItemClick(e: JQuery.Event<HTMLElement, null>, command: string, columnDef: Slick.Column<T>) {
+	// 	this.hideMenu();
 
-		this.onCommand.notify({
-			'grid': this.grid,
-			'column': columnDef,
-			'command': command
-		}, e, self);
+	// 	this.onCommand.notify({
+	// 		'grid': this.grid,
+	// 		'column': columnDef,
+	// 		'command': command
+	// 	}, e, self);
 
-		e.preventDefault();
-		e.stopPropagation();
-	}
+	// 	e.preventDefault();
+	// 	e.stopPropagation();
+	// }
 }

@@ -24,6 +24,7 @@ export class MainThreadNotebook extends Disposable implements MainThreadNotebook
 	private _proxy: ExtHostNotebookShape;
 	private _providers = new Map<number, NotebookProviderWrapper>();
 	private _futures = new Map<number, FutureWrapper>();
+	private _kernels = new Map<number, KernelWrapper>();
 
 	constructor(
 		extHostContext: IExtHostContext,
@@ -42,6 +43,10 @@ export class MainThreadNotebook extends Disposable implements MainThreadNotebook
 
 	public disposeFuture(futureId: number): void {
 		this._futures.delete(futureId);
+	}
+
+	public addKernel(kernelId: number, kernel: KernelWrapper): void {
+		this._kernels.set(kernelId, kernel);
 	}
 
 	//#region Extension host callable methods
@@ -76,7 +81,16 @@ export class MainThreadNotebook extends Disposable implements MainThreadNotebook
 		if (future) {
 			future.onDone(done);
 		}
+	}
 
+	public $onCommTargetCallback(comm: azdata.nb.IComm, msg: azdata.nb.ICommOpenMsg): void {
+		let realKey = -1;
+		for (let key of this._kernels.keys()) {
+			realKey = key;
+		}
+
+		let kernel = this._kernels.get(realKey);
+		kernel.onCommMsg(comm, msg);
 	}
 	//#endregion
 }
@@ -333,12 +347,14 @@ class KernelWrapper implements azdata.nb.IKernel {
 	private _isReady: boolean = false;
 	private _ready = new Deferred<void>();
 	private _info: azdata.nb.IInfoReply;
+	private _callBack: (comm: azdata.nb.IComm, msg: azdata.nb.ICommOpenMsg) => void | PromiseLike<void>;
 	constructor(private readonly _proxy: Proxies, private readonly kernelDetails: INotebookKernelDetails) {
 	}
 
 	public async initialize(): Promise<void> {
 		try {
 			this._info = await this._proxy.ext.$getKernelReadyStatus(this.kernelDetails.kernelId);
+			this._proxy.main.addKernel(this.kernelDetails.kernelId, this);
 			this._isReady = true;
 			this._ready.resolve();
 		} catch (error) {
@@ -378,6 +394,23 @@ class KernelWrapper implements azdata.nb.IKernel {
 		return this._proxy.ext.$getKernelSpec(this.kernelDetails.kernelId);
 	}
 
+	connectToComm(targetName: string, commId?: string): azdata.nb.IComm {
+		return this._proxy.ext.$connectToComm(this.kernelDetails.kernelId, targetName, commId);
+	}
+
+	registerCommTarget?(targetName: string, callback: (comm: azdata.nb.IComm, msg: azdata.nb.ICommOpenMsg) => void | PromiseLike<void>): void {
+		this._callBack = callback;
+		return this._proxy.ext.$registerCommTarget(this.kernelDetails.kernelId, targetName, callback);
+	}
+
+	public onCommMsg(comm: azdata.nb.IComm, msg: azdata.nb.ICommOpenMsg): void {
+		this._callBack(comm, msg);
+	}
+
+	requestCommInfo?(content: azdata.nb.ICommInfoRequest): Promise<azdata.nb.ICommInfoReplyMsg> {
+		return this._proxy.ext.$requestCommInfo(this.kernelDetails.kernelId, content);
+	}
+
 	requestComplete(content: azdata.nb.ICompleteRequest): Thenable<azdata.nb.ICompleteReplyMsg> {
 		return this._proxy.ext.$requestComplete(this.kernelDetails.kernelId, content);
 	}
@@ -403,7 +436,7 @@ class FutureWrapper implements FutureInternal {
 	private _futureId: number;
 	private _done = new Deferred<azdata.nb.IShellMessage>();
 	private _messageHandlers = new Map<FutureMessageType, azdata.nb.MessageHandler<azdata.nb.IMessage>>();
-	private _msg: azdata.nb.IMessage;
+	private _msg: azdata.nb.IShellMessage2;
 	private _inProgress: boolean;
 
 	constructor(private _proxy: Proxies) {
@@ -430,6 +463,10 @@ class FutureWrapper implements FutureInternal {
 		}
 	}
 
+	public get isDisposed(): boolean {
+		return false;
+	}
+
 	public onDone(done: INotebookFutureDone): void {
 		this._inProgress = false;
 		if (done.succeeded) {
@@ -437,6 +474,18 @@ class FutureWrapper implements FutureInternal {
 		} else {
 			this._done.reject(new Error(done.rejectReason));
 		}
+	}
+
+	onIOPub(msg): void {
+		return
+	}
+
+	onReply(msg): void {
+		return
+	}
+
+	onStdin(msg): void {
+		return
 	}
 
 	private addMessageHandler(type: FutureMessageType, handler: azdata.nb.MessageHandler<azdata.nb.IMessage>): void {
@@ -454,11 +503,11 @@ class FutureWrapper implements FutureInternal {
 		this._inProgress = value;
 	}
 
-	get msg(): azdata.nb.IMessage {
+	get msg(): azdata.nb.IShellMessage2 {
 		return this._msg;
 	}
 
-	get done(): Thenable<azdata.nb.IShellMessage> {
+	get done(): Promise<azdata.nb.IShellMessage> {
 		return this._done.promise;
 	}
 

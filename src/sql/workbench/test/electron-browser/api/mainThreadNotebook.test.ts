@@ -191,4 +191,14 @@ class ExtHostNotebookStub implements ExtHostNotebookShape {
 	$disposeFuture(futureId: number): void {
 		throw new Error('Method not implemented.');
 	}
+	$connectToComm(kernelId: number, targetName: string, commId?: string): azdata.nb.IComm {
+		throw new Error('Method not implemented.');
+	}
+	$registerCommTarget?(kernelId: number, targetName: string, callback: (comm: azdata.nb.IComm, msg: azdata.nb.ICommOpenMsg) => void | PromiseLike<void>): void {
+		throw new Error('Method not implemented.');
+	}
+	$requestCommInfo?(kernelId: number, content: azdata.nb.ICommInfoRequest): Promise<azdata.nb.ICommInfoReplyMsg> {
+		throw new Error('Method not implemented.');
+	}
+
 }

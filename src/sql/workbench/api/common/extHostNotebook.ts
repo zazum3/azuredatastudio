@@ -151,6 +151,48 @@ export class ExtHostNotebook implements ExtHostNotebookShape {
 		return kernel.getSpec();
 	}
 
+	$connectToComm(kernelId: number, targetName: string, commId?: string): azdata.nb.IComm {
+		let kernel = this._getAdapter<azdata.nb.IKernel>(kernelId);
+		return kernel.connectToComm(targetName, commId);
+	}
+
+	$registerCommTarget?(kernelId: number, targetName: string, callback: (comm: azdata.nb.IComm, msg: azdata.nb.ICommOpenMsg) => void | PromiseLike<void>): void {
+		let kernel = this._getAdapter<azdata.nb.IKernel>(kernelId);
+
+
+		// future.setReplyHandler({ handle: (msg) => this._proxy.$onFutureMessage(futureId, FutureMessageType.Reply, msg) });
+
+		return kernel.registerCommTarget(targetName, this.handleCommTargetCallback.bind(this));
+	}
+
+	private handleCommTargetCallback(comm: azdata.nb.IComm, msg: azdata.nb.ICommOpenMsg) {
+		if (comm.targetName === 'floof') {
+			let kernel = this._getAdapter<azdata.nb.IKernel>(0);
+			if (kernel) {}
+		}
+		// let kernelId = -1;
+		// let id = 0;
+		// try {
+		// 	// for (let key of this._adapters.keys()) {
+		// 		// let kernel = this._getAdapter<azdata.nb.IKernel>(key);
+		// 		// if (kernel && kernel['kernelImpl'] && msg.header.session === kernel['kernelImpl']['_kernelSession']) {
+		// 			kernelId = 9;
+		// 			// break;
+		// 		// }
+		// 	// }
+		// } catch {
+		// 	// do nothing
+		// }
+		// comm['_kernel']['_statusChanged']= undefined;
+		comm['_kernel'] = undefined;
+		this._proxy.$onCommTargetCallback(comm, msg);
+	}
+
+	$requestCommInfo?(kernelId: number, content: azdata.nb.ICommInfoRequest): Promise<azdata.nb.ICommInfoReplyMsg> {
+		let kernel = this._getAdapter<azdata.nb.IKernel>(kernelId);
+		return kernel.requestCommInfo(content);
+	}
+
 	$requestComplete(kernelId: number, content: azdata.nb.ICompleteRequest): Thenable<azdata.nb.ICompleteReplyMsg> {
 		let kernel = this._getAdapter<azdata.nb.IKernel>(kernelId);
 		return kernel.requestComplete(content);

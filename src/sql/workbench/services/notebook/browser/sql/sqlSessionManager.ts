@@ -378,7 +378,7 @@ class SqlKernel extends Disposable implements nb.IKernel {
 }
 
 export class SQLFuture extends Disposable implements FutureInternal {
-	private _msg: nb.IMessage = undefined;
+	private _msg: nb.IShellMessage2 = undefined;
 	private ioHandler: nb.MessageHandler<nb.IIOPubMessage>;
 	private doneHandler: nb.MessageHandler<nb.IShellMessage>;
 	private doneDeferred = new Deferred<nb.IShellMessage>();
@@ -412,14 +412,29 @@ export class SQLFuture extends Disposable implements FutureInternal {
 			this._queryRunner.cancelQuery().catch(err => onUnexpectedError(err));
 		}
 	}
-	get msg(): nb.IMessage {
+	get msg(): nb.IShellMessage2 {
 		return this._msg;
 	}
 
-	get done(): Thenable<nb.IShellMessage> {
+	get isDisposed(): boolean {
+		return false;
+	}
+
+	get done(): Promise<nb.IShellMessage> {
 		return this.doneDeferred.promise;
 	}
 
+	onIOPub(msg): void {
+
+	}
+
+	onStdin(msg): void {
+
+	}
+
+	onReply(msg): void {
+
+	}
 	public async handleDone(err?: Error): Promise<void> {
 		// must wait on all outstanding output updates to complete
 		if (this._outputAddedPromises && this._outputAddedPromises.length > 0) {
@@ -428,7 +443,6 @@ export class SQLFuture extends Disposable implements FutureInternal {
 		}
 		let msg: nb.IExecuteReplyMsg = {
 			channel: 'shell',
-			type: 'execute_reply',
 			content: {
 				status: this._errorOccurred && this._stopOnError ? 'error' : 'ok',
 				execution_count: this._executionCount

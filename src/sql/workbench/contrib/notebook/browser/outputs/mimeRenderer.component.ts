@@ -10,6 +10,8 @@ import { MimeModel } from 'sql/workbench/services/notebook/browser/outputs/mimem
 import { INotebookService } from 'sql/workbench/services/notebook/browser/notebookService';
 import { RenderMimeRegistry } from 'sql/workbench/services/notebook/browser/outputs/registry';
 import { localize } from 'vs/nls';
+// import * as base from '@jupyter-widgets/base';
+import { WidgetManager } from 'sql/workbench/contrib/notebook/browser/outputs/widgetManager';
 
 @Component({
 	selector: MimeRendererComponent.SELECTOR,
@@ -53,9 +55,26 @@ export class MimeRendererComponent extends AngularDisposable implements IMimeCom
 		this.createRenderedMimetype(this._bundleOptions, this.el.nativeElement);
 	}
 
-	protected createRenderedMimetype(options: MimeModel.IOptions, node: HTMLElement): void {
+	protected async createRenderedMimetype(options: MimeModel.IOptions, node: HTMLElement): Promise<void> {
 		if (this.mimeType) {
+			let manager: WidgetManager;
 			let renderer = this.registry.createRenderer(this.mimeType);
+			let kernel = this._notebookService.listNotebookEditors()[0]?.model?.clientSession?.kernel;
+			if (!this._notebookService.getWidgetManager(kernel?.id)) {
+				manager = new WidgetManager(kernel, node);
+				this._notebookService.addWidgetManager(kernel.id, manager);
+			} else {
+				manager = this._notebookService.getWidgetManager(kernel.id);
+			}
+			if (this.mimeType === 'application/vnd.jupyter.widget-view+json') {
+				let model = manager.get_model(options.data[this.mimeType]['model_id']);
+				manager.updateElement(node);
+				if (model !== undefined) {
+					model.then(model => {
+						manager.display_model(undefined, model);
+					});
+				}
+			}
 			renderer.node = node;
 			let model = new MimeModel(options);
 			renderer.renderModel(model).catch(error => {

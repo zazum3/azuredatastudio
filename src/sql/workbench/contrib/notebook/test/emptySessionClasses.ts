@@ -170,11 +170,15 @@ export class EmptyFuture implements FutureInternal {
 		return false;
 	}
 
-	get msg(): nb.IMessage {
+	get msg(): nb.IShellMessage2 {
 		return undefined;
 	}
 
-	get done(): Thenable<nb.IShellMessage> {
+	get isDisposed(): boolean {
+		return false;
+	}
+
+	get done(): Promise<nb.IShellMessage> {
 		let msg: nb.IShellMessage = {
 			channel: 'shell',
 			type: 'shell',
@@ -200,6 +204,16 @@ export class EmptyFuture implements FutureInternal {
 	setStdInHandler(handler: nb.MessageHandler<nb.IStdinMessage>): void {
 		// no-op
 	}
+	onIOPub(msg): void {
+
+	}
+	onReply(msg): void {
+
+	}
+	onStdin(msg): void {
+
+	}
+
 	setIOPubHandler(handler: nb.MessageHandler<nb.IIOPubMessage>): void {
 		setTimeout(() => {
 			let msg: nb.IIOPubMessage = {

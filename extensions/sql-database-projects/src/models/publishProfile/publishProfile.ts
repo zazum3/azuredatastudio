@@ -31,10 +31,10 @@ export async function load(profileUri: Uri, dacfxService: mssql.IDacFxService): 
 
 	// read target database name
 	let targetDbName: string = '';
-	let targetDatabaseNameCount = profileXmlDoc.documentElement.getElementsByTagName(constants.targetDatabaseName).length;
+	let targetDatabaseNameCount = 0;
 	if (targetDatabaseNameCount > 0) {
 		// if there is more than one TargetDatabaseName nodes, SSDT uses the name in the last one so we'll do the same here
-		targetDbName = profileXmlDoc.documentElement.getElementsByTagName(constants.targetDatabaseName)[targetDatabaseNameCount - 1].textContent;
+		// targetDbName = profileXmlDoc.documentElement.getElementsByTagName(constants.targetDatabaseName)[targetDatabaseNameCount - 1].textContent;
 	}
 
 	const connectionInfo = await readConnectionString(profileXmlDoc);

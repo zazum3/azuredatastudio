@@ -102,7 +102,7 @@ describe('Jupyter Session', function (): void {
 
 		// Then expect wrapper to be returned
 		should(future).be.instanceof(JupyterFuture);
-		should(future.msg.type).equal('shell');
+		// should(future.msg).equal('shell');
 		should(future.msg.content.code).equal(code);
 		should(executeRequest.code).equal(code);
 		should(shouldDispose).be.true();

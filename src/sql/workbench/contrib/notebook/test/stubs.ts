@@ -17,6 +17,7 @@ import { ConnectionProfile } from 'sql/platform/connection/common/connectionProf
 import { URI } from 'vs/base/common/uri';
 import { QueryTextEditor } from 'sql/workbench/browser/modelComponents/queryTextEditor';
 import { IContextViewProvider, IDelegate } from 'vs/base/browser/ui/contextview/contextview';
+import { WidgetManager } from 'sql/workbench/contrib/notebook/browser/outputs/widgetManager';
 
 export class NotebookModelStub implements INotebookModel {
 	constructor(private _languageInfo?: nb.ILanguageInfo) {
@@ -198,6 +199,12 @@ export class ServerManagerStub implements nb.ServerManager {
 }
 
 export class NotebookServiceStub implements INotebookService {
+	getWidgetManager(kernelId: string) {
+		throw new Error('Method not implemented.');
+	}
+	addWidgetManager(kernelId: string, manager: WidgetManager) {
+		throw new Error('Method not implemented.');
+	}
 	_serviceBrand: undefined;
 	get onNotebookEditorAdd(): vsEvent.Event<INotebookEditor> {
 		throw new Error('Method not implemented.');
@@ -403,13 +410,25 @@ export class KernelStub implements nb.IKernel {
 }
 
 export class FutureStub implements nb.IFuture {
-	constructor(private _msg: nb.IMessage, private _done: Thenable<nb.IShellMessage>) {
+	constructor(private _msg: nb.IShellMessage2, private _done: Promise<nb.IShellMessage>) {
 	}
-	get msg(): nb.IMessage {
+	get msg(): nb.IShellMessage2 {
 		return this._msg;
 	}
-	get done(): Thenable<nb.IShellMessage> {
+	get done(): Promise<nb.IShellMessage2> {
 		return this._done;
+	}
+	get isDisposed(): boolean {
+		return false;
+	}
+	onIOPub(msg): void {
+		return;
+	}
+	onStdin(msg): void {
+		return;
+	}
+	onReply(msg): void {
+		return;
 	}
 	setReplyHandler(handler: nb.MessageHandler<nb.IShellMessage>): void {
 		return;

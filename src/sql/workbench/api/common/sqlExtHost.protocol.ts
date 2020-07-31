@@ -854,6 +854,9 @@ export interface ExtHostNotebookShape {
 	$requestComplete(kernelId: number, content: azdata.nb.ICompleteRequest): Thenable<azdata.nb.ICompleteReplyMsg>;
 	$requestExecute(kernelId: number, content: azdata.nb.IExecuteRequest, disposeOnDone?: boolean): Thenable<INotebookFutureDetails>;
 	$interruptKernel(kernelId: number): Thenable<void>;
+	$connectToComm(kernelId: number, targetName: string, commId?: string): azdata.nb.IComm;
+	$registerCommTarget?(kernelId: number, targetName: string, callback: (comm: azdata.nb.IComm, msg: azdata.nb.ICommOpenMsg) => void | PromiseLike<void>): void;
+	$requestCommInfo?(kernelId: number, content: azdata.nb.ICommInfoRequest): Promise<azdata.nb.ICommInfoReplyMsg>;
 
 	// Future APIs
 	$sendInputReply(futureId: number, content: azdata.nb.IInputReply): void;
@@ -865,6 +868,7 @@ export interface MainThreadNotebookShape extends IDisposable {
 	$unregisterNotebookProvider(handle: number): void;
 	$onFutureMessage(futureId: number, type: FutureMessageType, payload: azdata.nb.IMessage): void;
 	$onFutureDone(futureId: number, done: INotebookFutureDone): void;
+	$onCommTargetCallback(comm: azdata.nb.IComm, msg: azdata.nb.ICommOpenMsg): void;
 }
 
 export interface INotebookDocumentsAndEditorsDelta {

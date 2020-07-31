@@ -33,7 +33,7 @@ export class AutoColumnSize<T extends Slick.SlickData> implements Slick.Plugin<T
 		}
 
 		this._$container = jQuery(this._grid.getContainerNode());
-		this._$container.on('dblclick.autosize', '.slick-resizable-handle', e => this.handleDoubleClick(e));
+		this._$container.on('dblclick.autosize', '.slick-resizable-handle', e => this.handleDoubleClick(undefined));
 		this._context = document.createElement('canvas').getContext('2d')!;
 	}
 
@@ -82,7 +82,7 @@ export class AutoColumnSize<T extends Slick.SlickData> implements Slick.Plugin<T
 				let headerEl = jQuery(headerColumns.children.item(i)!);
 				let columnDef = headerEl.data('column');
 				if (columnDef) {
-					let headerWidth = this.getElementWidth(headerEl[0]);
+					let headerWidth = this.getElementWidth(undefined);
 					let colIndex = this._grid.getColumnIndex(columnDef.id);
 					let column = allColumns[colIndex];
 					let autoSizeWidth = Math.max(headerWidth, this.getMaxColumnTextWidth(columnDef, colIndex)) + 1;
@@ -100,7 +100,7 @@ export class AutoColumnSize<T extends Slick.SlickData> implements Slick.Plugin<T
 		}
 	}
 
-	private handleDoubleClick(e: JQuery.Event<HTMLElement, unknown>) {
+	private handleDoubleClick(e: JQueryEventObject) {
 		let headerEl = jQuery(e.currentTarget).closest('.slick-header-column');
 		let columnDef = headerEl.data('column');
 
@@ -114,8 +114,8 @@ export class AutoColumnSize<T extends Slick.SlickData> implements Slick.Plugin<T
 		this.reSizeColumn(headerEl, columnDef);
 	}
 
-	private reSizeColumn(headerEl: JQuery, columnDef: Slick.Column<T>) {
-		let headerWidth = this.getElementWidth(headerEl[0]);
+	private reSizeColumn(headerEl: JQuery<Element>, columnDef: Slick.Column<T>) {
+		let headerWidth = 10;
 		let colIndex = this._grid.getColumnIndex(columnDef.id!);
 		let origCols = this._grid.getColumns();
 		let allColumns = deepClone(origCols);
