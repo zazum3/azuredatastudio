@@ -104,6 +104,18 @@ export class JupyterKernel implements nb.IKernel {
 		});
 	}
 
+	createComm(target_name: string, model_id: string): Kernel.IComm {
+		return this.kernelImpl.connectToComm(target_name, model_id);
+	}
+
+	registerCommTarget(comm_targe_name: string, callback: (comm: Kernel.IComm, msg: KernelMessage.ICommOpenMsg) => void | PromiseLike<void>) {
+		this.kernelImpl.registerCommTarget(comm_targe_name, callback);
+	}
+
+	requestCommInfo(content: KernelMessage.ICommInfoRequest): Promise<KernelMessage.ICommInfoReplyMsg> {
+		return this.kernelImpl.requestCommInfo(content);
+	}
+
 	interrupt(): Promise<void> {
 		return this.kernelImpl.interrupt();
 	}
