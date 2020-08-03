@@ -4956,6 +4956,29 @@ declare module 'azdata' {
 			 * request fails or the response is invalid.
 			 */
 			interrupt(): Thenable<void>;
+
+			/**
+			 * Add comment for method here
+			 * what will return type be?
+			 * @param target_name
+			 * @param model_id
+			 */
+			createComm(target_name: string, model_id: string);
+
+			/**Add comment for method here
+			 * What will return type be?
+			 * @param arg0
+			 */
+			requestCommInfo(arg0: { target_name: string; });
+
+			/**
+			 * Add comment for method here
+			 * What will return type be?
+			 * @param comm_target_name
+			 * @param arg1
+			 */
+			registerCommTarget(comm_target_name: string, arg1: (comm: import('@jupyterlab/services/lib/kernel/kernel').IComm, msg: import('@jupyterlab/services/lib/kernel/messages').ICommOpenMsg<'iopub' | 'shell'>) => Promise<void>);
+
 		}
 
 		export interface IInfoReply {

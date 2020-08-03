@@ -335,6 +335,15 @@ class KernelWrapper implements azdata.nb.IKernel {
 	private _info: azdata.nb.IInfoReply;
 	constructor(private readonly _proxy: Proxies, private readonly kernelDetails: INotebookKernelDetails) {
 	}
+	createComm(target_name: string, model_id: string) {
+		throw new Error('Method not implemented.');
+	}
+	requestCommInfo(arg0: { target_name: string; }) {
+		throw new Error('Method not implemented.');
+	}
+	registerCommTarget(comm_target_name: string, arg1: (comm: import('@jupyterlab/services/lib/kernel/kernel').IComm, msg: import('@jupyterlab/services/lib/kernel/messages').ICommOpenMsg<'iopub' | 'shell'>) => Promise<void>) {
+		throw new Error('Method not implemented.');
+	}
 
 	public async initialize(): Promise<void> {
 		try {
