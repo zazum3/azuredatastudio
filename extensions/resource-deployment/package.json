@@ -391,6 +391,102 @@
             "when": "version=sql2019"
           }
         ]
+      },
+      {
+        "name": "sql-azure-setup",
+        "displayIndex": 4,
+        "displayName": "%resource-type-sql-azure-display-name%",
+        "description": "%resource-type-sql-azure-description%",
+        "platforms": "*",
+        "icon": {
+          "light": "./images/sql_server_on_azure.svg",
+          "dark": "./images/sql_server_on_azure.svg"
+        },
+        "options": [
+          {
+            "name": "resource-type",
+            "displayName": "%resource-type-display-name%",
+            "values": [
+              {
+                "name": "single-database",
+                "displayName": "%sql-azure-single-database-display-name%"
+              },
+              {
+                "name": "elastic-pool",
+                "displayName": "%sql-azure-elastic-pool-display-name%"
+              },
+              {
+                "name": "database-server",
+                "displayName": "%sql-azure-database-server-display-name%"
+              }
+            ]
+          }
+        ],
+        "providers": [
+          {
+            "webPageUrl": "https://portal.azure.com/#create/Microsoft.SQLDatabase",
+            "requiredTools": [],
+            "when": "resource-type=single-database"
+          },
+          {
+            "webPageUrl": "https://portal.azure.com/#create/Microsoft.SQLElasticDatabasePool",
+            "requiredTools": [],
+            "when": "resource-type=elastic-pool"
+          },
+          {
+            "webPageUrl": "https://portal.azure.com/#create/Microsoft.SQLServer",
+            "requiredTools": [],
+            "when": "resource-type=database-server"
+          }
+        ]
+      },
+      {
+        "name": "sql-vm-setup",
+        "displayIndex": 5,
+        "displayName": "%resource-type-sql-azure-display-name%",
+        "description": "%resource-type-sql-azure-description%",
+        "platforms": "*",
+        "icon": {
+          "light": "./images/sql_vm.svg",
+          "dark": "./images/sql_vm.svg"
+        },
+        "options": [
+          {
+            "name": "resource-type",
+            "displayName": "%resource-type-display-name%",
+            "values": [
+              {
+                "name": "single-database",
+                "displayName": "%sql-azure-single-database-display-name%"
+              },
+              {
+                "name": "elastic-pool",
+                "displayName": "%sql-azure-elastic-pool-display-name%"
+              },
+              {
+                "name": "database-server",
+                "displayName": "%sql-azure-database-server-display-name%"
+              }
+            ]
+          }
+        ],
+        "providers": [
+          {
+            "webPageUrl": "https://portal.azure.com/#create/Microsoft.SQLDatabase",
+            "requiredTools": [],
+            "when": "resource-type=single-database"
+          },
+          {
+            "webPageUrl": "https://portal.azure.com/#create/Microsoft.SQLElasticDatabasePool",
+            "requiredTools": [],
+            "when": "resource-type=elastic-pool"
+          },
+          {
+            "webPageUrl": "https://portal.azure.com/#create/Microsoft.SQLServer",
+            "requiredTools": [],
+            "when": "resource-type=database-server"
+          }
+        ]
       }
     ]
   },
