@@ -103,6 +103,15 @@ export class EmptySession implements nb.ISession {
 }
 
 class EmptyKernel implements nb.IKernel {
+	createComm(target_name: string, model_id: string) {
+		throw new Error('Method not implemented.');
+	}
+	requestCommInfo(arg0: { target_name: string; }) {
+		throw new Error('Method not implemented.');
+	}
+	registerCommTarget(comm_target_name: string, arg1: (comm: import('@jupyterlab/services/lib/kernel/kernel').IComm, msg: import('@jupyterlab/services/lib/kernel/messages').ICommOpenMsg<'iopub' | 'shell'>) => Promise<void>) {
+		throw new Error('Method not implemented.');
+	}
 	public get id(): string {
 		return '-1';
 	}

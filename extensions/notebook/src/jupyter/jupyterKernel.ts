@@ -108,7 +108,7 @@ export class JupyterKernel implements nb.IKernel {
 		return this.kernelImpl.connectToComm(target_name, model_id);
 	}
 
-	registerCommTarget(comm_targe_name: string, callback: (comm: nb.IComm, msg: nb.ICommOpenMsg) => void | PromiseLike<void>) {
+	registerCommTarget(comm_targe_name: string, callback: (comm: any, msg: any) => void | PromiseLike<void>) {
 		this.kernelImpl.registerCommTarget(comm_targe_name, callback);
 	}
 

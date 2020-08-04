@@ -3,12 +3,14 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+/* eslint-disable code-import-patterns */
+
 import * as renderers from './renderers';
-import { Deferred } from 'sql/base/common/promise';
 import { ReadonlyJSONObject } from 'sql/workbench/services/notebook/common/jsonext';
 import * as tableRenderers from 'sql/workbench/contrib/notebook/browser/outputs/tableRenderers';
 import type { IRenderMime } from 'sql/workbench/services/notebook/browser/outputs/renderMimeInterfaces';
-
+import { WidgetManager } from 'sql/workbench/contrib/notebook/browser/outputs/IpyWidgetManager';
+import * as lmWidget from '@lumino/widgets';
 /**
  * A common base class for mime renderers.
  */
@@ -382,6 +384,7 @@ export class RenderedDataResource extends RenderedCommon {
  * A dummy widget for (not) displaying ipywidgets.
  */
 export class RenderedIPyWidget extends RenderedCommon {
+	options: IRenderMime.IRendererOptions;
 	/**
 	 * Construct a new rendered widget.
 	 *
@@ -390,8 +393,8 @@ export class RenderedIPyWidget extends RenderedCommon {
 	constructor(options: IRenderMime.IRendererOptions) {
 		super(options);
 		this.addClass('jp-RenderedIPyWidget');
+		this.options = options;
 	}
-
 	/**
 	 * Render a mime model.
 	 *
@@ -400,8 +403,36 @@ export class RenderedIPyWidget extends RenderedCommon {
 	 * @returns A promise which resolves when rendering is complete.
 	 */
 	render(model: IRenderMime.IMimeModel): Promise<void> {
-		let deferred = new Deferred<void>();
-		deferred.resolve();
-		return deferred.promise;
+		// let deferred = new Deferred<void>();
+		// deferred.resolve();
+		// return deferred.promise;
+
+		let code = model.data['text/plain'];
+		const widgetarea = document.getElementsByClassName(
+			'widgetarea'
+		)[0] as HTMLElement;
+
+		const manager = new WidgetManager(nb.kernel);
+
+		// Run backend code to create the widgets.  You could also create the
+		// widgets in the frontend, like the other widget examples demonstrate.
+		const execution = kernel.requestExecute({ code: code });
+		execution.onIOPub = async (msg): Promise<void> => {
+			// If we have a display message, display the widget.
+			if (KernelMessage.isDisplayDataMsg(msg)) {
+				const widgetData: any =
+					msg.content.data['application/vnd.jupyter.widget-view+json'];
+				if (widgetData !== undefined && widgetData.version_major === 2) {
+					const model = await manager.get_model(widgetData.model_id);
+					if (model !== undefined) {
+						const view = await manager.create_view(model, this.options);
+						lmWidget.Widget.attach(view.pWidget, widgetarea);
+					}
+				}
+			}
+		};
+
+		this.node.append(widgetarea);
+		return Promise.resolve(undefined);
 	}
 }

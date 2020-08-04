@@ -55,24 +55,24 @@ export class MimeRendererComponent extends AngularDisposable implements IMimeCom
 
 	protected createRenderedMimetype(options: MimeModel.IOptions, node: HTMLElement): void {
 		if (this.mimeType) {
-			if (this.mimeType = 'application/vnd.upyter.widget-view+json') {
+			if (this.mimeType === 'application/vnd.jupyter.widget-view+json') {
 				//insert code from index here
 			}
-			else {
-				let renderer = this.registry.createRenderer(this.mimeType);
-				renderer.node = node;
-				let model = new MimeModel(options);
-				renderer.renderModel(model).catch(error => {
-					// Manually append error message to output
-					renderer.node.innerHTML = `<pre>Javascript Error: ${error.message}</pre>`;
-					// Remove mime-type-specific CSS classes
-					renderer.node.className = 'p-Widget jp-RenderedText';
-					renderer.node.setAttribute(
-						'data-mime-type',
-						'application/vnd.jupyter.stderr'
-					);
-				});
-			}
+
+			let renderer = this.registry.createRenderer(this.mimeType);
+			renderer.node = node;
+			let model = new MimeModel(options);
+			renderer.renderModel(model).catch(error => {
+				// Manually append error message to output
+				renderer.node.innerHTML = `<pre>Javascript Error: ${error.message}</pre>`;
+				// Remove mime-type-specific CSS classes
+				renderer.node.className = 'p-Widget jp-RenderedText';
+				renderer.node.setAttribute(
+					'data-mime-type',
+					'application/vnd.jupyter.stderr'
+				);
+			});
+
 		} else {
 			node.innerHTML = localize('noRendererFound',
 				"No {0} renderer could be found for output. It has the following MIME types: {1}",
