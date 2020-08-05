@@ -441,50 +441,32 @@
         ]
       },
       {
-        "name": "sql-vm-setup",
+        "name": "sql-azure-vm-setup",
         "displayIndex": 5,
-        "displayName": "%resource-type-sql-azure-display-name%",
-        "description": "%resource-type-sql-azure-description%",
+        "displayName": "%resource-type-sql-azure-vm-display-name%",
+        "description": "%resoruce-type-sql-azure-vm-description%",
         "platforms": "*",
         "icon": {
-          "light": "./images/sql_vm.svg",
-          "dark": "./images/sql_vm.svg"
+          "light": "./images/sql_vm_on_azure.svg",
+          "dark": "./images/sql_vm_on_azure.svg"
         },
         "options": [
           {
-            "name": "resource-type",
-            "displayName": "%resource-type-display-name%",
+            "name": "publisher",
+            "displayName": "%publisher-display-name%",
             "values": [
               {
-                "name": "single-database",
-                "displayName": "%sql-azure-single-database-display-name%"
-              },
-              {
-                "name": "elastic-pool",
-                "displayName": "%sql-azure-elastic-pool-display-name%"
-              },
-              {
-                "name": "database-server",
-                "displayName": "%sql-azure-database-server-display-name%"
+                "name": "MicrosoftSQLServer",
+                "displayName": "%sql-azure-vm-publisher-microsoft-sql-server%"
               }
             ]
           }
         ],
         "providers": [
           {
-            "webPageUrl": "https://portal.azure.com/#create/Microsoft.SQLDatabase",
-            "requiredTools": [],
-            "when": "resource-type=single-database"
-          },
-          {
-            "webPageUrl": "https://portal.azure.com/#create/Microsoft.SQLElasticDatabasePool",
-            "requiredTools": [],
-            "when": "resource-type=elastic-pool"
-          },
-          {
-            "webPageUrl": "https://portal.azure.com/#create/Microsoft.SQLServer",
-            "requiredTools": [],
-            "when": "resource-type=database-server"
+            "notebookWizard": {
+              "notebook":""
+            }
           }
         ]
       }

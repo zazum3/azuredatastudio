@@ -54,10 +54,14 @@
 	"bdc-agreement-bdc-eula": "SQL Server License Terms",
 	"deployment.configuration.title": "Deployment configuration",
 	"azdata-install-location-description": "Location of the azdata package used for the install command",
-	"resource-type-sql-azure-display-name": "SQL databases",
+	"resource-type-sql-azure-display-name": "Azure SQL databases",
 	"resource-type-sql-azure-description": "Best for modern cloud applications. Hyperscale and serverless options are available.",
 	"resource-type-display-name":"Resource type",
 	"sql-azure-single-database-display-name": "Single database",
 	"sql-azure-elastic-pool-display-name": "Elastic pool",
-	"sql-azure-database-server-display-name": "Database server"
+	"sql-azure-database-server-display-name": "Database server",
+	"resource-type-sql-azure-vm-display-name": "Azure SQL virtual machine",
+	"resoruce-type-sql-azure-vm-description": "Best for migrations and applications requiring OS-level access. Lift-and-shift ready.",
+	"publisher-display-name":"Publisher",
+	"sql-azure-vm-publisher-microsoft-sql-server": "MicrosoftSQLServer"
 }
