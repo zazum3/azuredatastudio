@@ -208,7 +208,7 @@ steps:
     inputs:
       ConnectedServiceName: 'Code Signing'
       FolderPath: '.build'
-      Pattern: '*.exe, extensions/*.vsix'
+      Pattern: '*.exe, *.vsix'
       signConfigType: inlineSignParams
       inlineOperation: |
         [

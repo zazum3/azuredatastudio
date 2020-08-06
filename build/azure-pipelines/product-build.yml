@@ -47,15 +47,15 @@ jobs:
   steps:
   - template: win32/product-build-win32-arm64.yml
 
-# - job: Linux
-#   condition: and(succeeded(), eq(variables['VSCODE_COMPILE_ONLY'], 'false'), eq(variables['VSCODE_BUILD_LINUX'], 'true'))
-#   pool:
-#     vmImage: 'Ubuntu-16.04'
-#   container: vscode-x64
-#   dependsOn:
-#   - Compile
-#   steps:
-#   - template: linux/product-build-linux.yml
+- job: Linux
+  condition: and(succeeded(), eq(variables['VSCODE_COMPILE_ONLY'], 'false'), eq(variables['VSCODE_BUILD_LINUX'], 'true'))
+  pool:
+    vmImage: 'Ubuntu-16.04'
+  container: vscode-x64
+  dependsOn:
+  - Compile
+  steps:
+  - template: linux/product-build-linux.yml
 
 - job: LinuxSnap
   condition: and(succeeded(), eq(variables['VSCODE_COMPILE_ONLY'], 'false'), eq(variables['VSCODE_BUILD_LINUX'], 'true'))
