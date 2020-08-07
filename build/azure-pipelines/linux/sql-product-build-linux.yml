@@ -194,7 +194,7 @@ steps:
           {
             "keyCode": "CP-233016",
             "operationSetCode": "OpcVerify",
-            "parameters": null,
+            "parameters": [],
             "toolName": "sign",
             "toolVersion": "1.0"
           }
