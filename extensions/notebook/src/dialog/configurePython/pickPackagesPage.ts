@@ -16,6 +16,7 @@ interface RequiredPackageInfo {
 	name: string;
 	existingVersion: string;
 	requiredVersion: string;
+	unsupportedVersion: string;
 }
 
 namespace cssStyles {
@@ -53,6 +54,7 @@ export class PickPackagesPage extends BasePage {
 		let nameColumn = localize('configurePython.pkgNameColumn', "Name");
 		let existingVersionColumn = localize('configurePython.existingVersionColumn', "Existing Version");
 		let requiredVersionColumn = localize('configurePython.requiredVersionColumn', "Required Version");
+		let unsupportedVersionColumn = localize('configurePython.unsupportedVersionColumn', "Unsupported Version");
 		this.requiredPackagesTable = this.view.modelBuilder.declarativeTable().withProperties<azdata.DeclarativeTableProperties>({
 			columns: [{
 				displayName: nameColumn,
@@ -71,7 +73,7 @@ export class PickPackagesPage extends BasePage {
 				ariaLabel: existingVersionColumn,
 				valueType: azdata.DeclarativeDataType.string,
 				isReadOnly: true,
-				width: '200px',
+				width: '100px',
 				headerCssStyles: {
 					...cssStyles.tableHeader
 				},
@@ -83,7 +85,19 @@ export class PickPackagesPage extends BasePage {
 				ariaLabel: requiredVersionColumn,
 				valueType: azdata.DeclarativeDataType.string,
 				isReadOnly: true,
-				width: '200px',
+				width: '100px',
+				headerCssStyles: {
+					...cssStyles.tableHeader
+				},
+				rowCssStyles: {
+					...cssStyles.tableRow
+				}
+			}, {
+				displayName: unsupportedVersionColumn,
+				ariaLabel: unsupportedVersionColumn,
+				valueType: azdata.DeclarativeDataType.string,
+				isReadOnly: true,
+				width: '100px',
 				headerCssStyles: {
 					...cssStyles.tableHeader
 				},
@@ -142,7 +156,7 @@ export class PickPackagesPage extends BasePage {
 			let requiredPkgVersions: RequiredPackageInfo[] = [];
 			let requiredPackages = this.model.installation.getRequiredPackagesForKernel(kernelName);
 			requiredPackages.forEach(pkg => {
-				requiredPkgVersions.push({ name: pkg.name, existingVersion: undefined, requiredVersion: pkg.version });
+				requiredPkgVersions.push({ name: pkg.name, existingVersion: undefined, requiredVersion: pkg.version, unsupportedVersion: pkg.maxVersionLimit });
 			});
 
 			// For each required package, check if there is another version of that package already installed
@@ -155,11 +169,11 @@ export class PickPackagesPage extends BasePage {
 			});
 
 			if (requiredPkgVersions.length > 0) {
-				this.requiredPackagesTable.data = requiredPkgVersions.map(pkg => [pkg.name, pkg.existingVersion ?? '-', pkg.requiredVersion]);
+				this.requiredPackagesTable.data = requiredPkgVersions.map(pkg => [pkg.name, pkg.existingVersion ?? '-', pkg.requiredVersion, pkg.unsupportedVersion ?? '-']);
 				this.model.packagesToInstall = requiredPackages;
 			} else {
 				this.instance.showErrorMessage(localize('msgUnsupportedKernel', "Could not retrieve packages for kernel {0}", kernelName));
-				this.requiredPackagesTable.data = [['-', '-', '-']];
+				this.requiredPackagesTable.data = [['-', '-', '-', '-']];
 				this.model.packagesToInstall = undefined;
 			}
 		} finally {
