@@ -546,7 +546,10 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 		let requiredPackages = this.getRequiredPackagesForKernel(kernelDisplayName);
 		for (let pkg of requiredPackages) {
 			let installedVersion = installedPackageMap.get(pkg.name);
-			if (!installedVersion || utils.comparePackageVersions(installedVersion, pkg.version) < 0) {
+			if (!installedVersion
+				|| utils.comparePackageVersions(installedVersion, pkg.version) < 0
+				|| (pkg.maxVersionLimit && utils.comparePackageVersions(installedVersion, pkg.maxVersionLimit) >= 0)
+			) {
 				return false;
 			}
 		}
