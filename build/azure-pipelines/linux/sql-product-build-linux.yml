@@ -171,6 +171,13 @@ steps:
       cp --parents -r $(Build.SourcesDirectory)/extensions/*/coverage/** $(Build.ArtifactStagingDirectory)/test-results/coverage
     displayName: Copy Coverage
 
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core sdk'
+    inputs:
+      packageType: sdk
+      version: 2.1
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+
   - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
     inputs:
       ConnectedServiceName: 'Code Signing'
@@ -200,6 +207,7 @@ steps:
           }
         ]
       SessionTimeout: 120
+    displayName: 'Signing Extensions'
 
   - task: PublishTestResults@2
     displayName: 'Publish Test Results test-results.xml'
