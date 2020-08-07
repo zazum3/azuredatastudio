@@ -167,35 +167,35 @@ steps:
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
   - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
-      inputs:
-        ConnectedServiceName: 'Code Signing'
-        FolderPath: '$(agent.builddirectory)'
-        Pattern: 'extensions/*.vsix'
-        signConfigType: inlineSignParams
-        inlineOperation: |
-          [
-            {
-              "keyCode": "CP-2330164",
-              "operationSetCode": "OpcSign",
-              "parameters": [
-                {
-                  "parameterName": "FileDigest",
-                  "parameterValue": "/fd \"SHA256\""
-                }
-              ],
-              "toolName": "sign",
-              "toolVersion": "1.0"
-            },
-            {
-              "keyCode": "CP-233016",
-              "operationSetCode": "OpcVerify",
-              "parameters": [],
-              "toolName": "sign",
-              "toolVersion": "1.0"
-            }
-          ]
-        SessionTimeout: 120
-      displayName: 'Signing Extensions'
+    inputs:
+      ConnectedServiceName: 'Code Signing'
+      FolderPath: '$(agent.builddirectory)'
+      Pattern: 'extensions/*.vsix'
+      signConfigType: inlineSignParams
+      inlineOperation: |
+        [
+          {
+            "keyCode": "CP-2330164",
+            "operationSetCode": "OpcSign",
+            "parameters": [
+              {
+                "parameterName": "FileDigest",
+                "parameterValue": "/fd \"SHA256\""
+              }
+            ],
+            "toolName": "sign",
+            "toolVersion": "1.0"
+          },
+          {
+            "keyCode": "CP-233016",
+            "operationSetCode": "OpcVerify",
+            "parameters": [],
+            "toolName": "sign",
+            "toolVersion": "1.0"
+          }
+        ]
+      SessionTimeout: 120
+    displayName: 'Signing Extensions'
 
   - script: |
       set -e
