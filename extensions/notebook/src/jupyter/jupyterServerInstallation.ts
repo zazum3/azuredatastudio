@@ -84,6 +84,10 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 			name: 'jupyter',
 			version: '1.0.0'
 		}, {
+			name: 'notebook',
+			version: '6.0.3',
+			maxVersionLimit: '6.1.1'
+		}, {
 			name: 'pandas',
 			version: '0.24.2'
 		}, {
@@ -578,7 +582,10 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 
 				expectedCondaPackages.forEach(expectedPkg => {
 					let installedPkgVersion = condaVersionMap.get(expectedPkg.name);
-					if (!installedPkgVersion || utils.comparePackageVersions(installedPkgVersion, expectedPkg.version) < 0) {
+					if (!installedPkgVersion
+						|| utils.comparePackageVersions(installedPkgVersion, expectedPkg.version) < 0
+						|| (expectedPkg.maxVersionLimit && utils.comparePackageVersions(installedPkgVersion, expectedPkg.maxVersionLimit) >= 0)
+					) {
 						condaPackagesToInstall.push(expectedPkg);
 					}
 				});
@@ -591,7 +598,10 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 
 			expectedPipPackages.forEach(expectedPkg => {
 				let installedPkgVersion = pipVersionMap.get(expectedPkg.name);
-				if (!installedPkgVersion || utils.comparePackageVersions(installedPkgVersion, expectedPkg.version) < 0) {
+				if (!installedPkgVersion
+					|| utils.comparePackageVersions(installedPkgVersion, expectedPkg.version) < 0
+					|| (expectedPkg.maxVersionLimit && utils.comparePackageVersions(installedPkgVersion, expectedPkg.maxVersionLimit) >= 0)
+				) {
 					pipPackagesToInstall.push(expectedPkg);
 				}
 			});
@@ -688,7 +698,14 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 		}
 
 		let versionSpecifier = useMinVersion ? '>=' : '==';
-		let packagesStr = packages.map(pkg => `"${pkg.name}${versionSpecifier}${pkg.version}"`).join(' ');
+		let packagesStr = packages.map(pkg => {
+			let maxVersionSpecifier = '';
+			if (useMinVersion && pkg.maxVersionLimit) {
+				maxVersionSpecifier = `,<${pkg.maxVersionLimit}`;
+			}
+
+			return `"${pkg.name}${versionSpecifier}${pkg.version}${maxVersionSpecifier}"`;
+		}).join(' ');
 		let cmd = `"${this.pythonExecutable}" -m pip install --user ${packagesStr} --extra-index-url https://prose-python-packages.azurewebsites.net`;
 		return this.executeStreamedCommand(cmd);
 	}
@@ -738,7 +755,14 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 		}
 
 		let versionSpecifier = useMinVersion ? '>=' : '==';
-		let packagesStr = packages.map(pkg => `"${pkg.name}${versionSpecifier}${pkg.version}"`).join(' ');
+		let packagesStr = packages.map(pkg => {
+			let maxVersionSpecifier = '';
+			if (useMinVersion && pkg.maxVersionLimit) {
+				maxVersionSpecifier = `,<${pkg.maxVersionLimit}`;
+			}
+
+			return `"${pkg.name}${versionSpecifier}${pkg.version}${maxVersionSpecifier}"`;
+		}).join(' ');
 		let condaExe = this.getCondaExePath();
 		let cmd = `"${condaExe}" install -c conda-forge -y ${packagesStr}`;
 		return this.executeStreamedCommand(cmd);
@@ -886,6 +910,7 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 export interface PythonPkgDetails {
 	name: string;
 	version: string;
+	maxVersionLimit?: string;
 }
 
 export interface PipPackageOverview {
