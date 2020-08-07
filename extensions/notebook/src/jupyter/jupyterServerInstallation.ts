@@ -144,20 +144,23 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 		this._kernelSetupCache = new Map<string, boolean>();
 		this._requiredKernelPackages = new Map<string, PythonPkgDetails[]>();
 
-		let jupyterPkg = {
+		let jupyterPackages = [{
 			name: 'jupyter',
 			version: '1.0.0'
-		};
-		this._requiredKernelPackages.set(constants.python3DisplayName, [jupyterPkg]);
+		}, {
+			name: 'notebook',
+			version: '6.0.3',
+			maxVersionLimit: '6.1.1'
+		}];
+		this._requiredKernelPackages.set(constants.python3DisplayName, jupyterPackages);
 
 		let powershellPkg = {
 			name: 'powershell-kernel',
 			version: '0.1.3'
 		};
-		this._requiredKernelPackages.set(constants.powershellDisplayName, [jupyterPkg, powershellPkg]);
+		this._requiredKernelPackages.set(constants.powershellDisplayName, jupyterPackages.concat(powershellPkg));
 
-		let sparkPackages = [
-			jupyterPkg,
+		let sparkPackages = jupyterPackages.concat([
 			{
 				name: 'sparkmagic',
 				version: '0.12.9'
@@ -167,7 +170,8 @@ export class JupyterServerInstallation implements IJupyterServerInstallation {
 			}, {
 				name: 'prose-codeaccelerator',
 				version: '1.3.0'
-			}];
+			}
+		]);
 		this._requiredKernelPackages.set(constants.pysparkDisplayName, sparkPackages);
 		this._requiredKernelPackages.set(constants.sparkScalaDisplayName, sparkPackages);
 		this._requiredKernelPackages.set(constants.sparkRDisplayName, sparkPackages);
