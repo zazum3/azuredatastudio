@@ -175,7 +175,7 @@ steps:
       inlineOperation: |
         [
           {
-            "keyCode": "CP-2330164",
+            "keyCode": "CP-233016",
             "operationSetCode": "OpcSign",
             "parameters": [
               {
