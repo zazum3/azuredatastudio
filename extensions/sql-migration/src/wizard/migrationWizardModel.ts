@@ -3,12 +3,14 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-export class WizardController {
-	constructor() {
+import * as azdata from 'azdata';
 
-	}
-
-	public async openWizard(): Promise<void> {
-
-	}
+/**
+ * The main data model that communicates between the pages.
+ */
+export interface IMigrationWizardDataModel {
+	server: azdata.connection.Connection;
+	serverId: string;
+	ownerUri: string;
+	database: string;
 }
