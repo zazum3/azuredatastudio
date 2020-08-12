@@ -4,26 +4,24 @@
  *--------------------------------------------------------------------------------------------*/
 
 /* eslint-disable code-import-patterns */
+
 import * as base from '@jupyter-widgets/base';
 
-
-import { HTMLManager } from '@jupyter-widgets/html-manager';
-
-import './widgets.css';
 import { nb } from 'azdata';
-import { IComm } from '@jupyterlab/services/lib/kernel/kernel';
-import { ICommOpenMsg } from '@jupyterlab/services/lib/kernel/messages';
+const manager = require('@jupyter-widgets/html-manager');
 
-
-export class WidgetManager extends HTMLManager {
+export class WidgetManager extends manager.HTMLManager {
 	constructor(kernel: nb.IKernel) {
 		super();
 		this.kernel = kernel;
-		kernel.registerCommTarget(this.comm_target_name, async (comm: IComm, msg: ICommOpenMsg<'iopub' | 'shell'>) => {
+
+		kernel.registerCommTarget(this.comm_target_name, async (comm, msg) => {
 			const oldComm = new base.shims.services.Comm(comm);
 			await this.handle_comm_open(oldComm, msg);
 		});
 	}
+
+
 	/**
 	 * Create a comm.
 	 */
@@ -39,13 +37,15 @@ export class WidgetManager extends HTMLManager {
 		}
 		return Promise.resolve(new base.shims.services.Comm(comm));
 	}
+
 	/**
 	 * Get the currently-registered comms.
 	 */
 	_get_comm_info(): Promise<any> {
 		return this.kernel
 			.requestCommInfo({ target_name: this.comm_target_name })
-			.then(reply => (reply.content as any).comms);
+			.then((reply: { content: any; }) => (reply.content as any).comms);
 	}
+
 	kernel: nb.IKernel;
 }

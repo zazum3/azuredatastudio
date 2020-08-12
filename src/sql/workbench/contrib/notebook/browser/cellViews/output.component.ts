@@ -143,6 +143,7 @@ export class OutputComponent extends CellView implements OnInit, AfterViewInit {
 
 	private loadComponent(): void {
 		let options = outputProcessor.getBundleOptions({ value: this.cellOutput, trusted: this.trustedMode });
+		options.notebookUri = this.cellModel.notebookModel.notebookUri;
 		options.themeService = this._themeService;
 		let mimeType = componentRegistry.getPreferredMimeType(
 			options.data,

@@ -6,6 +6,7 @@
 import { IRenderMime } from 'sql/workbench/services/notebook/browser/outputs/renderMimeInterfaces';
 import { ReadonlyJSONObject } from 'sql/workbench/services/notebook/common/jsonext';
 import { IThemeService } from 'vs/platform/theme/common/themeService';
+import { URI } from 'vs/base/common/uri';
 
 /**
  * The default mime model implementation.
@@ -96,5 +97,7 @@ export namespace MimeModel {
 		 * Theme service used to react to theme change events
 		 */
 		themeService?: IThemeService;
+
+		notebookUri?: URI;
 	}
 }

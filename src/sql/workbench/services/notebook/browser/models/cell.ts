@@ -3,6 +3,8 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+/* eslint-disable code-import-patterns */
+
 import { nb, ServerInfo } from 'azdata';
 
 import { Event, Emitter } from 'vs/base/common/event';
@@ -372,6 +374,10 @@ export class CellModel extends Disposable implements ICellModel {
 					// requestExecute expects a string for the code parameter
 					content = Array.isArray(content) ? content.join('') : content;
 					if (tryMatchCellMagic(this.source[0]) !== ads_execute_command || !this._isCommandExecutionSettingEnabled) {
+						// let widgetManager = new WidgetManager(kernel);
+						// if(this._notebookService){
+						// 	this._notebookService.setKernelIdToManager(kernel.id, widgetManager);
+						// }
 						const future = kernel.requestExecute({
 							code: content,
 							stop_on_error: true

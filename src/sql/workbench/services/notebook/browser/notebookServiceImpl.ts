@@ -2,6 +2,7 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+/* eslint-disable code-import-patterns */
 
 import { nb } from 'azdata';
 import { localize } from 'vs/nls';
@@ -36,6 +37,7 @@ import { onUnexpectedError } from 'vs/base/common/errors';
 import { notebookConstants } from 'sql/workbench/services/notebook/browser/interfaces';
 import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';
 import { IProductService } from 'vs/platform/product/common/productService';
+import { WidgetManager } from 'sql/workbench/contrib/notebook/browser/outputs/IpyWidgetManager';
 
 export interface NotebookProviderProperties {
 	provider: string;
@@ -108,6 +110,7 @@ export class NotebookService extends Disposable implements INotebookService {
 	private _isRegistrationComplete = false;
 	private _trustedCacheQueue: URI[] = [];
 	private _unTrustedCacheQueue: URI[] = [];
+	private _kernelIdToManager = new Map<String, WidgetManager>();
 
 	constructor(
 		@ILifecycleService lifecycleService: ILifecycleService,
@@ -160,6 +163,14 @@ export class NotebookService extends Disposable implements INotebookService {
 		}
 
 		lifecycleService.onWillShutdown(() => this.shutdown());
+	}
+
+	public setKernelIdToManager(kernel: string, manager: WidgetManager) {
+		this._kernelIdToManager.set(kernel, manager);
+	}
+
+	public getKernelIdToManager(kernel: string): WidgetManager {
+		return this._kernelIdToManager.get(kernel);
 	}
 
 	public dispose(): void {

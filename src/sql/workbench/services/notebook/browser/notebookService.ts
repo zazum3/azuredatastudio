@@ -3,6 +3,8 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+/* eslint-disable code-import-patterns */
+
 import * as azdata from 'azdata';
 
 import { Event } from 'vs/base/common/event';
@@ -18,6 +20,7 @@ import { IBootstrapParams } from 'sql/workbench/services/bootstrap/common/bootst
 import { BaseTextEditor } from 'vs/workbench/browser/parts/editor/textEditor';
 import { Range } from 'vs/editor/common/core/range';
 import { IStandardKernelWithProvider } from 'sql/workbench/services/notebook/browser/models/notebookUtils';
+import { WidgetManager } from 'sql/workbench/contrib/notebook/browser/outputs/IpyWidgetManager';
 
 export const SERVICE_ID = 'sqlNotebookService';
 export const INotebookService = createDecorator<INotebookService>(SERVICE_ID);
@@ -129,6 +132,10 @@ export interface INotebookService {
 	 * @param isTrusted True if notebook is to be set to trusted, false otherwise.
 	 */
 	setTrusted(notebookUri: URI, isTrusted: boolean): Promise<boolean>;
+
+	setKernelIdToManager(kernel: string, manager: WidgetManager): void;
+
+	getKernelIdToManager(kernel: string): WidgetManager;
 }
 
 export interface INotebookProvider {

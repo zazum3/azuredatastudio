@@ -3,6 +3,8 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+/* eslint-disable code-import-patterns */
+
 import { IMimeComponent } from 'sql/workbench/contrib/notebook/browser/outputs/mimeRegistry';
 import { AngularDisposable } from 'sql/base/browser/lifecycle';
 import { ElementRef, forwardRef, Inject, Component, OnInit, Input } from '@angular/core';
@@ -56,23 +58,37 @@ export class MimeRendererComponent extends AngularDisposable implements IMimeCom
 	protected createRenderedMimetype(options: MimeModel.IOptions, node: HTMLElement): void {
 		if (this.mimeType) {
 			if (this.mimeType === 'application/vnd.jupyter.widget-view+json') {
-				//insert code from index here
+				let editor = this._notebookService.findNotebookEditor(options.notebookUri);
+				let kernel = editor.model.clientSession.kernel;
+				//const manager = this._notebookService.getKernelIdToManager(kernel.id);
+
+				const widgetarea = document.getElementsByClassName(
+					'widgetarea'
+				)[0] as HTMLElement;
+
+				const widgetData: any =
+					options.data['application/vnd.jupyter.widget-view+json'];
+				if (widgetData !== undefined && widgetData.version_major === 2) {
+					//const model = manager.get_model(widgetData.model_id);
+
+				}
+				//node.append(widgetarea);
+			} else {
+
+				let renderer = this.registry.createRenderer(this.mimeType);
+				renderer.node = node;
+				let model = new MimeModel(options);
+				renderer.renderModel(model).catch(error => {
+					// Manually append error message to output
+					renderer.node.innerHTML = `<pre>Javascript Error: ${error.message}</pre>`;
+					// Remove mime-type-specific CSS classes
+					renderer.node.className = 'p-Widget jp-RenderedText';
+					renderer.node.setAttribute(
+						'data-mime-type',
+						'application/vnd.jupyter.stderr'
+					);
+				});
 			}
-
-			let renderer = this.registry.createRenderer(this.mimeType);
-			renderer.node = node;
-			let model = new MimeModel(options);
-			renderer.renderModel(model).catch(error => {
-				// Manually append error message to output
-				renderer.node.innerHTML = `<pre>Javascript Error: ${error.message}</pre>`;
-				// Remove mime-type-specific CSS classes
-				renderer.node.className = 'p-Widget jp-RenderedText';
-				renderer.node.setAttribute(
-					'data-mime-type',
-					'application/vnd.jupyter.stderr'
-				);
-			});
-
 		} else {
 			node.innerHTML = localize('noRendererFound',
 				"No {0} renderer could be found for output. It has the following MIME types: {1}",
