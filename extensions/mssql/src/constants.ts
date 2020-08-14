@@ -39,9 +39,12 @@ export const CmsService = 'cmsService';
 export const DacFxService = 'dacfxService';
 export const SchemaCompareService = 'schemaCompareService';
 export const LanguageExtensionService = 'languageExtensionService';
-export const objectExplorerPrefix: string = 'objectexplorer://';
 export const SqlAssessmentService = 'sqlAssessmentService';
 export const NotebookConvertService = 'notebookConvertService';
+export const SqlMigrationService = 'sqlMigrationService';
+
+// Object Explorer URI prefix
+export const objectExplorerPrefix: string = 'objectexplorer://';
 
 export enum BuiltInCommands {
 	SetContext = 'setContext'

@@ -777,3 +777,17 @@ export interface ConvertSqlToNotebookResult extends azdata.ResultStatus {
 }
 
 // ------------------------------- <Convert Notebook> -----------------------------
+
+// ------------------------------- <Migration> -----------------------------
+export class MigrationAssessmentParams {
+	public ownerUri: string;
+}
+
+export class MigrationAssessmentResult {
+	public output: string;
+}
+
+export namespace MigrationAssessmenRequest {
+	export const type = new RequestType<MigrationAssessmentParams, MigrationAssessmentResult, void, void>('migration/assessment');
+}
+// ------------------------------- <Migration> -----------------------------
