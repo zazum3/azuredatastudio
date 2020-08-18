@@ -22,7 +22,7 @@ const files = [
 	'.build/docker/*', // docker images
 	'.build/darwin/*', // darwin binaries
 	'.build/version.json', // version information
-	path.join(os.tmpdir + '/adsuser-*/logs/*/exthost1/*/*.log') // extension logs
+	path.join(os.tmpdir(),'/adsuser-*/logs/*/exthost1/*/*.log') // extension logs
 ];
 
 
