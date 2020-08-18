@@ -8,9 +8,9 @@
 import * as base from '@jupyter-widgets/base';
 
 import { nb } from 'azdata';
-const manager = require('@jupyter-widgets/html-manager');
+import { HTMLManager } from '@jupyter-widgets/html-manager';
 
-export class WidgetManager extends manager.HTMLManager {
+export class WidgetManager extends HTMLManager {
 	constructor(kernel: nb.IKernel) {
 		super();
 		this.kernel = kernel;

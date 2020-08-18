@@ -59,13 +59,14 @@ export class MimeRendererComponent extends AngularDisposable implements IMimeCom
 		if (this.mimeType) {
 			if (this.mimeType === 'application/vnd.jupyter.widget-view+json') {
 				let editor = this._notebookService.findNotebookEditor(options.notebookUri);
-				let kernel = editor.model.clientSession.kernel;
-				//const manager = this._notebookService.getKernelIdToManager(kernel.id);
+				if (editor !== undefined) {
+					let kernel = editor.model.clientSession.kernel;
+					//const manager = this._notebookService.getKernelIdToManager(kernel.id);
 
-				const widgetarea = document.getElementsByClassName(
-					'widgetarea'
-				)[0] as HTMLElement;
-
+					const widgetarea = document.getElementsByClassName(
+						'widgetarea'
+					)[0] as HTMLElement;
+				}
 				const widgetData: any =
 					options.data['application/vnd.jupyter.widget-view+json'];
 				if (widgetData !== undefined && widgetData.version_major === 2) {

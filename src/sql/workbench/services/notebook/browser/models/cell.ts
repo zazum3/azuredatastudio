@@ -31,6 +31,7 @@ import { ICommandService } from 'vs/platform/commands/common/commands';
 import { tryMatchCellMagic, extractCellMagicCommandPlusArgs } from 'sql/workbench/services/notebook/browser/utils';
 import { IConfigurationService } from 'vs/platform/configuration/common/configuration';
 import { Disposable } from 'vs/base/common/lifecycle';
+import { WidgetManager } from 'sql/workbench/contrib/notebook/browser/outputs/IpyWidgetManager';
 
 let modelId = 0;
 const ads_execute_command = 'ads_execute_command';
@@ -374,7 +375,7 @@ export class CellModel extends Disposable implements ICellModel {
 					// requestExecute expects a string for the code parameter
 					content = Array.isArray(content) ? content.join('') : content;
 					if (tryMatchCellMagic(this.source[0]) !== ads_execute_command || !this._isCommandExecutionSettingEnabled) {
-						// let widgetManager = new WidgetManager(kernel);
+						let widgetManager = new WidgetManager(kernel);
 						// if(this._notebookService){
 						// 	this._notebookService.setKernelIdToManager(kernel.id, widgetManager);
 						// }
