@@ -9,6 +9,7 @@ import * as vfs from 'vinyl-fs';
 import * as path from 'path';
 import * as es from 'event-stream';
 import * as fs from 'fs';
+import * as os from 'os';
 
 const files = [
 	'.build/extensions/**/*.vsix', // external extensions
@@ -20,8 +21,10 @@ const files = [
 	'.build/linux/archive/*', // linux archive
 	'.build/docker/*', // docker images
 	'.build/darwin/*', // darwin binaries
-	'.build/version.json' // version information
+	'.build/version.json', // version information
+	path.join(os.tmpdir + '/adsuser-*/logs/*/exthost1/*/*.log') // extension logs
 ];
+
 
 async function main() {
 	return new Promise((resolve, reject) => {
