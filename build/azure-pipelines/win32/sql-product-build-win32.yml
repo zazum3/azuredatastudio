@@ -143,6 +143,9 @@ steps:
     condition: and(succeeded(), eq(variables['RUN_UNSTABLE_TESTS'], 'true'))
     displayName: Run unstable tests
 
+  - powershell: |
+         Write-Host $env:TEMP
+    displayName: Printing temp folder details
 
   - task: CopyFiles@2
     displayName: 'Copy logs to: $(Build.ArtifactStagingDirectory) from $(Agent.TempDirectory)\adsuser-*\logs\*\exthost1\*\*.log'
