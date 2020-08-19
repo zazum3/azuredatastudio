@@ -144,19 +144,14 @@ steps:
     displayName: Run unstable tests
 
   - powershell: |
-         Write-Host $env:TEMP
-    displayName: Printing temp folder details
-
-  - task: CopyFiles@2
-    displayName: 'Copy logs to: $(Build.ArtifactStagingDirectory) from $(Agent.TempDirectory)\adsuser-*\logs\*\exthost1\*\*.log'
-    inputs:
-      Contents: '$(Agent.TempDirectory)\adsuser-*\logs\*\exthost1\*\*.log'
-      targetFolder: '$(Build.ArtifactStagingDirectory)\logs'
+      $LogDirectory = New-Item -Path $(Build.ArtifactStagingDirectory) -Name "logfiles" -ItemType "directory"
+      Get-ChildItem -Path "$env:TEMP\adsuser-*\logs\*" | Copy-Item -Destination $LogDirectory -Recurse -Container -Force
+    displayName: Copying logs
 
   - task: ArchiveFiles@2
     displayName: 'Compressing logs'
     inputs:
-      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\logs'
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\logfiles'
       archiveType: 'zip'
       archiveFile: '$(Build.ArtifactStagingDirectory)\$(Agent.JobName)_logs.zip'
       verbose: true
@@ -164,7 +159,7 @@ steps:
   - task: DeleteFiles@1
     displayName: 'Deleting logs after compressing'
     inputs:
-      SourceFolder: '$(Build.ArtifactStagingDirectory)\logs'
+      SourceFolder: '$(Build.ArtifactStagingDirectory)\logfiles'
       RemoveSourceFolder: true
 
   - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1

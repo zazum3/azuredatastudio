@@ -91,6 +91,25 @@ steps:
     STANDALONE_SQL_PWD_2019: $(ads-integration-test-standalone-server-password-2019)
     STANDALONE_SQL_2019: $(ads-integration-test-standalone-server-2019)
 
+- powershell: |
+    $LogDirectory = New-Item -Path $(Build.ArtifactStagingDirectory) -Name "logfiles" -ItemType "directory"
+    Get-ChildItem -Path "$env:TEMP\adsuser-*\logs\*" | Copy-Item -Destination $LogDirectory -Recurse -Container -Force
+  displayName: Copying logs
+
+- task: ArchiveFiles@2
+  displayName: 'Compressing logs'
+  inputs:
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\logfiles'
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)\$(Agent.JobName)_logs.zip'
+    verbose: true
+
+- task: DeleteFiles@1
+  displayName: 'Deleting logs after compressing'
+  inputs:
+    SourceFolder: '$(Build.ArtifactStagingDirectory)\logfiles'
+    RemoveSourceFolder: true
+
 - task: PublishTestResults@2
   displayName: 'Publish Integration and Smoke Test Results'
   inputs:
