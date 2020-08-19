@@ -93,7 +93,7 @@ steps:
 
 - powershell: |
     $LogDirectory = New-Item -Path $(Build.ArtifactStagingDirectory) -Name "logfiles" -ItemType "directory"
-    Get-ChildItem -Path "$env:TEMP\adsuser-*\logs\*" | Copy-Item -Destination $LogDirectory -Recurse -Container -Force
+    Get-ChildItem -Path "$env:TEMP\adsuser-*\logs\*" | Copy-Item -Destination $LogDirectory -Recurse -Container -Force -Verbose
   displayName: Copying logs
 
 - task: ArchiveFiles@2
