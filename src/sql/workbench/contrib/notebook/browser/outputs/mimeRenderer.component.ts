@@ -11,6 +11,9 @@ import { INotebookService } from 'sql/workbench/services/notebook/browser/notebo
 import { RenderMimeRegistry } from 'sql/workbench/services/notebook/browser/outputs/registry';
 import { localize } from 'vs/nls';
 
+import * as base from '@jupyter-widgets/base';
+
+
 @Component({
 	selector: MimeRendererComponent.SELECTOR,
 	template: ``
@@ -54,6 +57,8 @@ export class MimeRendererComponent extends AngularDisposable implements IMimeCom
 	}
 
 	protected createRenderedMimetype(options: MimeModel.IOptions, node: HTMLElement): void {
+		if (base) {
+		}
 		if (this.mimeType) {
 			let renderer = this.registry.createRenderer(this.mimeType);
 			renderer.node = node;
