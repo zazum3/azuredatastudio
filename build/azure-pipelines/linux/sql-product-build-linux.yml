@@ -166,8 +166,8 @@ steps:
 
   - script: |
       set -e
-      mkdir -p $(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles
-      cp --parents -r $TMPDIR/adsuser-*/logs/* $(Build.ArtifactStagingDirectory)/$(Agent.JobName)_logfiles -v
+      mkdir $(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles
+      cp --parents -r $TMPDIR/adsuser-*/logs/* $(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles -v
     displayName: Copying logs
 
   - task: ArchiveFiles@2
@@ -175,7 +175,7 @@ steps:
     inputs:
       rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles'
       archiveType: 'zip'
-      archiveFile: '$(Build.ArtifactStagingDirectory)\$(Agent.JobName)_logs.zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)\$(Agent.JobName)-logs.zip'
       verbose: true
 
   - task: DeleteFiles@1
