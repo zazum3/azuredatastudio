@@ -145,7 +145,7 @@ steps:
 
 
   - task: CopyFiles@2
-    displayName: 'Copy logs to: $(Build.ArtifactStagingDirectory)'
+    displayName: 'Copy logs to: $(Build.ArtifactStagingDirectory) from $(Agent.TempDirectory)\adsuser-*\logs\*\exthost1\*\*.log'
     inputs:
       Contents: '$(Agent.TempDirectory)\adsuser-*\logs\*\exthost1\*\*.log'
       targetFolder: '$(Build.ArtifactStagingDirectory)\logs'
