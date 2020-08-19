@@ -145,23 +145,23 @@ steps:
 
 
   - task: CopyFiles@2
-    displayName: 'Copy logs to: $(Build.ArtifactsStagingDirectory)'
+    displayName: 'Copy logs to: $(Build.ArtifactStagingDirectory)'
     inputs:
       Contents: '$(Agent.TempDirectory)\adsuser-*\logs\*\exthost1\*\*.log'
-      targetFolder: '$(Build.ArtifcatStagingDirectory)\logs'
+      targetFolder: '$(Build.ArtifactStagingDirectory)\logs'
 
   - task: ArchiveFiles@2
     displayName: 'Compressing logs'
     inputs:
-      rootFolderOrFile: '$(Build.ArtifcatStagingDirectory)\logs'
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)\logs'
       archiveType: 'zip'
-      archiveFile: '$(Build.ArtifcatStagingDirectory)\$(Agent.JobName)_logs.zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)\$(Agent.JobName)_logs.zip'
       verbose: true
 
   - task: DeleteFiles@1
     displayName: 'Deleting logs after compressing'
     inputs:
-      SourceFolder: '$(Build.ArtifcatStagingDirectory)\logs'
+      SourceFolder: '$(Build.ArtifactStagingDirectory)\logs'
       RemoveSourceFolder: true
 
   - task: SFP.build-tasks.custom-build-task-1.EsrpCodeSigning@1
