@@ -167,7 +167,7 @@ steps:
   - script: |
       set -e
       mkdir -p $(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles
-      cp --parents -r $TMPDIR/tmp.*/logs/* $(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles -v
+      cp --parents -r tmp/tmp.*/logs/* $(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles -v
     displayName: Copying logs
 
   - task: ArchiveFiles@2
