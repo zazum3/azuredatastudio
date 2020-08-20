@@ -171,12 +171,12 @@ steps:
     displayName: Copying logs
 
   - task: ArchiveFiles@2
-  displayName: 'Compressing logs'
-  inputs:
-    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles'
-    archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)\$(Agent.JobName)_logs.zip'
-    verbose: true
+    displayName: 'Compressing logs'
+    inputs:
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles'
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)\$(Agent.JobName)_logs.zip'
+      verbose: true
 
   - task: DeleteFiles@1
     displayName: 'Deleting logs after compressing'
