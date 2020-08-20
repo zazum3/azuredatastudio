@@ -93,7 +93,9 @@ steps:
 
 - powershell: |
     $LogDirectory = New-Item -Path $(Build.ArtifactStagingDirectory) -Name "$(Agent.JobName)-logfiles" -ItemType "directory"
-    Get-ChildItem -Path "$env:TEMP\adsuser-*\logs\*" | Copy-Item -Destination $LogDirectory -Recurse -Container -Force -Verbose
+    Write-Host $LogDirectory
+    $LogSourceDirectory = "$env:TEMP\adsuser-*\"
+    Get-ChildItem -Path $LogSourceDirectory | Copy-Item -Destination $LogDirectory -Recurse -Container -Force -Verbose
   displayName: Copying logs
 
 - task: ArchiveFiles@2
@@ -109,6 +111,9 @@ steps:
   inputs:
     SourceFolder: '$(Build.ArtifactStagingDirectory)\$(Agent.JobName)-logfiles'
     RemoveSourceFolder: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
 
 - task: PublishTestResults@2
   displayName: 'Publish Integration and Smoke Test Results'
