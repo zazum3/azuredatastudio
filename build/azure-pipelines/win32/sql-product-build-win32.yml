@@ -146,7 +146,7 @@ steps:
   - powershell: |
       $LogDirectory = New-Item -Path $(Build.ArtifactStagingDirectory) -Name "$(Agent.JobName)-logfiles" -ItemType "directory"
       Write-Host $LogDirectory
-      $LogSourceDirectory = "$env:TEMP\adsuser-*\"
+      $LogSourceDirectory = "$env:TEMP\vscodeuserfolder-*\"
       Write-Host $LogSourceDirectory
       $CopyOutput = Get-ChildItem -Path $LogSourceDirectory | Copy-Item -Destination $LogDirectory -Recurse -Container -Force -Verbose 4>&1
       Write-Host $CopyOutput
