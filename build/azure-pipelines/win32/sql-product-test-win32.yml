@@ -95,7 +95,8 @@ steps:
     $LogDirectory = New-Item -Path $(Build.ArtifactStagingDirectory) -Name "$(Agent.JobName)-logfiles" -ItemType "directory"
     Write-Host $LogDirectory
     $LogSourceDirectory = "$env:TEMP\adsuser-*\"
-    Get-ChildItem -Path $LogSourceDirectory | Copy-Item -Destination $LogDirectory -Recurse -Container -Force -Verbose
+    $CopyOutput = Get-ChildItem -Path $LogSourceDirectory | Copy-Item -Destination $LogDirectory -Recurse -Container -Force -Verbose 4>&1
+    Write-Host $CopyOutput
   displayName: Copying logs
 
 - task: ArchiveFiles@2
