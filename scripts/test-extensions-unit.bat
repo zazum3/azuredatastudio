@@ -117,8 +117,8 @@ if "%RUN_DBPROJECT_TESTS%" == "true" (
 
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-rmdir /s /q %VSCODEUSERDATADIR%
-rmdir /s /q %VSCODEEXTENSIONSDIR%
+REM rmdir /s /q %VSCODEUSERDATADIR%
+REM rmdir /s /q %VSCODEEXTENSIONSDIR%
 
 popd
 
