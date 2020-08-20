@@ -56,4 +56,4 @@ fi
 # cd $ROOT/extensions/css-language-features/server && $ROOT/scripts/node-electron.sh test/index.js
 # cd $ROOT/extensions/html-language-features/server && $ROOT/scripts/node-electron.sh test/index.js
 
-rm -rf $VSCODEUSERDATADIR
+# rm -rf $VSCODEUSERDATADIR

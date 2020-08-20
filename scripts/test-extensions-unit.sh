@@ -111,5 +111,5 @@ if [[ "$RUN_DBPROJECT_TESTS" == "true" ]]; then
 	"$INTEGRATION_TEST_ELECTRON_PATH" $LINUX_NO_SANDBOX --extensionDevelopmentPath=$ROOT/extensions/sql-database-projects --extensionTestsPath=$ROOT/extensions/sql-database-projects/out/test --user-data-dir=$VSCODEUSERDATADIR --extensions-dir=$VSCODEEXTDIR --disable-telemetry --disable-crash-reporter --disable-updates --nogpu
 fi
 
-rm -r $VSCODEUSERDATADIR
-rm -r $VSCODEEXTDIR
+# rm -r $VSCODEUSERDATADIR
+# rm -r $VSCODEEXTDIR

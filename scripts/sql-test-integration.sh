@@ -65,5 +65,5 @@ fi
 --disable-telemetry --disable-crash-reporter --disable-updates --skip-getting-started --disable-inspect
 
 
-rm -r -f $VSCODEUSERDATADIR
-rm -r $VSCODEEXTDIR
+# rm -r -f $VSCODEUSERDATADIR
+# rm -r $VSCODEEXTDIR

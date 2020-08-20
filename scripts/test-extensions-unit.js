@@ -71,5 +71,5 @@ for (const ext of argv.extensions) {
 
 // clean up
 
-fs.remove(VSCODEUSERDATADIR, { recursive: true }).catch(console.error);
-fs.remove(VSCODEEXTENSIONSDIR, { recursive: true }).catch(console.error);
+// fs.remove(VSCODEUSERDATADIR, { recursive: true }).catch(console.error);
+// fs.remove(VSCODEEXTENSIONSDIR, { recursive: true }).catch(console.error);

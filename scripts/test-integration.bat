@@ -71,7 +71,7 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 REM call .\scripts\node-electron.bat .\node_modules\mocha\bin\_mocha .\extensions\*\server\out\test\**\*.test.js
 REM if %errorlevel% neq 0 exit /b %errorlevel%
 
-rmdir /s /q %VSCODEUSERDATADIR%
+REM rmdir /s /q %VSCODEUSERDATADIR%
 
 popd
 

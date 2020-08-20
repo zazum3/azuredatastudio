@@ -18,4 +18,4 @@ echo "Runs tests against the current documentation in https://github.com/microso
 ./scripts/test.sh --runGlob **/*.releaseTest.js "$@"
 
 
-rm -r $VSCODEUSERDATADIR
+# rm -r $VSCODEUSERDATADIR
