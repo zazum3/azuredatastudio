@@ -166,26 +166,6 @@ steps:
 
   - script: |
       set -e
-      mkdir -p $(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles
-      cp --parents -r tmp/tmp.*/logs/* $(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles -v
-    displayName: Copying logs
-
-  - task: ArchiveFiles@2
-    displayName: 'Compressing logs'
-    inputs:
-      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles'
-      archiveType: 'zip'
-      archiveFile: '$(Build.ArtifactStagingDirectory)\$(Agent.JobName)_logs.zip'
-      verbose: true
-
-  - task: DeleteFiles@1
-    displayName: 'Deleting logs after compressing'
-    inputs:
-      SourceFolder: '$(Build.ArtifactStagingDirectory)/$(Agent.JobName)-logfiles'
-      RemoveSourceFolder: true
-
-  - script: |
-      set -e
       shopt -s globstar
       mkdir -p $(Build.ArtifactStagingDirectory)/test-results/coverage
       cp --parents -r $(Build.SourcesDirectory)/extensions/*/coverage/** $(Build.ArtifactStagingDirectory)/test-results/coverage
