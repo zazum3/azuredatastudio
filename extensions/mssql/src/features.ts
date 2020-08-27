@@ -964,7 +964,7 @@ export class ProfilerFeature extends SqlOpsFeature<undefined> {
 		};
 
 		let startSession = (ownerUri: string, sessionName: string): Thenable<boolean> => {
-			let params: types.StartProfilingParams = {
+			let params: contracts.StartProfilingParams = {
 				ownerUri,
 				sessionName
 			};
@@ -979,7 +979,7 @@ export class ProfilerFeature extends SqlOpsFeature<undefined> {
 		};
 
 		let stopSession = (ownerUri: string): Thenable<boolean> => {
-			let params: types.StopProfilingParams = {
+			let params: contracts.StopProfilingParams = {
 				ownerUri
 			};
 
@@ -993,7 +993,7 @@ export class ProfilerFeature extends SqlOpsFeature<undefined> {
 		};
 
 		let pauseSession = (ownerUri: string): Thenable<boolean> => {
-			let params: types.PauseProfilingParams = {
+			let params: contracts.PauseProfilingParams = {
 				ownerUri
 			};
 
@@ -1007,7 +1007,7 @@ export class ProfilerFeature extends SqlOpsFeature<undefined> {
 		};
 
 		let getXEventSessions = (ownerUri: string): Thenable<string[]> => {
-			let params: types.GetXEventSessionsParams = {
+			let params: contracts.GetXEventSessionsParams = {
 				ownerUri
 			};
 
@@ -1025,7 +1025,7 @@ export class ProfilerFeature extends SqlOpsFeature<undefined> {
 		};
 
 		let disconnectSession = (ownerUri: string): Thenable<boolean> => {
-			let params: type.DisconnectSessionParams = {
+			let params: contracts.DisconnectSessionParams = {
 				ownerUri: ownerUri
 			};
 			return client.sendRequest(contracts.DisconnectSessionRequest.type, params).then(
@@ -1038,7 +1038,7 @@ export class ProfilerFeature extends SqlOpsFeature<undefined> {
 		};
 
 		let registerOnSessionEventsAvailable = (handler: (response: azdata.ProfilerSessionEvents) => any): void => {
-			client.onNotification(contracts.ProfilerEventsAvailableNotification.type, (params: types.ProfilerEventsAvailableParams) => {
+			client.onNotification(contracts.ProfilerEventsAvailableNotification.type, (params: contracts.ProfilerEventsAvailableParams) => {
 				handler(<azdata.ProfilerSessionEvents>{
 					sessionId: params.ownerUri,
 					events: params.events,
@@ -1049,7 +1049,7 @@ export class ProfilerFeature extends SqlOpsFeature<undefined> {
 
 
 		let registerOnSessionStopped = (handler: (response: azdata.ProfilerSessionStoppedParams) => any): void => {
-			client.onNotification(contracts.ProfilerSessionStoppedNotification.type, (params: types.ProfilerSessionStoppedParams) => {
+			client.onNotification(contracts.ProfilerSessionStoppedNotification.type, (params: contracts.ProfilerSessionStoppedParams) => {
 				handler(<azdata.ProfilerSessionStoppedParams>{
 					ownerUri: params.ownerUri,
 					sessionId: params.sessionId
@@ -1058,7 +1058,7 @@ export class ProfilerFeature extends SqlOpsFeature<undefined> {
 		};
 
 		let registerOnProfilerSessionCreated = (handler: (response: azdata.ProfilerSessionCreatedParams) => any): void => {
-			client.onNotification(contracts.ProfilerSessionCreatedNotification.type, (params: types.ProfilerSessionCreatedParams) => {
+			client.onNotification(contracts.ProfilerSessionCreatedNotification.type, (params: contracts.ProfilerSessionCreatedParams) => {
 				handler(<azdata.ProfilerSessionCreatedParams>{
 					ownerUri: params.ownerUri,
 					sessionName: params.sessionName,
