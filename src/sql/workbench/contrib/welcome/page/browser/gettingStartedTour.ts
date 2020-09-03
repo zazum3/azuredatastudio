@@ -121,11 +121,10 @@ export class GuidedTour extends Disposable {
 
 		tourData.forEach(({ key, order, header, body, step, elmClass, id, btnId, btnText, docs, elementToAppendTo, arrow, popupImage }, i): void => {
 			const container = document.createElement('div');
-			let positionVertical;
-			let positionHorizontal;
-			let subjectElement;
+			let positionVertical: number | undefined;
+			let positionHorizontal: number | undefined;
 			if (elementToAppendTo !== 'center') {
-				subjectElement = document.querySelector(elementToAppendTo) as HTMLElement;
+				let subjectElement = document.querySelector(elementToAppendTo) as HTMLElement;
 				const subjectElementPosition = subjectElement.getBoundingClientRect();
 				positionHorizontal = Math.round((subjectElementPosition.left + 70));
 				positionVertical = Math.round((subjectElementPosition.top - 22));
@@ -203,7 +202,7 @@ export class GuidedTour extends Disposable {
 		this.buildInteractions();
 	}
 
-	private findWithAttr(array: TourData[], attr: string, value: string): number {
+	private findWithAttr(array: TourData[], attr: keyof TourData, value: string): number {
 		for (let i = 0; i < array.length; i += 1) {
 			if (array[i][attr] === value) {
 				return i;
@@ -218,13 +217,13 @@ export class GuidedTour extends Disposable {
 			return;
 		}
 		let next = i + 1;
-		const h1: HTMLElement = popups[next].querySelector('.ads-tour-popup-text-container h1');
-		const popupId = popups[next].getAttribute('id');
+		const h1 = popups[next].querySelector('.ads-tour-popup-text-container h1') as HTMLElement;
+		const popupId = popups[next].getAttribute('id')!;
 		const popupItem = this.findWithAttr(tourData, 'id', popupId);
 		let elementClassToAppendTo = tourData[popupItem].elementToAppendTo;
 		let tourItem = document.querySelector(`#${tourData[popupItem].elmClass}`) as HTMLElement;
-		let positionVertical;
-		let positionHorizontal;
+		let positionVertical: number | undefined;
+		let positionHorizontal: number | undefined;
 		let subjectElement = tourItem as HTMLElement;
 		if (elementClassToAppendTo !== 'center') {
 			subjectElement = document.querySelector(elementClassToAppendTo) as HTMLElement;
@@ -266,7 +265,7 @@ export class GuidedTour extends Disposable {
 			const btn = elm.querySelector('.ads-tour-popup-text-container .monaco-button') as HTMLElement;
 			btn.tabIndex = 4;
 			btn.focus();
-			const exitButton = elm.querySelector('.ads-tour-btn-exit');
+			const exitButton = elm.querySelector('.ads-tour-btn-exit')!;
 			const popupsLength = popups.length;
 			exitButton.addEventListener('click', function () {
 				context.hide();
@@ -285,7 +284,7 @@ export class GuidedTour extends Disposable {
 
 	public show(): void {
 		if (this._overlay.style.display !== 'block') {
-			const firstTourElement = document.querySelector('.ads-tour-element');
+			const firstTourElement = document.querySelector('.ads-tour-element')!;
 			firstTourElement.classList.add('ads-tour-show');
 			this._overlay.style.display = 'block';
 			const workbench = document.querySelector('.monaco-workbench') as HTMLElement;
@@ -301,7 +300,7 @@ export class GuidedTour extends Disposable {
 			elm.style.pointerEvents = 'auto';
 		});
 		tourData.forEach(function ({ id }) {
-			document.querySelector(`#${id}`).remove();
+			document.querySelector(`#${id}`)!.remove();
 		});
 		if (this._overlay.style.display !== 'none') {
 			this._overlay.style.display = 'none';

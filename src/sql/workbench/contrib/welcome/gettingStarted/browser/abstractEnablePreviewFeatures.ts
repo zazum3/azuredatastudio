@@ -23,7 +23,7 @@ export abstract class AbstractEnablePreviewFeatures implements IWorkbenchContrib
 	) { }
 
 	protected handlePreviewFeatures(): void {
-		let previewFeaturesEnabled = this.configurationService.getValue('workbench')['enablePreviewFeatures'];
+		let previewFeaturesEnabled = this.configurationService.getValue<{ enablePreviewFeatures: boolean }>('workbench').enablePreviewFeatures;
 		if (previewFeaturesEnabled || this.storageService.get(AbstractEnablePreviewFeatures.ENABLE_PREVIEW_FEATURES_SHOWN, StorageScope.GLOBAL)) {
 			return;
 		}
@@ -32,7 +32,7 @@ export abstract class AbstractEnablePreviewFeatures implements IWorkbenchContrib
 			this.getWindowCount()
 		]).then(async ([focused, count]) => {
 			if (!focused && count > 1) {
-				return null;
+				return;
 			}
 			await this.configurationService.updateValue('workbench.enablePreviewFeatures', false);
 

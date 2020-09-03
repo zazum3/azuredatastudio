@@ -6,7 +6,6 @@
 import 'vs/css!./welcomePage';
 import 'sql/workbench/contrib/welcome/page/browser/az_data_welcome_page';
 import { URI } from 'vs/base/common/uri';
-import * as strings from 'vs/base/common/strings';
 import { ICommandService } from 'vs/platform/commands/common/commands';
 import * as arrays from 'vs/base/common/arrays';
 import { WalkThroughInput } from 'vs/workbench/contrib/welcome/walkThrough/browser/walkThroughInput';
@@ -84,7 +83,7 @@ export class WelcomePageContribution implements IWorkbenchContribution {
 						try {
 							const folder = await this.fileService.resolve(folderUri);
 							const files = folder.children ? folder.children.map(child => child.name) : [];
-							const file = arrays.find(files.sort(), file => strings.startsWith(file.toLowerCase(), 'readme'));
+							const file = files.sort().find(file => file.toLowerCase().startsWith('readme'));
 							if (file) {
 								return joinPath(folderUri, file);
 							}
@@ -96,10 +95,10 @@ export class WelcomePageContribution implements IWorkbenchContribution {
 					arrays.coalesceInPlace(readmes);
 					if (!this.editorService.activeEditor) {
 						if (readmes.length) {
-							const isMarkDown = (readme: URI) => strings.endsWith(readme.path.toLowerCase(), '.md');
+							const isMarkDown = (readme: URI) => readme.path.toLowerCase().endsWith('.md');
 							await Promise.all([
-								this.commandService.executeCommand('markdown.showPreview', null, readmes.filter(isMarkDown), { locked: true }),
-								this.editorService.openEditors(readmes.filter(readme => !isMarkDown(readme)).map(readme => ({ resource: readme }))),
+								this.commandService.executeCommand('markdown.showPreview', null, arrays.coalesce(readmes).filter(isMarkDown), { locked: true }),
+								this.editorService.openEditors(arrays.coalesce(readmes).filter(readme => !isMarkDown(readme)).map(readme => ({ resource: readme }))),
 							]);
 						} else {
 							await this.instantiationService.createInstance(WelcomePage).openEditor();
@@ -267,7 +266,7 @@ class WelcomePage extends Disposable {
 		if (prodName) {
 			prodName.innerHTML = this.productService.nameLong;
 		}
-		const welcomeContainerContainer = document.querySelector('.welcomePageContainer').parentElement as HTMLElement;
+		const welcomeContainerContainer = document.querySelector('.welcomePageContainer')!.parentElement as HTMLElement;
 		const adsHomepage = document.querySelector('.ads-homepage') as HTMLElement;
 		adsHomepage.classList.add('responsive-container');
 		const observer = new MutationObserver(parseMutations);
@@ -278,7 +277,7 @@ class WelcomePage extends Disposable {
 		const defaultBreakpoints = { SM: 480, MD: 640, LG: 1024, XL: 1365 };
 		const startingWidth = parseInt(welcomeContainerContainer.style.width);
 		adsHomepage.classList.add('XS');
-		Object.keys(defaultBreakpoints).forEach(function (breakpoint) {
+		(Object.keys(defaultBreakpoints) as Array<keyof typeof defaultBreakpoints>).forEach(breakpoint => {
 			let minWidth = defaultBreakpoints[breakpoint];
 			if (startingWidth >= minWidth) {
 				adsHomepage.classList.add(breakpoint);
@@ -289,7 +288,7 @@ class WelcomePage extends Disposable {
 		});
 		function parseMutations(): void {
 			const width = parseInt(welcomeContainerContainer.style.width);
-			Object.keys(defaultBreakpoints).forEach(function (breakpoint) {
+			(Object.keys(defaultBreakpoints) as Array<keyof typeof defaultBreakpoints>).forEach(breakpoint => {
 				let minWidth = defaultBreakpoints[breakpoint];
 				if (width >= minWidth) {
 					adsHomepage.classList.add(breakpoint);
@@ -335,7 +334,7 @@ class WelcomePage extends Disposable {
 	}
 
 	private createButtons(): void {
-		const container = document.querySelector('.ads-homepage .hero');
+		const container = document.querySelector('.ads-homepage .hero')!;
 		const dropdownButtonContainer = document.querySelector('#dropdown-btn-container') as HTMLElement;
 		const dropdownUl = document.createElement('ul');
 		const i = document.createElement('div');
@@ -383,7 +382,7 @@ class WelcomePage extends Disposable {
 		openFileButton.label = openFileText;
 		const getNewFileBtn = container.querySelector('#open-file-btn-container .monaco-button') as HTMLAnchorElement;
 		getNewFileBtn.setAttribute('role', 'button');
-		const body = document.querySelector('body');
+		const body = document.querySelector('body')!;
 
 		if (body.classList.contains('windows') || body.classList.contains('linux')) {
 			getNewFileBtn.classList.add(...fileBtnWindowsClasses);
@@ -402,7 +401,7 @@ class WelcomePage extends Disposable {
 
 	private enableGuidedTour(): void {
 		const guidedTour = this.instantiationService.createInstance(GuidedTour);
-		const adsHomepage = document.querySelector('.ads-homepage');
+		const adsHomepage = document.querySelector('.ads-homepage')!;
 		const guidedTourNotificationContainer = document.createElement('div');
 		const p = document.createElement('p');
 		const b = document.createElement('b');
@@ -456,7 +455,7 @@ class WelcomePage extends Disposable {
 	}
 
 	private createWidePreviewToolTip(): void {
-		const container = document.querySelector('.ads-homepage .tool-tip');
+		const container = document.querySelector('.ads-homepage .tool-tip')!;
 		const previewLink = container.querySelector('#tool-tip-container-wide') as HTMLElement;
 		const tooltip = container.querySelector('#tooltip-text-wide') as HTMLElement;
 		const previewModalBody = container.querySelector('.preview-tooltip-body') as HTMLElement;
@@ -510,7 +509,7 @@ class WelcomePage extends Disposable {
 	}
 
 	private createDropDown(): void {
-		const container = document.querySelector('.ads-homepage .hero');
+		const container = document.querySelector('.ads-homepage .hero')!;
 		const dropdownBtn = container.querySelector('#dropdown-btn') as HTMLElement;
 		const dropdown = container.querySelector('#dropdown') as HTMLInputElement;
 		addStandardDisposableListener(dropdownBtn, 'click', () => {
@@ -518,7 +517,7 @@ class WelcomePage extends Disposable {
 		});
 		addStandardDisposableListener(dropdownBtn, 'keydown', event => {
 			if (event.equals(KeyCode.Enter) || event.equals(KeyCode.Space)) {
-				const dropdownFirstElement = document.querySelector('#dropdown').firstElementChild.children[0] as HTMLInputElement;
+				const dropdownFirstElement = document.querySelector('#dropdown')!.firstElementChild!.children[0] as HTMLInputElement;
 				dropdown.classList.toggle('show');
 				dropdownFirstElement.focus();
 			}
@@ -533,12 +532,12 @@ class WelcomePage extends Disposable {
 			}
 		});
 
-		const body = document.querySelector('body');
+		const body = document.querySelector('body')!;
 		if (body.classList.contains('windows') || body.classList.contains('linux')) {
-			const macOnly = container.querySelector('#dropdown-mac-only');
+			const macOnly = container.querySelector('#dropdown-mac-only')!;
 			macOnly.remove();
 		} else if (body.classList.contains('mac')) {
-			const windowsLinuxOnly = container.querySelector('#dropdown-windows-linux-only');
+			const windowsLinuxOnly = container.querySelector('#dropdown-windows-linux-only')!;
 			windowsLinuxOnly.remove();
 		}
 		window.addEventListener('click', (event) => {
@@ -551,9 +550,9 @@ class WelcomePage extends Disposable {
 		});
 
 		addStandardDisposableListener(dropdown, 'keydown', event => {
-			const container = document.querySelector('.ads-homepage .hero');
-			const dropdownLastElement = container.querySelector('#dropdown').lastElementChild.children[0] as HTMLInputElement;
-			const dropdownFirstElement = container.querySelector('#dropdown').firstElementChild.children[0] as HTMLInputElement;
+			const container = document.querySelector('.ads-homepage .hero')!;
+			const dropdownLastElement = container.querySelector('#dropdown')!.lastElementChild!.children[0] as HTMLInputElement;
+			const dropdownFirstElement = container.querySelector('#dropdown')!.firstElementChild!.children[0] as HTMLInputElement;
 			if (event.equals(KeyCode.Tab)) {
 				EventHelper.stop(event);
 				return;
@@ -562,7 +561,7 @@ class WelcomePage extends Disposable {
 				if (event.target === dropdownFirstElement) {
 					dropdownLastElement.focus();
 				} else {
-					const movePrev = <HTMLElement>container.querySelector('.move:focus').parentElement.previousElementSibling.children[0] as HTMLElement;
+					const movePrev = <HTMLElement>container.querySelector('.move:focus')!.parentElement!.previousElementSibling!.children[0] as HTMLElement;
 					movePrev.focus();
 				}
 			}
@@ -570,7 +569,7 @@ class WelcomePage extends Disposable {
 				if (event.target === dropdownLastElement) {
 					dropdownFirstElement.focus();
 				} else {
-					const moveNext = <HTMLElement>container.querySelector('.move:focus').parentElement.nextElementSibling.children[0] as HTMLElement;
+					const moveNext = <HTMLElement>container.querySelector('.move:focus')!.parentElement!.nextElementSibling!.children[0] as HTMLElement;
 					moveNext.focus();
 				}
 			}
@@ -578,7 +577,7 @@ class WelcomePage extends Disposable {
 	}
 
 	private createPreviewModal(): void {
-		const container = document.querySelector('.ads-homepage');
+		const container = document.querySelector('.ads-homepage')!;
 		const modal = container.querySelector('#preview-modal') as HTMLElement;
 		const btn = container.querySelector('#tool-tip-container-narrow') as HTMLElement;
 		const span = container.querySelector('.close-icon') as HTMLElement;
@@ -674,7 +673,7 @@ class WelcomePage extends Disposable {
 		span.innerText = lastOpened;
 		span.title = relativePath;
 		li.appendChild(span);
-		const ul = container.querySelector('.list');
+		const ul = container.querySelector('.list')!;
 		ul.appendChild(li);
 		result.push(li);
 		return result;
@@ -685,7 +684,7 @@ class WelcomePage extends Disposable {
 		for (let i = 0; i < recents.length; i++) {
 			const recent = recents[i];
 			let relativePath: string;
-			let fullPath: URI;
+			let fullPath: URI | undefined;
 			let windowOpenable: IWindowOpenable;
 			if (isRecentFolder(recent)) {
 				windowOpenable = { folderUri: recent.folderUri };
@@ -715,13 +714,13 @@ class WelcomePage extends Disposable {
 				outerAnchorContainerElm.classList.add('extension');
 				outerAnchorContainerElm.classList.add('tile');
 				outerAnchorContainerElm.setAttribute('role', 'button');
-				outerAnchorContainerElm.href = extension.link;
+				outerAnchorContainerElm.href = extension.link ?? '';
 				flexDivContainerElm.classList.add(...flexDivContainerClasses);
 				descriptionContainerElm.classList.add('description');
 				imgContainerElm.classList.add('img-container');
 				iconElm.classList.add('icon');
 				pElm.classList.add('extension-header');
-				iconElm.src = extension.icon;
+				iconElm.src = extension.icon ?? '';
 				imgContainerElm.appendChild(iconElm);
 				flexDivContainerElm.appendChild(imgContainerElm);
 				flexDivContainerElm.appendChild(descriptionContainerElm);
@@ -729,7 +728,7 @@ class WelcomePage extends Disposable {
 				descriptionContainerElm.appendChild(bodyElm);
 				outerAnchorContainerElm.appendChild(flexDivContainerElm);
 				pElm.innerText = extension.name;
-				bodyElm.innerText = extension.description;
+				bodyElm.innerText = extension.description ?? '';
 				list.appendChild(outerAnchorContainerElm);
 			});
 		}
@@ -777,8 +776,8 @@ class WelcomePage extends Disposable {
 				getInstalledButton.classList.add('enabledExtension');
 				getInstalledButton.classList.add(...classes);
 				getInstalledButton.setAttribute('data-extension', extension.id);
-				description.innerHTML = extension.description;
-				header.innerHTML = extension.name;
+				description!.innerHTML = extension.description ?? '';
+				header!.innerHTML = extension.name;
 				this.addExtensionPackList(container, '.extension-pack-extension-list');
 			});
 		}
