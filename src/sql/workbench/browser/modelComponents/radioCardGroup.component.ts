@@ -116,6 +116,18 @@ export default class RadioCardGroup extends ComponentBase implements IComponent,
 		return this.getPropertyOrDefault<azdata.RadioCardGroupComponentProperties, string | undefined>((props) => props.selectedCardId, undefined);
 	}
 
+	public get cardGroupType(): string {
+		return this.getPropertyOrDefault<azdata.RadioCardGroupComponentProperties, string>((props) => props.cardStyle, 'default');
+	}
+
+	public isDefaultCard(): boolean {
+		return this.cardGroupType === 'default';
+	}
+
+	public isPortalCard(): boolean {
+		return this.cardGroupType === 'portalCard';
+	}
+
 	public getIconClass(cardId: string): string {
 		if (!this.iconClasses[cardId]) {
 			this.iconClasses[cardId] = `cardIcon icon ${createIconCssClass(this.getCardById(cardId).icon)}`;

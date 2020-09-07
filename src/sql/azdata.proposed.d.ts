@@ -167,6 +167,7 @@ declare module 'azdata' {
 		iconWidth?: string;
 		iconHeight?: string;
 		selectedCardId?: string;
+		cardStyle?: 'default' | 'portalCard';
 	}
 
 	export interface RadioCardGroupComponent extends Component, RadioCardGroupComponentProperties {
