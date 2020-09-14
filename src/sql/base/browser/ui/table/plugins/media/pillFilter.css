@@ -1,0 +1,35 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the Source EULA. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.pill-filter-container {
+	display: flex;
+}
+
+.pill-filter-container .pill-filter {
+	align-items: center;
+	display: inline-flex;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	height: 24px;
+	font-size: 13px;
+	line-height: 1.385;
+	border-radius: 16px;
+	box-sizing: border-box;
+	vertical-align: middle;
+	border: 1px solid;
+	cursor: pointer;
+	max-width: 100%;
+	margin: 5px;
+}
+
+.pill-filter-container .pill-inner-content {
+	margin: 6px;
+}
+
+.pill-filter-container .pill-content-operator {
+	padding: 0px 4px;
+}
