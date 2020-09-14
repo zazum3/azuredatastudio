@@ -5,6 +5,7 @@
 import * as azdata from 'azdata';
 import { isSameProduct } from '../../models/product';
 import { AssessmentDialogComponent } from './model/assessmentDialogComponent';
+import * as mssql from '../../../../mssql';
 
 export class SqlAssessmentResultList extends AssessmentDialogComponent {
 	async createComponent(view: azdata.ModelView): Promise<azdata.Component> {
@@ -21,13 +22,14 @@ export class SqlAssessmentResultList extends AssessmentDialogComponent {
 			'text-align': 'left'
 		};
 
-		const dataValues = this._model.assessmentResults?.
+		let dataValues = this._model.assessmentResults?.
 			filter(s => isSameProduct(this._productType, s.appliesToMigrationTargetPlatform)). // Filter results based on the product type selected
-			map((s): azdata.DeclarativeTableCellValue[] => {
+			map((s): MigrationCellValue[] => {
 				return [
 					{
 						value: s.checkId,
-						style
+						style,
+						migrationResultItem: s
 					}
 				];
 			});
@@ -53,10 +55,14 @@ export class SqlAssessmentResultList extends AssessmentDialogComponent {
 
 		table.component().onRowSelected(({ row }) => {
 			if (this._model.assessmentResults) {
-				this._model.rulePickedEvent.fire(this._model.assessmentResults[row]);
+				this._model.rulePickedEvent.fire(dataValues![row][0].migrationResultItem);
 			}
 		});
 
 		return table.component();
 	}
+}
+
+interface MigrationCellValue extends azdata.DeclarativeTableCellValue {
+	migrationResultItem: mssql.SqlMigrationAssessmentResultItem;
 }
