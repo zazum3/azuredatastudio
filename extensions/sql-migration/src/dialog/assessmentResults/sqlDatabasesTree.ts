@@ -23,7 +23,7 @@ export class SqlDatabaseTree extends AssessmentDialogComponent {
 		for (let i = 0; i < databases.length; ++i) {
 			dataValues[i] = [
 				{
-					value: false,
+					value: true,
 					style
 				},
 				{
