@@ -412,6 +412,10 @@
           "when": "false"
         },
         {
+          "command": "mssqlCluster.livy.cmd.submitSparkJob",
+          "when": "false"
+        },
+        {
           "command": "mssqlCluster.livy.cmd.submitFileToSparkJob",
           "when": "false"
         },
@@ -677,8 +681,14 @@
                 "tasks-widget": [
                   "mssqlCluster.task.newNotebook",
                   "mssqlCluster.task.openNotebook",
-                  "mssqlCluster.livy.task.submitSparkJob",
-                  "mssqlCluster.task.openClusterDashboard"
+                  {
+                    "name": "mssqlCluster.livy.task.submitSparkJob",
+                    "when": "false"
+                  },
+                  {
+                    "name": "mssqlCluster.task.openClusterDashboard",
+                    "when": "false"
+                  }
                 ]
               }
             },

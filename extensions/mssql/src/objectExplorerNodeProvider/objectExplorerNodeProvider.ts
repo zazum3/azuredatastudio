@@ -45,6 +45,12 @@ export class MssqlObjectExplorerNodeProvider extends ProviderBase implements azd
 	private async doSessionOpen(session: azdata.ObjectExplorerSession): Promise<boolean> {
 		if (!session || !session.sessionId) { return false; }
 
+		// The BDC extension is required for populating the HDFS node so if it isn't available
+		// then just exit early
+		const bdcExt = vscode.extensions.getExtension('Microsoft.bdc');
+		if (!bdcExt) {
+			return false;
+		}
 		let sqlConnProfile = await azdata.objectexplorer.getSessionConnectionProfile(session.sessionId);
 		if (!sqlConnProfile) { return false; }
 

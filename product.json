@@ -46,6 +46,7 @@
 		"Microsoft.arc",
 		"Microsoft.azdata",
 		"Microsoft.azuredatastudio-postgresql",
+		"Microsoft.big-data-cluster",
 		"Microsoft.cms",
 		"Microsoft.dacpac",
 		"Microsoft.import",
