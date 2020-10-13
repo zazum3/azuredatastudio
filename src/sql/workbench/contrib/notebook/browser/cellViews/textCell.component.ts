@@ -31,6 +31,7 @@ import * as turndownPluginGfm from '../turndownPluginGfm';
 import TurndownService = require('turndown');
 import * as Mark from 'mark.js';
 import { NotebookInput } from 'sql/workbench/contrib/notebook/browser/models/notebookInput';
+import * as path from 'vs/base/common/path';
 
 export const TEXT_SELECTOR: string = 'text-cell-component';
 const USER_SELECT_CLASS = 'actionselect';
@@ -67,17 +68,22 @@ export class TextCellComponent extends CellView implements OnInit, OnChanges {
 		this.enableActiveCellEditOnDoubleClick();
 	}
 
-	@HostListener('document:keydown.meta.a', ['$event'])
-	onkeydown(e) {
-		// use preventDefault() to avoid invoking the editor's select all
-		// select the active .
-		e.preventDefault();
-		document.execCommand('selectAll');
-	}
-
-	@HostListener('document:keydown.meta.z', ['$event'])
-	onUndo(e) {
-		document.execCommand('undo');
+	@HostListener('document:keydown', ['$event'])
+	onkeydown(e: KeyboardEvent) {
+		if (this.isActive()) {
+			// select the active .
+			if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+				preventDefaultAndExecCommand(e, 'selectAll');
+			} else if ((e.metaKey && e.shiftKey && e.key === 'z') || (e.ctrlKey && e.key === 'y')) {
+				preventDefaultAndExecCommand(e, 'redo');
+			} else if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+				preventDefaultAndExecCommand(e, 'undo');
+			} else if (e.shiftKey && e.key === 'Tab') {
+				preventDefaultAndExecCommand(e, 'outdent');
+			} else if (e.key === 'Tab') {
+				preventDefaultAndExecCommand(e, 'indent');
+			}
+		}
 	}
 
 	private _content: string | string[];
@@ -432,13 +438,20 @@ export class TextCellComponent extends CellView implements OnInit, OnChanges {
 	}
 
 	private setTurndownOptions() {
-		this.turndownService = new TurndownService({ 'emDelimiter': '_', 'bulletListMarker': '-' });
+		this.turndownService = new TurndownService({ 'emDelimiter': '_', 'bulletListMarker': '-', 'headingStyle': 'atx' });
 		this.turndownService.keep(['u', 'mark']);
 		this.turndownService.use(turndownPluginGfm.gfm);
 		this.turndownService.addRule('pre', {
 			filter: 'pre',
 			replacement: function (content, node) {
 				return '\n```\n' + node.textContent + '\n```\n';
+			}
+		});
+		this.turndownService.addRule('caption', {
+			filter: 'caption',
+			replacement: function (content, node) {
+				return `${node.outerHTML}
+				`;
 			}
 		});
 		this.turndownService.addRule('span', {
@@ -456,6 +469,30 @@ export class TextCellComponent extends CellView implements OnInit, OnChanges {
 				return node.textContent;
 			}
 		});
+		this.turndownService.addRule('img', {
+			filter: 'img',
+			replacement: (content, node) => {
+				if (node?.src) {
+					let relativePath = this.findPathRelativeToContent(node.src);
+					if (relativePath) {
+						return `![${node.alt}](${relativePath})`;
+					}
+				}
+				return `![${node.alt}](${node.src})`;
+			}
+		});
+		this.turndownService.addRule('a', {
+			filter: 'a',
+			replacement: (content, node) => {
+				if (node?.href) {
+					let relativePath = this.findPathRelativeToContent(node.href);
+					if (relativePath) {
+						return `[${node.innerText}](${relativePath})`;
+					}
+				}
+				return `[${node.innerText}](${node.href})`;
+			}
+		});
 	}
 
 	// Enables edit mode on double clicking active cell
@@ -466,4 +503,22 @@ export class TextCellComponent extends CellView implements OnInit, OnChanges {
 		this.cellModel.active = true;
 		this._model.updateActiveCell(this.cellModel);
 	}
+
+	private findPathRelativeToContent(elementContent: string): string {
+		let notebookFolder = this.notebookUri ? path.join(path.dirname(this.notebookUri.fsPath), path.sep) : '';
+		if (notebookFolder) {
+			let absolutePathURI = URI.parse(elementContent);
+			if (absolutePathURI?.scheme === 'file') {
+				let relativePath = path.relative(notebookFolder, absolutePathURI.fsPath);
+				return relativePath ? relativePath : '';
+			}
+		}
+		return '';
+	}
+}
+
+function preventDefaultAndExecCommand(e: KeyboardEvent, commandId: string) {
+	// use preventDefault() to avoid invoking the editor's select all
+	e.preventDefault();
+	document.execCommand(commandId);
 }

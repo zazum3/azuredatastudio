@@ -16,7 +16,6 @@ import { Deferred } from '../common/promise';
 import { IBookTrustManager, BookTrustManager } from './bookTrustManager';
 import * as loc from '../common/localizedConstants';
 import * as glob from 'fast-glob';
-import { isNullOrUndefined } from 'util';
 import { IJupyterBookSectionV2, IJupyterBookSectionV1 } from '../contracts/content';
 import { debounce, getPinnedNotebooks } from '../common/utils';
 import { IBookPinManager, BookPinManager } from './bookPinManager';
@@ -58,9 +57,9 @@ export class BookTreeViewProvider implements vscode.TreeDataProvider<BookTreeIte
 
 	private async initialize(workspaceFolders: vscode.WorkspaceFolder[]): Promise<void> {
 		if (this.viewId === constants.PINNED_BOOKS_VIEWID) {
-			await Promise.all(getPinnedNotebooks().map(async (notebookPath) => {
+			await Promise.all(getPinnedNotebooks().map(async (notebook) => {
 				try {
-					await this.createAndAddBookModel(notebookPath, true);
+					await this.createAndAddBookModel(notebook.notebookPath, true, notebook.bookPath);
 				} catch {
 					// no-op, not all workspace folders are going to be valid books
 				}
@@ -91,7 +90,7 @@ export class BookTreeViewProvider implements vscode.TreeDataProvider<BookTreeIte
 	}
 
 	trustBook(bookTreeItem?: BookTreeItem): void {
-		let bookPathToTrust = bookTreeItem ? bookTreeItem.root : this.currentBook?.bookPath;
+		let bookPathToTrust: string = bookTreeItem ? bookTreeItem.root : this.currentBook?.bookPath;
 		if (bookPathToTrust) {
 			let trustChanged = this._bookTrustManager.setBookAsTrusted(bookPathToTrust);
 			if (trustChanged) {
@@ -170,7 +169,8 @@ export class BookTreeViewProvider implements vscode.TreeDataProvider<BookTreeIte
 	async addNotebookToPinnedView(bookItem: BookTreeItem): Promise<void> {
 		let notebookPath: string = bookItem.book.contentPath;
 		if (notebookPath) {
-			await this.createAndAddBookModel(notebookPath, true);
+			let rootPath: string = bookItem.book.root ? bookItem.book.root : '';
+			await this.createAndAddBookModel(notebookPath, true, rootPath);
 		}
 	}
 
@@ -216,10 +216,12 @@ export class BookTreeViewProvider implements vscode.TreeDataProvider<BookTreeIte
 	 * Creates a model for the specified folder path and adds it to the known list of books if we
 	 * were able to successfully parse it.
 	 * @param bookPath The path to the book folder to create the model for
+	 * @param isNotebook A boolean value to know we are creating a model for a notebook or a book
+	 * @param notebookBookRoot For pinned notebooks we need to know if the notebook is part of a book or it's a standalone notebook
 	 */
-	private async createAndAddBookModel(bookPath: string, isNotebook: boolean): Promise<void> {
+	private async createAndAddBookModel(bookPath: string, isNotebook: boolean, notebookBookRoot?: string): Promise<void> {
 		if (!this.books.find(x => x.bookPath === bookPath)) {
-			const book: BookModel = new BookModel(bookPath, this._openAsUntitled, isNotebook, this._extensionContext);
+			const book: BookModel = new BookModel(bookPath, this._openAsUntitled, isNotebook, this._extensionContext, notebookBookRoot);
 			await book.initializeContents();
 			this.books.push(book);
 			if (!this.currentBook) {
@@ -313,7 +315,7 @@ export class BookTreeViewProvider implements vscode.TreeDataProvider<BookTreeIte
 		if (shouldReveal || this._bookViewer?.visible) {
 			bookItem = notebookPath ? await this.findAndExpandParentNode(notebookPath) : undefined;
 			// Select + focus item in viewlet if books viewlet is already open, or if we pass in variable
-			if (bookItem) {
+			if (bookItem?.contextValue !== 'pinnedNotebook') {
 				// Note: 3 is the maximum number of levels that the vscode APIs let you expand to
 				await this._bookViewer.reveal(bookItem, { select: true, focus: true, expand: true });
 			}
@@ -492,7 +494,7 @@ export class BookTreeViewProvider implements vscode.TreeDataProvider<BookTreeIte
 		let notebookConfig = vscode.workspace.getConfiguration(constants.notebookConfigKey);
 		let maxDepth = notebookConfig[constants.maxBookSearchDepth];
 		// Use default value if user enters an invalid value
-		if (isNullOrUndefined(maxDepth) || maxDepth < 0) {
+		if (maxDepth === null || maxDepth === undefined || maxDepth < 0) {
 			maxDepth = 10;
 		} else if (maxDepth === 0) { // No limit of search depth if user enters 0
 			maxDepth = undefined;

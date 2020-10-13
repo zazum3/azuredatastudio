@@ -804,7 +804,7 @@ export interface ExtHostModelViewDialogShape {
 }
 
 export interface MainThreadModelViewDialogShape extends IDisposable {
-	$openEditor(handle: number, modelViewId: string, title: string, options?: azdata.ModelViewEditorOptions, position?: vscode.ViewColumn): Thenable<void>;
+	$openEditor(handle: number, modelViewId: string, title: string, name?: string, options?: azdata.ModelViewEditorOptions, position?: vscode.ViewColumn): Thenable<void>;
 	$openDialog(handle: number, dialogName?: string): Thenable<void>;
 	$closeDialog(handle: number): Thenable<void>;
 	$setDialogDetails(handle: number, details: IModelViewDialogDetails): Thenable<void>;
@@ -936,7 +936,7 @@ export interface MainThreadNotebookDocumentsAndEditorsShape extends IDisposable 
 	$runAllCells(id: string, startCellUri?: UriComponents, endCellUri?: UriComponents): Promise<boolean>;
 	$clearOutput(id: string, cellUri: UriComponents): Promise<boolean>;
 	$clearAllOutputs(id: string): Promise<boolean>;
-	$changeKernel(id: string, kernel: azdata.nb.IKernelInfo): Promise<boolean>;
+	$changeKernel(id: string, kernel: azdata.nb.IKernelSpec): Promise<boolean>;
 	$registerNavigationProvider(providerId: string, handle: number);
 }
 
