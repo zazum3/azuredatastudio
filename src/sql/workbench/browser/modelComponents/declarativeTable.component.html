@@ -1,11 +1,11 @@
-<table role="grid" #container *ngIf="columns" class="declarative-table" [style.height]="getHeight()"
+<table role="table" #container *ngIf="columns" class="declarative-table" [style.height]="getHeight()"
 	[style.width]="getWidth()" [attr.aria-label]="ariaLabel">
 	<thead role="rowgroup">
 		<tr role="row">
 			<ng-container *ngFor="let column of columns; let c = index;">
 				<th class="declarative-table-header" aria-sort="none" [style.width]="getColumnWidth(column)"
 					[ngStyle]="column.headerCssStyles"
-					[attr.aria-label]="getHeaderAriaLabel(c)">
+					[attr.aria-label]="getHeaderAriaLabel(c)" role="columnheader" scope="col">
 					{{column.displayName}}
 					<checkbox *ngIf="isCheckBox(c)" [checked]="isHeaderChecked(c)"
 					[aria-label]="getCheckAllColumnAriaLabel(c)" (onChange)="onHeaderCheckBoxChanged($event,c)"
@@ -22,7 +22,7 @@
 						<td class="declarative-table-cell" [style.width]="getColumnWidth(c)"
 							[attr.aria-label]="getAriaLabel(r, c)"
 							[ngStyle]="mergeCss(columns[c].rowCssStyles, cellData.style)"
-							role="gridcell">
+							role="cell">
 							<checkbox *ngIf="isCheckBox(c)" label="" (onChange)="onCheckBoxChanged($event,r,c)"
 								[enabled]="isControlEnabled(c)" [checked]="isChecked(r,c)"
 								[ngStyle]="mergeCss(columns[c].rowCssStyles, cellData.style)">
