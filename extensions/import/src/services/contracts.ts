@@ -78,6 +78,7 @@ const insertDataRequestName = 'flatfile/insertData';
 export interface InsertDataParams {
 	connectionString: string;
 	batchSize: number;
+	accessToken?: string;
 }
 
 export interface InsertDataResponse {
