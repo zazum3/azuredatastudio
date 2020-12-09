@@ -16,7 +16,7 @@ import { invalidAzureAccount, invalidTenant, unableToFetchTokenError } from '../
 import { AzureResourceServiceNames } from './constants';
 import { IAzureResourceSubscriptionFilterService, IAzureResourceSubscriptionService } from './interfaces';
 import { AzureResourceGroupService } from './providers/resourceGroup/resourceGroupService';
-import { StorageManagementClient } from '@azure/arm-storage';
+// import { StorageManagementClient } from '@azure/arm-storage';
 
 const localize = nls.loadMessageBundle();
 
@@ -384,17 +384,19 @@ export async function getBlobContainers(account: azdata.Account, subscription: a
 		return result;
 	}
 
-	let securityToken: { token: string, tokenType?: string };
-	let credential: TokenCredentials;
+	// let securityToken: { token: string, tokenType?: string };
+	// let credential: TokenCredentials;
 	try {
+		/*
 		securityToken = await azdata.accounts.getAccountSecurityToken(
 			account,
 			subscription.tenant!,
 			azdata.AzureResource.ResourceManagement
 		);
-		const token = securityToken.token;
-		const tokenType = securityToken.tokenType;
-		credential = new TokenCredentials(token, tokenType);
+		*/
+		// const token = securityToken.token;
+		// const tokenType = securityToken.tokenType;
+		// credential = new TokenCredentials(token, tokenType);
 
 	} catch (err) {
 		console.error(err);
@@ -406,6 +408,7 @@ export async function getBlobContainers(account: azdata.Account, subscription: a
 	}
 
 	try {
+		/*
 		const client = new StorageManagementClient(<any>credential, subscription.id);
 		result.blobContainers = (await client.blobContainers.list(storageAccounts.resourceGroup, storageAccounts.name)).map(blobContainer => {
 			return {
@@ -415,6 +418,7 @@ export async function getBlobContainers(account: azdata.Account, subscription: a
 				subscription: subscription
 			};
 		});
+		*/
 	} catch (err) {
 		console.error(err);
 		if (!ignoreErrors) {
@@ -447,17 +451,19 @@ export async function getFileShares(account: azdata.Account, subscription: azure
 		return result;
 	}
 
-	let securityToken: { token: string, tokenType?: string };
-	let credential: TokenCredentials;
+	// let securityToken: { token: string, tokenType?: string };
+	// let credential: TokenCredentials;
 	try {
+		/*
 		securityToken = await azdata.accounts.getAccountSecurityToken(
 			account,
 			subscription.tenant!,
 			azdata.AzureResource.ResourceManagement
 		);
-		const token = securityToken.token;
-		const tokenType = securityToken.tokenType;
-		credential = new TokenCredentials(token, tokenType);
+		*/
+		// const token = securityToken.token;
+		// const tokenType = securityToken.tokenType;
+		// credential = new TokenCredentials(token, tokenType);
 
 	} catch (err) {
 		console.error(err);
@@ -469,6 +475,7 @@ export async function getFileShares(account: azdata.Account, subscription: azure
 	}
 
 	try {
+		/*
 		const client = new StorageManagementClient(<any>credential, subscription.id);
 		result.fileShares = (await client.fileShares.list(storageAccounts.resourceGroup, storageAccounts.name)).map(fileShare => {
 			return {
@@ -478,6 +485,7 @@ export async function getFileShares(account: azdata.Account, subscription: azure
 				subscription: subscription
 			};
 		});
+		*/
 	} catch (err) {
 		console.error(err);
 		if (!ignoreErrors) {
