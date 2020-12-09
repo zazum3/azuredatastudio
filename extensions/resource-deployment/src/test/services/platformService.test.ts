@@ -128,7 +128,7 @@ describe('PlatformService', () => {
 			platformService.openFile(filePath);
 			stub.callCount.should.equal(1);
 			stub.getCall(0).args[0].should.equal('vscode.open');
-			stub.getCall(0).args[1].path.should.equal(filePath);
+			(stub.getCall(0).args[1] as vscode.Uri).fsPath.toLowerCase().should.equal(filePath.toLowerCase());
 		});
 		it('readTextFile', async () => {
 			sinon.stub(fs.promises, 'readFile').resolves(contents);
