@@ -128,6 +128,13 @@ steps:
     displayName: Run integration tests (Electron)
     condition: and(succeeded(), eq(variables['RUN_TESTS'], 'true'))
 
+  - script: |
+      set -e
+      tar -czvf $(Build.ArtifactStagingDirectory)/source/linux-x64/source-linux-x64.tar.gz $(agent.builddirectory)/azuredatastudio-linux-x64
+    displayName: Archive Source
+    continueOnError: true
+    condition: succeededOrFailed()
+
   - ${{each extension in parameters.extensionsToUnitTest}}:
     - script: |
         set -e
