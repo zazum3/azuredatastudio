@@ -130,6 +130,7 @@ steps:
 
   - script: |
       set -e
+      mkdir -p $(Build.ArtifactStagingDirectory)/source/linux-x64
       tar -czvf $(Build.ArtifactStagingDirectory)/source/linux-x64/source-linux-x64.tar.gz $(agent.builddirectory)/azuredatastudio-linux-x64
     displayName: Archive Source
     continueOnError: true
