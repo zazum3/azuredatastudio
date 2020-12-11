@@ -386,3 +386,4 @@ export async function getFileShares(account: azdata.Account, subscription: azure
 		errors: response.errors ? response.errors : []
 	};
 }
+
