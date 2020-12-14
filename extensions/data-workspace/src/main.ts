@@ -12,6 +12,7 @@ import { NewProjectDialog } from './dialogs/newProjectDialog';
 import { OpenExistingDialog } from './dialogs/openExistingDialog';
 import { IWorkspaceService } from './common/interfaces';
 import { IconPathHelper } from './common/iconHelper';
+import { TelemetryReporter, TelemetryViews } from './common/telemetry';
 
 export function activate(context: vscode.ExtensionContext): Promise<IExtension> {
 	const workspaceService = new WorkspaceService(context);
@@ -23,18 +24,24 @@ export function activate(context: vscode.ExtensionContext): Promise<IExtension> 
 		setProjectProviderContextValue(workspaceService);
 	}));
 	setProjectProviderContextValue(workspaceService);
+
 	context.subscriptions.push(vscode.commands.registerCommand('projects.new', async () => {
+		TelemetryReporter.sendActionEvent(TelemetryViews.WorkspaceTreePane, 'EmptyTreeWelcomeNewButtonClicked');
 		const dialog = new NewProjectDialog(workspaceService);
 		await dialog.open();
 	}));
+
 	context.subscriptions.push(vscode.commands.registerCommand('projects.openExisting', async () => {
+		TelemetryReporter.sendActionEvent(TelemetryViews.WorkspaceTreePane, 'EmptyTreeWelcomeOpenButtonClicked');
 		const dialog = new OpenExistingDialog(workspaceService, context);
 		await dialog.open();
 
 	}));
+
 	context.subscriptions.push(vscode.commands.registerCommand('dataworkspace.refresh', () => {
 		workspaceTreeDataProvider.refresh();
 	}));
+
 	context.subscriptions.push(vscode.commands.registerCommand('projects.removeProject', async (treeItem: WorkspaceTreeItem) => {
 		await workspaceService.removeProject(vscode.Uri.file(treeItem.element.project.projectFilePath));
 	}));

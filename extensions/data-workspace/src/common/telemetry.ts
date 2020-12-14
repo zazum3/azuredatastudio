@@ -7,11 +7,12 @@ import AdsTelemetryReporter from 'ads-extension-telemetry';
 
 import * as Utils from './utils';
 
-const packageJson = require('../package.json');
+const packageJson = require('../../package.json');
 
 let packageInfo = Utils.getPackageInfo(packageJson)!;
 
 export const TelemetryReporter = new AdsTelemetryReporter(packageInfo.name, packageInfo.version, packageInfo.aiKey);
 
 export enum TelemetryViews {
+	WorkspaceTreePane = 'WorkspaceTreePane'
 }
