@@ -77,15 +77,17 @@ export class OpenExistingDialog extends DialogBase {
 	async onComplete(): Promise<void> {
 		try {
 			if (this._targetTypeRadioCardGroup?.selectedCardId === constants.Workspace) {
-				// Capture that workspace was selected, also if there's already an open workspace that's being replaced
+				// capture that workspace was selected, also if there's already an open workspace that's being replaced
 				TelemetryReporter.createActionEvent(TelemetryViews.OpenDialog, 'Opening workspace')
 					.withAdditionalProperties({ hasWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() })
 					.send();
 
 				await this.workspaceService.enterWorkspace(vscode.Uri.file(this._workspaceFile));
 			} else {
-				const t = TelemetryReporter.createActionEvent(TelemetryViews.OpenDialog, 'Opening project')
-					.withAdditionalProperties({ hasWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() });
+				const t = TelemetryReporter.createActionEvent(TelemetryViews.OpenDialog, 'Opening project');
+
+				// save datapoint now because it'll get set to new value during validateWorkspace()
+				t.withAdditionalProperties({ hasWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() });
 
 				const validateWorkspace = await this.workspaceService.validateWorkspace();
 
