@@ -100,7 +100,6 @@ export class OpenExistingDialog extends DialogBase {
 		}
 	}
 
-
 	protected async initialize(view: azdata.ModelView): Promise<void> {
 		this._targetTypeRadioCardGroup = view.modelBuilder.radioCardGroup().withProperties<azdata.RadioCardGroupComponentProperties>({
 			cards: this._targetTypes.map((targetType) => {
