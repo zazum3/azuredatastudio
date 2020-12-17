@@ -3,9 +3,10 @@
  *  Licensed under the Source EULA. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import AdsTelemetryReporter from 'ads-extension-telemetry';
-
 import * as Utils from './utils';
+import * as vscode from 'vscode';
+
+import AdsTelemetryReporter from 'ads-extension-telemetry';
 
 const packageJson = require('../../package.json');
 
@@ -16,4 +17,9 @@ export const TelemetryReporter = new AdsTelemetryReporter(packageInfo.name, pack
 export enum TelemetryViews {
 	WorkspaceTreePane = 'WorkspaceTreePane',
 	OpenDialog = 'OpenDialog'
+}
+export function CalculateRelativity(projectPath: string, workspacePath?: string): string {
+	vscode.workspace.asRelativePath(projectPath);
+
+	return 'TODO';
 }

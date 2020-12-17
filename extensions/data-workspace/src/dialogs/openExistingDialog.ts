@@ -11,7 +11,7 @@ import * as constants from '../common/constants';
 import { IWorkspaceService } from '../common/interfaces';
 import { fileExist } from '../common/utils';
 import { IconPathHelper } from '../common/iconHelper';
-import { TelemetryReporter, TelemetryViews } from '../common/telemetry';
+import { CalculateRelativity, TelemetryReporter, TelemetryViews } from '../common/telemetry';
 
 export class OpenExistingDialog extends DialogBase {
 	public _projectFile: string = '';
@@ -82,9 +82,9 @@ export class OpenExistingDialog extends DialogBase {
 					.withAdditionalProperties({ hasWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() });
 
 				const validateWorkspace = await this.workspaceService.validateWorkspace();
-				if (validateWorkspace) {
-					t.withAdditionalProperties({ workspaceProjectRelativity: this.calculateRelativity(this._projectFile, this.workspaceInputBox!.value!) }).send();
 
+				if (validateWorkspace) {
+					t.withAdditionalProperties({ workspaceProjectRelativity: CalculateRelativity(this._projectFile, this.workspaceInputBox!.value!) }).send();
 					await this.workspaceService.addProjectsToWorkspace([vscode.Uri.file(this._projectFile)], vscode.Uri.file(this.workspaceInputBox!.value!));
 				}
 			}
@@ -94,9 +94,6 @@ export class OpenExistingDialog extends DialogBase {
 		}
 	}
 
-	private calculateRelativity(projectPath: string, workspacePath: string): string {
-		return 'TODO';
-	}
 
 	protected async initialize(view: azdata.ModelView): Promise<void> {
 		this._targetTypeRadioCardGroup = view.modelBuilder.radioCardGroup().withProperties<azdata.RadioCardGroupComponentProperties>({
