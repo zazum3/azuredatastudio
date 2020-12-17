@@ -11,6 +11,7 @@ import * as constants from '../common/constants';
 import { IWorkspaceService } from '../common/interfaces';
 import { fileExist } from '../common/utils';
 import { IconPathHelper } from '../common/iconHelper';
+import { TelemetryReporter, TelemetryViews } from '../common/telemetry';
 
 export class OpenExistingDialog extends DialogBase {
 	public _projectFile: string = '';
@@ -31,6 +32,11 @@ export class OpenExistingDialog extends DialogBase {
 
 	constructor(private workspaceService: IWorkspaceService, private extensionContext: vscode.ExtensionContext) {
 		super(constants.OpenExistingDialogTitle, 'OpenProject');
+
+		// dialog launched from Welcome message button (only visible when no current workspace) vs. "add project" button
+		TelemetryReporter.createActionEvent(TelemetryViews.OpenDialog, 'Open workspace/project dialog launched')
+			.withAdditionalProperties({ hasWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() })
+			.send();
 	}
 
 	async validate(): Promise<boolean> {
@@ -65,10 +71,20 @@ export class OpenExistingDialog extends DialogBase {
 	async onComplete(): Promise<void> {
 		try {
 			if (this._targetTypeRadioCardGroup?.selectedCardId === constants.Workspace) {
+				// Capture that workspace was selected, also if there's already an open workspace that's being replaced
+				TelemetryReporter.createActionEvent(TelemetryViews.OpenDialog, 'Opening workspace')
+					.withAdditionalProperties({ hasWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() })
+					.send();
+
 				await this.workspaceService.enterWorkspace(vscode.Uri.file(this._workspaceFile));
 			} else {
+				const t = TelemetryReporter.createActionEvent(TelemetryViews.OpenDialog, 'Opening project')
+					.withAdditionalProperties({ hasWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() });
+
 				const validateWorkspace = await this.workspaceService.validateWorkspace();
 				if (validateWorkspace) {
+					t.withAdditionalProperties({ workspaceProjectRelativity: this.calculateRelativity(this._projectFile, this.workspaceInputBox!.value!) }).send();
+
 					await this.workspaceService.addProjectsToWorkspace([vscode.Uri.file(this._projectFile)], vscode.Uri.file(this.workspaceInputBox!.value!));
 				}
 			}
@@ -76,6 +92,10 @@ export class OpenExistingDialog extends DialogBase {
 		catch (err) {
 			vscode.window.showErrorMessage(err?.message ? err.message : err);
 		}
+	}
+
+	private calculateRelativity(projectPath: string, workspacePath: string): string {
+		return 'TODO';
 	}
 
 	protected async initialize(view: azdata.ModelView): Promise<void> {
