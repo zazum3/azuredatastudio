@@ -68,6 +68,11 @@ declare module 'dataworkspace' {
 		 * Gets the supported project types
 		 */
 		readonly supportedProjectTypes: IProjectType[];
+
+		/**
+		 * Gets the extension ID for the project provider
+		 */
+		readonly providerExtensionId: string;
 	}
 
 	/**

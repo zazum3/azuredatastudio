@@ -16,8 +16,10 @@ export const TelemetryReporter = new AdsTelemetryReporter(packageInfo.name, pack
 
 export enum TelemetryViews {
 	WorkspaceTreePane = 'WorkspaceTreePane',
-	OpenDialog = 'OpenDialog'
+	OpenDialog = 'OpenDialog',
+	ProviderRegistration = 'ProviderRegistration'
 }
+
 export function CalculateRelativity(projectPath: string, workspacePath?: string): string {
 	vscode.workspace.asRelativePath(projectPath);
 
