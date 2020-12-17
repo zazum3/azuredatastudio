@@ -7,8 +7,6 @@ import * as should from 'should';
 import * as TypeMoq from 'typemoq';
 import * as sinon from 'sinon';
 import * as vscode from 'vscode';
-import * as os from 'os';
-import * as path from 'path';
 import * as constants from '../../common/constants';
 import { promises as fs } from 'fs';
 import { WorkspaceService } from '../../services/workspaceService';
