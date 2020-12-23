@@ -34,8 +34,8 @@ export class OpenExistingDialog extends DialogBase {
 		super(constants.OpenExistingDialogTitle, 'OpenProject');
 
 		// dialog launched from Welcome message button (only visible when no current workspace) vs. "add project" button
-		TelemetryReporter.createActionEvent(TelemetryViews.OpenDialog, 'Open workspace/project dialog launched')
-			.withAdditionalProperties({ hasWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() })
+		TelemetryReporter.createActionEvent(TelemetryViews.OpenExistingDialog, 'OpenWorkspaceProjectDialogLaunched')
+			.withAdditionalProperties({ isWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() })
 			.send();
 	}
 
@@ -78,13 +78,13 @@ export class OpenExistingDialog extends DialogBase {
 		try {
 			if (this._targetTypeRadioCardGroup?.selectedCardId === constants.Workspace) {
 				// capture that workspace was selected, also if there's already an open workspace that's being replaced
-				TelemetryReporter.createActionEvent(TelemetryViews.OpenDialog, 'Opening workspace')
+				TelemetryReporter.createActionEvent(TelemetryViews.OpenExistingDialog, 'OpeningWorkspace')
 					.withAdditionalProperties({ hasWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() })
 					.send();
 
 				await this.workspaceService.enterWorkspace(vscode.Uri.file(this._workspaceFile));
 			} else {
-				const t = TelemetryReporter.createActionEvent(TelemetryViews.OpenDialog, 'Opening project');
+				const t = TelemetryReporter.createActionEvent(TelemetryViews.OpenExistingDialog, 'OpeningProject');
 
 				// save datapoint now because it'll get set to new value during validateWorkspace()
 				t.withAdditionalProperties({ hasWorkspaceOpen: (vscode.workspace.workspaceFile !== undefined).toString() });
@@ -92,8 +92,10 @@ export class OpenExistingDialog extends DialogBase {
 				const validateWorkspace = await this.workspaceService.validateWorkspace();
 
 				if (validateWorkspace) {
-					t.withAdditionalProperties({ workspaceProjectRelativity: CalculateRelativity(this._projectFile, this.workspaceInputBox!.value!) }).send();
+					t.withAdditionalProperties({ workspaceProjectRelativity: CalculateRelativity(this._projectFile, this.workspaceInputBox!.value!), cancelled: 'false' }).send();
 					await this.workspaceService.addProjectsToWorkspace([vscode.Uri.file(this._projectFile)], vscode.Uri.file(this.workspaceInputBox!.value!));
+				} else {
+					t.withAdditionalProperties({ workspaceProjectRelativity: 'none', cancelled: 'true' }).send();
 				}
 			}
 		}

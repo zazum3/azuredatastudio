@@ -21,7 +21,7 @@ export const ProjectProviderRegistry: IProjectProviderRegistry = new class imple
 			this._providerProjectTypeMapping[projectType.id.toUpperCase()] = provider;
 		});
 
-		TelemetryReporter.createActionEvent(TelemetryViews.ProviderRegistration, 'providerRegistration')
+		TelemetryReporter.createActionEvent(TelemetryViews.ProviderRegistration, 'ProviderRegistered')
 			.withAdditionalProperties({
 				providerId: provider.providerExtensionId,
 				extensions: provider.supportedProjectTypes.sort().join(', ')

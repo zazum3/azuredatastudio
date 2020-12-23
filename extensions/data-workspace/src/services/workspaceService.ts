@@ -116,7 +116,7 @@ export class WorkspaceService implements IWorkspaceService {
 				currentProjects.push(projectFile);
 				newProjectFileAdded = true;
 
-				TelemetryReporter.createActionEvent(TelemetryViews.WorkspaceTreePane, 'add project to workspace')
+				TelemetryReporter.createActionEvent(TelemetryViews.WorkspaceTreePane, 'ProjectAddedToWorkspace')
 					.withAdditionalProperties({
 						workspaceProjectRelativity: CalculateRelativity(projectFile.fsPath),
 						projectType: path.extname(projectFile.fsPath)
@@ -172,7 +172,7 @@ export class WorkspaceService implements IWorkspaceService {
 			if (projectIdx !== -1) {
 				currentProjects.splice(projectIdx, 1);
 
-				TelemetryReporter.createActionEvent(TelemetryViews.WorkspaceTreePane, 'remove project from workspace')
+				TelemetryReporter.createActionEvent(TelemetryViews.WorkspaceTreePane, 'ProjectRemovedFromWorkspace')
 					.withAdditionalProperties({
 						projectType: path.extname(projectFile.fsPath)
 					}).send();

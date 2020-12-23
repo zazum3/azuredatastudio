@@ -16,7 +16,8 @@ export const TelemetryReporter = new AdsTelemetryReporter(packageInfo.name, pack
 
 export enum TelemetryViews {
 	WorkspaceTreePane = 'WorkspaceTreePane',
-	OpenDialog = 'OpenDialog',
+	OpenExistingDialog = 'OpenExistingDialog',
+	NewProjectDialog = 'NewProjectDialog',
 	ProviderRegistration = 'ProviderRegistration'
 }
 

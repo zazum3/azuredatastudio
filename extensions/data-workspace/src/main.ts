@@ -26,7 +26,6 @@ export function activate(context: vscode.ExtensionContext): Promise<IExtension> 
 	setProjectProviderContextValue(workspaceService);
 
 	context.subscriptions.push(vscode.commands.registerCommand('projects.new', async () => {
-		TelemetryReporter.sendActionEvent(TelemetryViews.WorkspaceTreePane, 'EmptyTreeWelcomeNewButtonClicked');
 		const dialog = new NewProjectDialog(workspaceService);
 		await dialog.open();
 	}));
