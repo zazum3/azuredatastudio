@@ -22,7 +22,7 @@ export enum TelemetryViews {
 }
 
 export function CalculateRelativity(projectPath: string, workspacePath?: string): string {
-	vscode.workspace.asRelativePath(projectPath);
+	//vscode.workspace.asRelativePath(projectPath);
 
 	return 'TODO';
 }

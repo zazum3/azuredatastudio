@@ -12,7 +12,6 @@ import { NewProjectDialog } from './dialogs/newProjectDialog';
 import { OpenExistingDialog } from './dialogs/openExistingDialog';
 import { IWorkspaceService } from './common/interfaces';
 import { IconPathHelper } from './common/iconHelper';
-import { TelemetryReporter, TelemetryViews } from './common/telemetry';
 
 export function activate(context: vscode.ExtensionContext): Promise<IExtension> {
 	const workspaceService = new WorkspaceService(context);
@@ -31,7 +30,6 @@ export function activate(context: vscode.ExtensionContext): Promise<IExtension> 
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('projects.openExisting', async () => {
-		TelemetryReporter.sendActionEvent(TelemetryViews.WorkspaceTreePane, 'EmptyTreeWelcomeOpenButtonClicked');
 		const dialog = new OpenExistingDialog(workspaceService, context);
 		await dialog.open();
 
