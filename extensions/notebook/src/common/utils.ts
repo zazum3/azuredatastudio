@@ -260,9 +260,9 @@ export async function exists(path: string): Promise<boolean> {
 	}
 }
 
-export async function existsSync(path: string): Promise<boolean> {
+export function existsSync(path: string): boolean {
 	try {
-		await fs.accessSync(path);
+		fs.accessSync(path);
 		return true;
 	} catch (e) {
 		return false;
