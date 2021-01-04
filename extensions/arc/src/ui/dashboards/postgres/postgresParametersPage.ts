@@ -311,7 +311,7 @@ export class PostgresParametersPage extends DashboardPage {
 				if (!this.searchBox!.value) {
 					this.parametersTable.data = this._parameters.map(p => p.components!);
 				} else {
-					this.filterParameters(this.searchBox!.value);
+					this.filterParameters(this.searchBox!.value.toLowerCase());
 				}
 			})
 		);
@@ -319,9 +319,13 @@ export class PostgresParametersPage extends DashboardPage {
 
 	private filterParameters(search: string) {
 		let filterData: any[] = [];
+		let name: string;
+		let description: string;
 
 		this._parameters.forEach(param => {
-			if (param.parameterName?.search(search) !== -1 || param.description?.search(search) !== -1) {
+			name = param.parameterName?.toLowerCase();
+			description = param.description?.toLowerCase();
+			if (name.search(search) !== -1 || description.search(search) !== -1) {
 				filterData.push(param.components!);
 			}
 		});
